@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="181.417323pt" height="153.070866pt" viewBox="0 0 181.417323 153.070866" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-08-22T05:23:59.580272</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 153.070866 
+L 181.417323 153.070866 
+L 181.417323 0 
+L 0 0 
+L 0 153.070866 
+z
+" style="fill: none"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 9.354331 152.787402 
+L 172.062992 152.787402 
+Q 178.299213 152.787402 178.299213 146.551181 
+L 178.299213 10.488189 
+Q 178.299213 4.251969 172.062992 4.251969 
+L 9.354331 4.251969 
+Q 3.11811 4.251969 3.11811 10.488189 
+L 3.11811 146.551181 
+Q 3.11811 152.787402 9.354331 152.787402 
+z
+" clip-path="url(#p677f99e3bf)" style="fill: #e8ddcb"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 8.787402 151.086614 
+L 171.496063 151.086614 
+Q 177.732283 151.086614 177.732283 144.850394 
+L 177.732283 8.787402 
+Q 177.732283 2.551181 171.496063 2.551181 
+L 8.787402 2.551181 
+Q 2.551181 2.551181 2.551181 8.787402 
+L 2.551181 144.850394 
+Q 2.551181 151.086614 8.787402 151.086614 
+z
+" clip-path="url(#p677f99e3bf)" style="fill: #fffefb; stroke: #e4d9c7; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_1">
+    <!-- $\dfrac{8!}{3!\cdot 2!\cdot 2!\cdot 1!}$ -->
+    <g style="fill: #2d2924" transform="translate(51.963661 81.732933) scale(0.135 -0.135)">
+     <defs>
+      <path id="PennstanderMath-ExtraLight-79e" d="M 1914 -29 
+C 2842 -29 3347 470 3347 1267 
+C 3347 1901 2893 2221 2518 2282 
+C 2915 2422 3206 2768 3206 3338 
+C 3206 4051 2653 4390 1898 4390 
+C 1094 4390 512 4003 512 3235 
+C 512 2694 794 2410 1072 2278 
+C 675 2141 336 1715 336 1206 
+C 336 445 838 -29 1914 -29 
+z
+M 1869 291 
+C 1315 291 710 464 710 1222 
+C 710 1971 1382 2125 1853 2125 
+C 2531 2125 2992 1891 2992 1219 
+C 2992 579 2477 291 1869 291 
+z
+M 1875 2432 
+C 1309 2432 886 2573 886 3200 
+C 886 3712 1213 4077 1859 4077 
+C 2464 4077 2851 3862 2851 3293 
+C 2851 2739 2416 2432 1875 2432 
+z
+" transform="scale(0.015625)"/>
+      <path id="PennstanderMath-ExtraLight-13" d="M 1098 1142 
+C 1101 2042 1165 4054 1248 4688 
+L 838 4710 
+C 774 4138 758 2182 768 1162 
+C 822 1152 1034 1142 1098 1142 
+z
+M 957 -86 
+C 1187 -86 1366 70 1366 298 
+C 1366 525 1181 688 950 688 
+C 739 688 522 554 522 314 
+C 522 83 678 -86 957 -86 
+z
+" transform="scale(0.015625)"/>
+      <path id="PennstanderMath-ExtraLight-796" d="M 1638 -10 
+C 2451 -10 3027 480 3027 1274 
+C 3027 1984 2474 2269 1866 2307 
+C 2256 2381 2803 2704 2803 3277 
+C 2803 3920 2339 4272 1693 4272 
+C 982 4272 461 3859 195 3590 
+C 256 3520 394 3398 470 3344 
+C 720 3667 1149 3926 1677 3926 
+C 2186 3926 2429 3629 2429 3245 
+C 2429 2678 1683 2400 934 2400 
+C 934 2298 954 2131 973 2067 
+C 2032 2067 2682 2000 2682 1226 
+C 2682 662 2240 323 1616 323 
+C 1101 323 704 586 605 998 
+C 490 950 339 854 253 778 
+C 387 317 986 -10 1638 -10 
+z
+" transform="scale(0.015625)"/>
+      <path id="PennstanderMath-ExtraLight-140" d="M 752 1568 
+C 989 1568 1203 1757 1203 1997 
+C 1203 2211 1046 2422 800 2422 
+C 538 2422 320 2246 320 2003 
+C 320 1763 438 1568 752 1568 
+z
+" transform="scale(0.015625)"/>
+      <path id="PennstanderMath-ExtraLight-795" d="M 2970 464 
+C 2518 445 1203 352 922 320 
+C 1030 445 1702 1296 2086 1827 
+C 2506 2413 2835 2989 2835 3507 
+C 2835 4022 2429 4365 1869 4365 
+C 1139 4365 579 3914 310 3251 
+C 384 3184 544 3069 608 3040 
+C 832 3622 1200 4029 1830 4029 
+C 2179 4029 2490 3859 2490 3446 
+C 2490 2928 1910 2138 1504 1616 
+C 1107 1104 630 502 410 259 
+C 419 138 445 16 461 -54 
+L 2957 86 
+C 2973 154 2979 381 2970 464 
+z
+" transform="scale(0.015625)"/>
+      <path id="PennstanderMath-ExtraLight-794" d="M 1722 381 
+C 1731 675 1731 979 1731 1286 
+C 1731 2666 1677 4125 1667 4198 
+C 1606 4208 1478 4214 1373 4214 
+C 1142 4022 496 3379 394 3274 
+C 435 3184 531 3008 570 2957 
+C 646 3040 1264 3686 1354 3770 
+C 1350 3344 1373 630 1376 378 
+C 1261 371 723 330 592 307 
+C 589 221 602 45 611 -38 
+C 842 -22 2256 29 2483 29 
+C 2502 118 2515 285 2518 358 
+C 2397 368 1936 381 1722 381 
+z
+" transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#PennstanderMath-ExtraLight-79e" transform="translate(234.25 74.40625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-13" transform="translate(292.049942 74.40625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-796" transform="translate(6.25 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-13" transform="translate(58.249954 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(121.969888 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-795" transform="translate(162.879843 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-13" transform="translate(215.379797 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(279.099731 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-795" transform="translate(320.009686 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-13" transform="translate(372.509641 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(436.229575 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-794" transform="translate(477.139529 -68.440625)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-13" transform="translate(520.789493 -68.440625)"/>
+     <path d="M 6.25 26.8375 
+L 6.25 33.0875 
+L 567.399445 33.0875 
+L 567.399445 26.8375 
+L 6.25 26.8375 
+z
+"/>
+    </g>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p677f99e3bf">
+   <rect x="0" y="0" width="181.417323" height="153.070866"/>
+  </clipPath>
+ </defs>
+</svg>

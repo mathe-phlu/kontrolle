@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- FEHLERBEHOBEN (2026-08-21): Der Browser hielt diese Seite fest und
+     zeigte nach einem Neubau die alte Fassung weiter. Beim Pruefen sah
+     es aus, als haette die Aenderung nicht gewirkt - zweimal fast auf
+     eine falsche Faehrte gefuehrt.
+     Die Seite selbst wird immer nachgefragt; sie ist klein. Die grossen
+     Teile daneben tragen ein ?v= mit dem Fingerabdruck ihres Inhalts
+     und duerfen im Zwischenspeicher bleiben, solange sie gleich sind. -->
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>Reflexion — Kapitel 2</title>
+<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
+     damit nichts von Google live geholt wird?»): Hier standen drei
+     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
+     fonts.googleapis.com holten.
+
+     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
+     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
+     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
+     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
+     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
+
+     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
+     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+
+<link rel="stylesheet" href="flaeche.css?v=91b88465">
+</head><body>
+
+<header><div class="streifen"></div>
+  <h1>Kapitel 2 · Reflexion</h1>
+  <span class="entwurf" title="Zum Anschauen und Kritisieren">Entwurf 21. August 2026</span>
+  <nav id="nav"></nav>
+</header>
+<div id="buehne" style="flex:1 1 auto;display:flex;flex-direction:column;min-height:0"></div>
+
+<script>const D = {"kapitel": 2, "farbe": "zugang", "toene": {"menge": "#cce0ee", "ereignis": "#f1d3b5"}, "start": {"bild": "erkundung.png", "titel": "Eine Situation — viele Ergebnismengen", "lage": "In der Eisdiele gibt es 8 Sorten: 3 Fruchtsorbets und 5 Milcheissorten. Tim bestellt <b>3 Kugeln</b>. Eine Sorte darf <b>mehrmals</b> vorkommen.", "frage": "Wie schreibt man auf, was herauskommen kann?", "nachsatz": "Und woran merkt man, dass eine solche Liste taugt?"}, "etappen": [{"nr": "1", "name": "Ordnen", "rang": "Pflicht", "rolle": "zugang", "auftrag": "Alle diese Karten behaupten dasselbe: Sie schreiben auf, was bei Tims Bestellung herauskommen kann. Fünf davon sind kaputt. Sortieren Sie."}, {"nr": "2", "name": "Strategien", "rang": "Pflicht", "rolle": "aktion", "auftrag": "Jetzt die Ereignisse. Legen Sie jedes Ereignis zu jeder Menge, in der es sich hinschreiben lässt — mit dem + auf der Karte machen Sie eine zweite Kopie."}, {"nr": "3", "name": "Übertragen", "rang": "Sicherung", "rolle": "beweis", "auftrag": "Erproben Sie das Gelernte — an einer zweiten Bestellung in derselben Eisdiele, oder ausserhalb."}], "situationen": {"A": "In der Eisdiele gibt es 8 Sorten: 3 Fruchtsorbets und 5 Milcheissorten. Tim bestellt <b>3 Kugeln</b>. Eine Sorte darf <b>mehrmals</b> vorkommen.", "B": "Dieselbe Eisdiele. Tim bestellt <b>3 Kugeln</b> — aber <b>keine Sorte doppelt</b>.", "C": "Dieselbe Eisdiele. Tim bestellt <b>2 oder 3 Kugeln</b>. Eine Sorte darf <b>mehrmals</b> vorkommen."}, "e1": {"situation": "SSA", "gueltig": ["M2", "M5", "M8", "M10", "M8k", "M10k"], "kaputt": ["X1", "X1b", "X2b", "Xauf", "X4"], "grund": {"X1": "falsch gebaut: unvollständig — Lücke — gestürzt von E1, E2, E3, E4. Gedanke: Ich schreibe auf, was mich interessiert.", "X1b": "falsch gebaut: unvollständig — Lücke — gestürzt von E1, E2, E3. Gedanke: Es gibt Milch-Becher und Sorbet-Becher.", "X2b": "falsch gebaut: überlappend — gestürzt von E1, E2, E3. Gedanke: Ich schaue, welche Art vorkommt.", "Xauf": "falsch gebaut: nicht wohldefiniert — gestürzt von E1, E2, E3. Gedanke: Eine Kugel sticht immer heraus.", "X4": "falsch gebaut: falsche Länge — anderes Experiment — gestürzt von E1, E2, E3, E4. Gedanke: Ich notiere die Kugelreihe — wie viele es waren, hab ich nicht draufgeschrieben."}}, "e2": {"mengen": ["M2", "M5", "M8", "M10", "M8k", "M10k"], "ereignisse": ["R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8", "RN1", "RN2"], "traegt": {"R1": ["M2"], "R2": ["M2", "M5"], "R3": ["M2", "M8"], "R4": ["M2", "M5", "M8", "M10"], "R5": ["M2", "M5"], "R6": ["M2", "M5", "M8", "M10"], "R7": ["M2", "M5", "M8", "M10"], "R8": ["M2"], "RN1": ["M2", "M8k"], "RN2": ["M2", "M5", "M8k", "M10k"]}, "groesse": {"M2": 512, "M5": 120, "M8": 8, "M10": 4, "M8k": 8, "M10k": 4}}, "e3": {"wegA": {"situationen": ["B", "C"], "mengen": ["M1", "M3", "M4", "M6", "M7", "M9"], "gueltig": {"A": ["M2", "M5", "M8", "M10", "M8k", "M10k"], "B": ["M3", "M6", "M8", "M10", "M8k", "M10k"], "C": ["M1", "M4", "M7", "M9"]}}, "wegB": {"aufgaben": [{"id": "TUR", "text": "In einer Urne liegen 2 rote, 1 blaue und 1 grüne Kugel. Es wird zweimal mit Zurücklegen gezogen. (Skript, Aufgabe 2.2)", "hinweis": "16 / 10 / 9 / 6 — die roten Kugeln sind nicht unterscheidbar. Wer trotzdem 16 nimmt, verfeinert künstlich. Alle 16 sind möglich — verfeinern erfindet nichts."}, {"id": "TPIN", "text": "Eine PIN ist vier- oder sechsstellig, Ziffern dürfen sich wiederholen. (Skript, Aufgabe 1.1)", "hinweis": "Tupel verschiedener Länge in EINEM Omega — die Struktur von Situation C. Und «nur die Länge» ist eine gültige Ergebnismenge mit 2 Elementen."}, {"id": "TBLI", "text": "Ein Blindenschrift-Zeichen besteht aus 6 Punkten, jeder gesetzt oder nicht. (Skript, Aufgabe 1.6)", "hinweis": "64 Punktmuster. Die einzige Vergröberung ist «Anzahl der Punkte» (7). Reihenfolge und Kategorie gibt es hier nicht — die Achsen versagen, die Kriterien nicht."}, {"id": "TFAE", "text": "3 Kugeln werden auf 3 Fächer verteilt. (Skript, Aufgabe 2.3)", "hinweis": "27 / 10 / 5 / 3 — ein 2x2 mit ANDEREN Achsen: Kugeln unterscheidbar? Fächer unterscheidbar?"}]}}};</script>
+<script src="flaeche.js?v=3c61721f"></script>
+<script src="etappen.js?v=abf54674"></script>
+<script>los();</script>
+<script>window.KASPER_RUECKMELDUNG={immer:true,projekt:"dz",sammeln:true,stueck:"Reflexion 2"};</script>
+<script src="paket.js?v=288615c7"></script>
+<script src="rueckmeldung.js?v=6e8d2149"></script>
+</body></html>

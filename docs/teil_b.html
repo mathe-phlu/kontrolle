@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daten und Zufall — Teil B</title>
+<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
+     damit nichts von Google live geholt wird?»): Hier standen drei
+     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
+     fonts.googleapis.com holten.
+
+     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
+     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
+     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
+     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
+     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
+
+     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
+     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+<script>window.KASPER_RUECKMELDUNG={immer:true,projekt:"dz",sammeln:true,stueck:"Startseite Teil B"};</script>
+<script src="paket.js"></script>
+<script src="rueckmeldung.js"></script>
+<style>
+:root{ --papier:#f8f4ec; --creme:#f6ecdf; --karte:#fffefb;
+       --tinte:#2d2924; --matt:#6c6357; --linie:#e4d9c7;
+       --druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
+       --hand:'Patrick Hand',cursive; }
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.6 var(--druck);color:var(--tinte);background:var(--papier)}
+.streifen{height:132px;background:url(kopfstreifen.png) center/cover;
+          border-bottom:1px solid var(--linie);position:relative;overflow:hidden}
+/* Die Wortmarke braucht Grund unter sich, sonst geht sie im Wimmelbild
+   unter. Der Grund laeuft nach links aus, damit er keine Kante bekommt. */
+.streifen .grund{position:absolute;right:0;top:0;bottom:0;width:min(620px,72%);
+   background:linear-gradient(90deg,rgba(255,255,255,0) 0%,
+              rgba(255,255,255,.72) 34%,rgba(255,255,255,.95) 62%,#fff 100%)}
+.streifen h1{position:absolute;right:30px;bottom:10px;margin:0;
+             font-family:var(--hand);font-size:48px;font-weight:400;
+             color:var(--tinte)}
+.streifen h1 em{font-style:normal;font-size:26px;color:var(--matt);
+             margin-left:10px}
+/* Der Weg zum anderen Teil. Er steht unten, nicht oben: Wer die Seite
+   oeffnet, sucht ein Kapitel, nicht den anderen Teil. */
+.wechsel{margin-top:22px;text-align:right}
+.wechsel a{font-size:14px;color:var(--matt);text-decoration:none;
+   border:1px solid var(--linie);border-radius:9px;padding:8px 14px;
+   background:var(--karte);display:inline-block}
+.wechsel a:hover{border-color:var(--tinte);color:var(--tinte)}
+main{max-width:1000px;margin:0 auto;padding:26px 22px 60px}
+/* NEU (2026-08-21, Rikes Wunsch): «Die Eiskugel will ich weiter auf der
+   Startseite haben.» Das Bild sass bisher nur im Startfeld von
+   Kapitel 1. Es gehoert aber auf die Startseite: Die Eisdiele ist die
+   gemeinsame Welt ALLER VIER Reflexionen - so wie jede Welt der
+   Festigung ihr Bild hat, hat Teil A dieses. */
+.vorspann{font-size:17px;color:var(--matt);margin:0 0 26px;
+          background:var(--creme);border-radius:14px;padding:16px 20px;
+          display:flex;gap:20px;align-items:center}
+.vorspann b{color:var(--tinte)}
+.vorspann img{width:132px;height:132px;flex:0 0 132px;border-radius:16px;
+          object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.vorspann p{margin:0}
+@media (max-width:620px){ .vorspann{flex-direction:column} }
+.teil{background:var(--creme);border-radius:14px;padding:16px 20px 26px;margin-bottom:18px}
+.teil > .augen{font-size:12px;text-transform:uppercase;letter-spacing:.07em;
+               color:#8a6b3a;margin-bottom:2px}
+.teil > h2{font-family:var(--hand);font-size:23px;font-weight:400;margin:0 0 16px}
+/* FEHLERBEHOBEN (2026-08-22, Rikes Befund «bei schmalerem Fenster wird
+   die Kachel fuer Kapitel 4 breiter als die fuer Kapitel 3»):
+
+   Ursache: Die Reihe war ein umbrechendes FLEX, und jede Kachel trug
+   flex-grow:1. Sobald der Umbruch drei Kacheln in die erste Zeile
+   stellte, blieb die vierte allein - und wuchs auf die ganze Breite.
+   Nicht ein Fehler im Mass, sondern in der Wahl des Werkzeugs: Flex
+   verteilt den Rest, ein Raster haelt Spalten.
+
+   auto-FILL, nicht auto-fit: auto-fit laesst leere Spuren einfallen,
+   dann waere die einzelne Kachel wieder breit - genau der Fehler noch
+   einmal. */
+.reihe{display:grid;gap:14px;align-items:start;
+        grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.kap{text-decoration:none;color:inherit;
+      display:flex;gap:13px;align-items:flex-start;background:var(--karte);
+      border:1px solid var(--linie);border-radius:12px;padding:12px 14px}
+.quadrat{width:52px;height:52px;flex:0 0 52px;border-radius:12px;display:flex;
+         align-items:center;justify-content:center;font-family:var(--hand);
+         font-size:26px;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.16)}
+.kap .text{min-width:0}
+.kap b{display:block;font-weight:600;font-size:15.5px;line-height:1.3}
+.kap span{display:block;font-size:13.5px;color:var(--matt);line-height:1.35}
+.kap .zustand{font-size:12.5px;margin-top:4px}
+.kap.offen .zustand{color:#2E7D32}
+.kap.folgt{opacity:.55}
+.kap.folgt .zustand{color:var(--matt)}
+.kap.offen:hover{border-color:var(--tinte)}
+.fuss{margin-top:34px;font-size:13.5px;color:var(--matt);border-top:1px solid var(--linie);
+      padding-top:14px}
+</style></head><body>
+<div class="streifen"><div class="grund"></div><h1>Daten und Zufall<em>Teil B</em></h1></div>
+<main>
+  <div class="vorspann"><p>Zu jedem Kapitel gehört eine
+  <b>Reflexion</b>: ein Satz Karten, den Sie zu zweit oder zu dritt
+  sortieren, ordnen und begründen. Sie steht <b>nach</b> dem Kapitel — wenn
+  Sie das Skript gelesen und die Aufgaben gerechnet haben. Es geht nicht mehr
+  darum, etwas Neues zu finden, sondern darum, die Gedanken zu ordnen: Was
+  gehört zusammen, was unterscheidet sich, und woran erkennt man das?</p></div>
+  <section class="teil"><h2>Von der Wahrscheinlichkeit zur Entscheidung</h2>
+    <div class="reihe">
+    <a class="kap folgt" >
+      <div class="quadrat" style="background:#007D57">5</div>
+      <div class="text"><b>Bedingte Wahrscheinlichkeit</b>
+      <div class="zustand">folgt</div></div></a>
+    <a class="kap folgt" >
+      <div class="quadrat" style="background:#0065A9">6</div>
+      <div class="text"><b>Zufallsgrössen</b><span>Erwartung und Abweichung</span>
+      <div class="zustand">folgt</div></div></a>
+    <a class="kap folgt" >
+      <div class="quadrat" style="background:#E09E5A">7</div>
+      <div class="text"><b>Bernoulli-Modelle</b>
+      <div class="zustand">folgt</div></div></a>
+    <a class="kap folgt" >
+      <div class="quadrat" style="background:#9867A5">8</div>
+      <div class="text"><b>Normalverteilung</b>
+      <div class="zustand">folgt</div></div></a>
+    </div>
+  </section>
+  <div class="wechsel"><a href="index.html">Teil A · Vom Zählen zur Wahrscheinlichkeit →</a></div>
+  <p class="fuss">Pädagogische Hochschule Luzern · MA01.07 · Herbstsemester 2026</p>
+</main></body></html>

@@ -1,0 +1,822 @@
+/* Gemeinsame Sortierflaeche fuer die Reflexionen von «Daten und Zufall».
+   Herausgeloest am 2026-08-21 aus themen/kombinatorik/flaeche.py.
+
+   Diese Datei kennt KEIN Kapitel. Sie liefert:
+     - Karten: erzeugen, ziehen, einrasten, streuen
+     - Geruest: Buehne, Auftragszeile, Leiste, Groessenregler, Bildsicherung
+     - Rahmen: Startfeld, Mikrofonprobe, Navigation, Etappensteuerung
+
+   Was ein Kapitel beisteuert:
+     - D            die Daten, im HTML vor dieser Datei gesetzt
+     - window.ETAPPEN   Array von Funktionen, eine je Etappe
+     - D.start      Inhalt des Startfelds (Titel, Bild, Lage, Frage)
+     - D.etappen    Beschriftung und Rolle je Etappe
+
+   ENTSCHEIDUNG (2026-08-21): eigene .js- und .css-Datei statt einer
+   Zeichenkette in Python. Der Code ist damit im Editor und im Browser
+   lesbar und laesst sich an einer Haltestelle anhalten.
+   Verworfene Alternative: alles in eine HTML-Datei einbetten - das ist
+   der bisherige Zustand und genau der Grund, weshalb die Flaeche
+   dreimal gebaut worden waere.
+*/
+const bild = id => `karten/${id}.svg`;
+let stand = { aufnahme:null, weg:null, etappe:0, karten:{}, gruppen:[], e3gezeigt:null,
+              e1gruppen:null, ablagepaare:null, e3:null,
+              // sitzeigen: UEBERFLUESSIG seit 2026-08-21, der Umschalter
+              // «Situationen einblenden» ist weg. Bleibt im Stand
+              // stehen, damit aeltere gesicherte Staende weiter lesbar
+              // sind; wird von nichts mehr gelesen.
+              geprueft:false, sitzeigen:false, dupl:0,
+              // Was auf den beschreibbaren Karten steht. Eigener Topf,
+              // damit der Text einen Etappenwechsel ueberlebt.
+              texte:{} };
+let zmax = 10;
+
+/* ───────── Karten: setzen, ziehen, Lupe ───────── */
+function pos(el){
+  const l = el._lupe || 1;
+  el.style.transform = `translate3d(${el._x}px,${el._y}px,0)`
+    + (el._rot ? ` rotate(${el._rot}deg)` : '') + (l!==1 ? ` scale(${l})` : '');
+}
+const LUPE = 1.5;
+/* Eine Marke auf einer Karte - die kleine farbige Zahl oben links.
+
+   Herausgeloest am 2026-08-21: Sie steckte fest in karte() und liess
+   sich nur beim Erzeugen setzen. Kapitel 2 braucht sie NACHTRAEGLICH -
+   dort erscheint erst nach dem Pruefen ein «?», hinter dem steht, woran
+   eine kaputte Mengenkarte scheitert. Vorher waere das die Antwort vor
+   der Frage gewesen.
+
+     {text, art, titel}   art: 'sit' | 'skript' | undefined
+                          titel: Inhalt der Sprechblase, HTML erlaubt */
+function mkMarke(marke, el){
+  const m = document.createElement('span');
+  m.className = 'marke'
+    + (marke.art==='skript' ? ' skript' : '')
+    + (marke.art==='sit' || !marke.art ? ' sit' : '');
+  m.textContent = marke.text;
+  if (marke.titel){
+    // NEU (2026-08-21, Rikes Rueckmeldung): Nur eine Marke, hinter der
+    // etwas steht, sieht aus wie ein Knopf. In Etappe 1 tragen die
+    // Situationskarten ihre Nummer OHNE Blase - dort versprach der
+    // Hilfe-Zeiger («?» neben dem Pfeil) etwas, das es nicht gab.
+    m.classList.add('lesbar');
+    m._titel = marke.titel;
+    m.addEventListener('pointerdown', e => e.stopPropagation());
+    // Darueberfahren oeffnet, Weggehen schliesst - so war es vor dem
+    // 21.08. und so war es besser (Rike). Ein KLICK haelt die Blase
+    // fest; das ist der Weg auf dem Tablet, wo es kein Darueberfahren
+    // gibt, und auf dem Schreibtisch der Weg, um sie stehen zu lassen.
+    m.addEventListener('pointerenter', e => {
+      if (e.pointerType === 'touch') return;
+      blaseOeffnen(m, false);
+    });
+    m.addEventListener('pointerleave', e => {
+      if (e.pointerType === 'touch') return;
+      if (m.dataset.fest) return;
+      blasenSchliessen();
+    });
+    m.addEventListener('click', e => {
+      e.stopPropagation();
+      if (m.dataset.fest){ blasenSchliessen(); return; }
+      blaseOeffnen(m, true);
+    });
+  }
+  return m;
+}
+
+/* Eine Karte. `art` ist freiwillig:
+     {schreibbar:true, platzhalter:'...'}  leere Karte mit Textfeld
+
+   NEU (2026-08-21): Die beschreibbare Karte ist eine allgemeine
+   Kartensorte, kein Sonderfall von Kapitel 2. ENTSCHEIDUNG: Sie wird in
+   Kapitel 2 fuer den Weg «die Eisdiele verlassen» gebraucht, wo es
+   bewusst keine vorgefertigten Mengenkarten gibt - und im
+   Strategiebaukasten ohnehin wieder. Verworfene Alternative: sie in
+   themen/ergebnismengen bauen und spaeter herausloesen; das waere
+   derselbe Umbau ein zweites Mal. */
+function karte(id, marke, art){
+  art = art || {};
+  const el = document.createElement('div');
+  el.className = 'k' + (art.schreibbar ? ' schreibbar' : '');
+  el.dataset.id = id; el._x = 0; el._y = 0; el._rot = 0;
+  if (art.schreibbar){
+    // Der Griff oben ist noetig, weil das Textfeld die ganze Karte
+    // fuellt: Wer hineinklickt, will schreiben, nicht ziehen.
+    //
+    // PRUEFEN (2026-08-22): Zwei freiwillige Zutaten, beide allgemein
+    // gehalten - laut dem Vermerk oben ist die beschreibbare Karte
+    // keine Besonderheit von Kapitel 2.
+    //   vorsatz  ein fester Anfang VOR dem Textfeld, in Kapitel 2 das
+    //            «Ω =». Rikes Regel fuer die fertigen Mengenkarten
+    //            lautet «jede Karte traegt ein Ω, auch die kaputten».
+    //            Wo die Studierenden die Menge selbst schreiben, bietet
+    //            die Karte dieselbe Form an, statt sie nur zu erwarten.
+    //   grund    faerbt die Karte wie ihre gedruckten Geschwister. Der
+    //            Ton kommt aus den Daten, nicht aus dem Stylesheet -
+    //            EINE Quelle, sonst laufen HTML und Kartenbild
+    //            auseinander wie bei «Faktorisieren 2».
+    if (art.vorsatz) el.classList.add('mitvorsatz');
+    if (art.grund) el.classList.add('getoent');
+    el.innerHTML = '<span class="griff" title="Zum Verschieben hier anfassen">'
+                 + '</span>'
+                 + (art.vorsatz
+                    ? `<span class="vorsatz">${art.vorsatz}</span>` : '')
+                 + '<textarea spellcheck="false"></textarea>';
+    if (art.grund) el.style.background = art.grund;
+    const feld = el.querySelector('textarea');
+    feld.placeholder = art.platzhalter || 'Hier schreiben';
+    feld.value = stand.texte[id] || '';
+    feld.addEventListener('pointerdown', e => e.stopPropagation());
+    feld.addEventListener('click', e => e.stopPropagation());
+    feld.addEventListener('input', () => { stand.texte[id] = feld.value; });
+  } else {
+    el.innerHTML = `<img src="${bild(id.split('#')[0])}" alt="" draggable="false">`;
+  }
+  el.ondragstart = () => false;
+  if (marke) el.appendChild(mkMarke(marke, el));
+  el.addEventListener('pointerenter', ()=>{
+    // Nicht vergroessern, solange eine Blase offen ist - sie wuerde
+    // mitwachsen und aus der Flaeche laufen. Und nie auf einer
+    // beschreibbaren Karte: Dort springt sonst der Text beim Tippen.
+    if (el._zieht || art.schreibbar || el.querySelector('.marke.offen')) return;
+    el._lupe = LUPE; el._z0 = el.style.zIndex; el.style.zIndex = 99999; pos(el); });
+  el.addEventListener('pointerleave', ()=>{ el._lupe = 1;
+    el.style.zIndex = el._z0 || el.style.zIndex; pos(el); });
+  ziehbar(el);
+  return el;
+}
+function ziehbar(el){
+  el.addEventListener('pointerdown', e=>{
+    if (e.target.classList.contains('dop')) return;
+    if (e.target.closest('.marke')) return;      // die Marke ist ein Knopf
+    e.preventDefault();
+    const start = el.getBoundingClientRect();
+    const dx = e.clientX - start.left, dy = e.clientY - start.top;
+    // Wohin die Karte zurueckfaellt, wenn kein Platz mehr frei ist.
+    // Muss VOR dem Ziehen gemerkt werden - waehrend des Ziehens werden
+    // _x und _y auf null gesetzt.
+    el._heim = {x: el._x, y: el._y, rot: el._rot};
+    el._lupe = 1; el._zieht = true; el.classList.add('zieht');
+    // Zeiger festhalten: sonst reisst die Geste ab, sobald der Zeiger
+    // ueber ein anderes Element faehrt, das Ereignisse abfaengt.
+    try { el.setPointerCapture(e.pointerId); } catch(_) {}
+    el.style.zIndex = ++zmax; pos(el);
+    const buehne = document.getElementById('buehne');
+    const bb = buehne.getBoundingClientRect();
+    // Waehrend des Ziehens haengt die Karte an der Buehne, damit sie ueber
+    // beide Haelften wandern kann.
+    const heim = el.parentElement;
+    buehne.appendChild(el);
+    el.style.position = 'fixed';
+    const bewegen = ev => { el._x = 0; el._y = 0;
+      el.style.left = (ev.clientX - dx) + 'px'; el.style.top = (ev.clientY - dy) + 'px';
+      pos(el); zeigeZiel(ev.clientX, ev.clientY); };
+    const los = ev => {
+      window.removeEventListener('pointermove', bewegen);
+      window.removeEventListener('pointerup', los);
+      el._zieht = false; el.classList.remove('zieht');
+      el.style.position = 'absolute'; el.style.left = ''; el.style.top = '';
+      ablegen(el, ev.clientX, ev.clientY, heim);
+    };
+    window.addEventListener('pointermove', bewegen);
+    window.addEventListener('pointerup', los);
+  });
+}
+function unterCursor(x, y, wahl){
+  const el = document.elementFromPoint(x, y);
+  return el ? el.closest(wahl) : null;
+}
+function zeigeZiel(x, y){
+  document.querySelectorAll('.ueber').forEach(d=>d.classList.remove('ueber'));
+  const z = unterCursor(x, y, '.paar,.feld:not(.neu),.feld.neu[data-ort=neuegruppe]');
+  if (z) z.classList.add('ueber');
+}
+function ablegen(el, x, y, heim){
+  document.querySelectorAll('.ueber').forEach(d=>d.classList.remove('ueber'));
+  // Eine Karte auf einem WINK («… hierher ziehen») macht ein neues Feld
+  // auf - deshalb vor der ueblichen Zielsuche fragen.
+  //
+  // FEHLERBEHOBEN (2026-08-21): Hier stand der Name aus Kapitel 1 fest
+  // verdrahtet, `[data-ort=neuegruppe]`. Kapitel 3 nennt seinen Wink
+  // `neuereihe`, und dort passierte deshalb gar nichts - die Fragekarte
+  // fiel durch, ohne dass eine Reihe aufging. Die gemeinsame Flaeche
+  // darf keine kapitelspezifischen Namen kennen: Sie reicht den Namen
+  // des Winks an den Haken weiter, und das Kapitel entscheidet.
+  // «+ weiteres Paar» und «+ weiterer Platz» sind ebenfalls .feld.neu,
+  // tragen aber kein data-ort - sie werden dadurch nicht getroffen.
+  const wink = unterCursor(x, y, '.feld.neu[data-ort]');
+  if (wink && window._e1ablage){
+    const winkOrt = wink.dataset.ort;
+    const ort = window._e1ablage(el, winkOrt);
+    if (ort !== winkOrt){
+      stand.karten[el.dataset.id] = {ort, x:4, y:4, rot:0};
+      window._neuzeichnen(); merken(); return;
+    }
+  }
+  let paar = unterCursor(x, y, '.paar');
+  const feld = unterCursor(x, y, '.feld:not(.neu)');
+  const blatt = unterCursor(x, y, '.blatt');
+
+  // FEHLERBEHOBEN (2026-08-21): Wer eine Karte DIREKT auf einen
+  // Paarplatz zog, umging die Pruefung auf freien Platz - die gab es
+  // nur im nachsichtigen Zweig weiter unten. Ein Platz nahm dadurch
+  // eine dritte Karte an, und weil einrasten() nur auf die ERSTE
+  // liegende Karte schaute, landete sie punktgenau auf der zweiten.
+  // Gemessen: g0/p0 mit drei Karten, zwei davon auf x:162, y:4.
+  // Die untere war unsichtbar und galt beim Pruefen trotzdem mit.
+  if (paar && !hatLuft(paar, el)){
+    const ersatz = naechsterPlatz(paar.closest('.feld') || feld, x, y, fasst(paar));
+    if (ersatz) paar = ersatz;
+    else { heimkehr(el, heim); return; }      // lieber zurueck als verdecken
+  }
+
+  const ziel = paar || feld || blatt || heim;
+  ziel.appendChild(el);
+  if (paar){
+    einrasten(el, paar, x, y);
+  } else if (feld && feld.querySelector('.paar')){
+    // NEU (2026-08-21): Wer irgendwo IM Feld loslaesst, trifft. Vorher
+    // musste man den Paarplatz genau treffen - besonders in der schmalen
+    // Ablage war das kaum zu schaffen. Gesucht wird der naechste Platz,
+    // der noch Luft hat.
+    const frei = naechsterPlatz(feld, x, y, 2);
+    if (frei){ ziel.removeChild(el); frei.appendChild(el); einrasten(el, frei, x, y); }
+    else { const r = feld.getBoundingClientRect();
+           el._x = Math.max(4, x - r.left - 30); el._y = Math.max(26, y - r.top - 26); }
+  } else if (feld){
+    // NEU (2026-08-21): In einem Gruppenfeld rasten die Karten in ein
+    // Raster ein, statt dort liegenzubleiben, wo der Zeiger war. Vorher
+    // sah es aus, als laege die Karte nur obenauf - und wer am Rand
+    // losliess, hatte sie halb ausserhalb.
+    el._rot = 0;
+    gruppeOrdnen(feld);
+  } else {
+    const r = ziel.getBoundingClientRect();
+    el._x = Math.max(0, x - r.left - 30); el._y = Math.max(0, y - r.top - 26);
+  }
+  pos(el); merken();
+  if (window.Aufnahme && Aufnahme.laeuft)
+    Aufnahme.merken('karte', {id: el.dataset.id,
+      ziel: (el.parentElement.dataset.ort||'tisch'), etappe: stand.etappe+1});
+  // Haken fuer die Etappe: etwas hat sich bewegt. Etappe 2 haengt hier
+  // die Meldung ein, welche Situation ueber mehrere Gruppen streut.
+  if (window._nachAblegen) window._nachAblegen();
+}
+/* Ordnet die Karten eines Feldes in ein Raster und macht das Feld hoeher,
+   wenn es eng wird. So sieht man auf einen Blick, was in einer Gruppe
+   liegt - und nichts haengt ueber den Rand. */
+function gruppeOrdnen(feldEl){
+  const kb = parseFloat(getComputedStyle(document.documentElement)
+              .getPropertyValue('--kb'));
+  const kh = kb * 0.845;
+  const innen = feldEl.clientWidth - 14;
+  const spalten = Math.max(1, Math.floor(innen / (kb + 6)));
+  // FEHLERBEHOBEN (2026-08-21): Die 34 waren fuer eine EINZEILIGE
+  // Kopfzeile gerechnet. Kapitel 2 setzt ganze Aufgabentexte in den
+  // Kopf; darunter waeren die Karten in den Text hineingerutscht.
+  // Jetzt wird die tatsaechliche Hoehe gemessen.
+  const kopfEl = feldEl.querySelector(':scope > .gname, :scope > .kopf');
+  const oben = kopfEl ? kopfEl.offsetHeight + 8 : 8;
+  const karten = [...feldEl.querySelectorAll(':scope > .k')];
+  karten.forEach((k, i)=>{
+    k._rot = 0;
+    k._x = 7 + (i % spalten) * (kb + 6);
+    k._y = oben + Math.floor(i / spalten) * (kh + 6);
+    pos(k);
+  });
+  const noetig = oben + Math.ceil(karten.length / spalten) * (kh + 6) + 10;
+  if (noetig > feldEl.offsetHeight) feldEl.style.height = noetig + 'px';
+}
+
+/* Wie viele Karten fasst ein Platz? Zwei - ausser der Platz sagt selbst
+   etwas anderes. Der Situationskopf eines Gruppenfeldes traegt
+   data-fasst="1": dort gehoert genau eine Situationskarte hin, und zwei
+   uebereinander waeren derselbe Fehler wie ein dritter Term im Paar. */
+function fasst(platz){ return parseInt(platz.dataset.fasst || '2', 10); }
+
+function hatLuft(platz, ausser){
+  const drin = [...platz.querySelectorAll(':scope > .k')].filter(k=>k!==ausser);
+  return drin.length < fasst(platz);
+}
+
+/* Zurueck an den Ort, an dem die Karte vor dem Ziehen lag. Wird gebraucht,
+   wenn nirgends mehr Platz ist - dann soll die Karte liegenbleiben statt
+   eine andere zu verdecken. */
+function heimkehr(el, heim){
+  heim.appendChild(el);
+  const h = el._heim || {x:0, y:0, rot:0};
+  el._x = h.x; el._y = h.y; el._rot = h.rot;
+  pos(el); merken();
+}
+
+/* Faecher untereinander neu stapeln.
+
+   FEHLERBEHOBEN (2026-08-21): gruppeOrdnen() macht ein Feld hoeher, wenn
+   es eng wird - aber die Felder DARUNTER stehen auf vorgerechneten
+   Positionen und rueckten nicht nach. Die Karten liefen unten aus dem
+   Feld heraus und ueber das naechste. Gefunden in Kapitel 4, betrifft
+   jedes Kapitel, das Faecher untereinander legt.
+
+   Erst ordnen, dann stapeln - in dieser Reihenfolge, sonst wird mit
+   Hoehen gerechnet, die gleich veralten. */
+function faecherSetzen(behaelter, y0, luecke){
+  let y = (y0 === undefined ? 26 : y0);
+  const abstand = (luecke === undefined ? 10 : luecke);
+  behaelter.querySelectorAll(':scope > .feld').forEach(d=>{
+    gruppeOrdnen(d);
+    d.style.top = y + 'px';
+    y += d.offsetHeight + abstand;
+  });
+  behaelter.style.minHeight = (y + 20) + 'px';
+  return y;
+}
+
+/* ───────── Reihen ─────────
+   Eine REIHE ist ein Feld mit einem festen Kopf links und den Karten
+   rechts daneben. Kapitel 2 baut damit seine sechs Mengenreihen,
+   Kapitel 3 seine zehn Fragereihen.
+
+   Herausgeloest aus themen/ergebnismengen am 2026-08-21, bevor Kapitel 3
+   dieselben dreissig Zeilen ein zweites Mal bekommen haette. Genau der
+   Fall, um dessentwillen die Flaeche herausgeloest wurde.
+
+   `kopfAnteil` ist die Breite des Kopfes als Vielfaches der
+   Kartenbreite. */
+function reiheOrdnen(d, kopfAnteil){
+  const kb = parseFloat(getComputedStyle(document.documentElement)
+              .getPropertyValue('--kb'));
+  const klein = kb * 0.60, kh = klein * 0.845;
+  const links = kb * (kopfAnteil || 0.72) + 18;
+  // NEU (2026-08-21): Eine Reihe kann ihren Kopf als KARTE tragen, nicht
+  // nur als festes Bild. Kapitel 3 braucht das seit heute - dort wird
+  // die Fragekarte selbst herübergezogen und ist dann der Kopf.
+  // Sie liegt links, die uebrigen fliessen daneben.
+  const alle = [...d.querySelectorAll(':scope > .k')];
+  const kopf = alle.find(k => k.classList.contains('kopfkarte'));
+  if (kopf){ kopf._rot = 0; kopf._x = 8; kopf._y = 8; pos(kopf); }
+  const karten = alle.filter(k => k !== kopf);
+  const platz = d.clientWidth - links - 10;
+  const spalten = Math.max(1, Math.floor(platz / (klein + 6)));
+  karten.forEach((k, i)=>{
+    k._rot = 0;
+    k._x = links + (i % spalten) * (klein + 6);
+    k._y = 8 + Math.floor(i / spalten) * (kh + 6);
+    pos(k);
+  });
+  const noetig = 16 + Math.max(1, Math.ceil(karten.length / spalten)) * (kh + 6);
+  d.style.height = Math.max(kb * 1.05, noetig) + 'px';
+}
+
+/* Alle Reihen eines Behaelters neu setzen. Noetig, weil eine wachsende
+   Reihe die Abstaende aller Reihen darunter verschiebt. */
+function reihenSetzen(behaelter, kopfAnteil, y0){
+  let y = (y0 === undefined ? 26 : y0);
+  behaelter.querySelectorAll('.feld.reihe').forEach(d=>{
+    reiheOrdnen(d, kopfAnteil);
+    d.style.top = y + 'px';
+    y += d.offsetHeight + 10;
+  });
+  behaelter.style.minHeight = (y + 20) + 'px';
+  return y;
+}
+
+/* Seitenrichtig einrasten: links das Modell, rechts der Term. In der
+   schmalen Ablage untereinander, weil nebeneinander kein Platz ist.
+
+   FEHLERBEHOBEN (2026-08-21): Die alte Fassung schaute nur auf belegt[0]
+   und schloss daraus auf die freie Seite. Lag dort schon eine Karte auf
+   der gewuenschten Seite, legte sie die neue exakt darueber. Und wer
+   links losliess, landete trotzdem rechts, weil die Wunschseite nur
+   zaehlte, solange der Platz ganz leer war.
+
+   Neu gilt: Die Seite, auf der losgelassen wurde, hat Vorrang. Ist sie
+   besetzt, weicht die Karte auf die andere aus. Beides zusammen kann
+   nicht mehr vorkommen - ablegen() laesst nur noch Karten herein, fuer
+   die Platz ist. */
+function einrasten(el, platz, x, y){
+  el._rot = 0;
+  const r = platz.getBoundingClientRect();
+  // FEHLERBEHOBEN: Die Breite kam aus offsetWidth der Karte - und die
+  // stimmte nicht, solange die Karte gerade erst in die Ablage gewandert
+  // war, wo sie kleiner gesetzt wird. Jetzt wird die HAELFTE des Platzes
+  // gerechnet; das stimmt unabhaengig von der Kartengroesse.
+  const halb = r.width / 2;
+  const schmal = r.height > r.width * 0.85;      // hohe, schmale Ablage
+  const belegt = [...platz.querySelectorAll(':scope > .k')].filter(k=>k!==el);
+
+  if (fasst(platz) < 2){                         // Kopfplatz: nur einer
+    el._x = 4; el._y = 4; pos(el); return;
+  }
+
+  if (schmal){
+    const mitte = r.height / 2;
+    const untenBelegt = belegt.some(k => k._y >= mitte - 4);
+    const obenBelegt  = belegt.some(k => k._y <  mitte - 4);
+    const willUnten = y !== undefined && (y - r.top) > mitte;
+    const unten = willUnten ? !untenBelegt : obenBelegt;
+    el._x = 4;
+    el._y = unten ? Math.round(mitte) + 2 : 4;
+  } else {
+    const rechtsBelegt = belegt.some(k => k._x >= halb - 4);
+    const linksBelegt  = belegt.some(k => k._x <  halb - 4);
+    const willRechts = (x - r.left) > halb;
+    const rechts = willRechts ? !rechtsBelegt : linksBelegt;
+    el._x = rechts ? Math.round(halb) + 2 : 4;
+    el._y = 4;
+  }
+  pos(el);
+}
+
+/* Der naechste Platz mit Luft - erst der, auf dessen Hoehe man
+   losgelassen hat, dann von oben der erste freie.
+
+   FEHLERBEHOBEN (2026-08-21): Die alte Fassung rechnete fest mit «zwei
+   Karten je Platz» und suchte unter ALLEN Plaetzen des Feldes. Eine vom
+   vollen Paarplatz abgewiesene Karte landete deshalb auf dem
+   Situationskopf und deckte die Situation zu - derselbe Schaden, nur
+   eine Zeile weiter oben. Gemessen: g0/sit mit SS1 und UD5 auf x4 y4.
+
+   Neu wird nur unter Plaetzen DERSELBEN Art gesucht: `gesucht` ist das
+   Fassungsvermoegen des Platzes, von dem die Karte kommt. Ein voller
+   Paarplatz weicht auf einen anderen Paarplatz aus, ein voller Kopf auf
+   einen anderen Kopf - und wenn es keinen gibt, bleibt die Karte liegen,
+   wo sie war. */
+function naechsterPlatz(feldEl, x, y, gesucht){
+  if (!feldEl) return null;
+  const plaetze = [...feldEl.querySelectorAll('.paar')]
+    .filter(p => gesucht === undefined || fasst(p) === gesucht);
+  const nah = plaetze.find(p=>{ const r=p.getBoundingClientRect();
+    return y >= r.top - 12 && y <= r.bottom + 12 && hatLuft(p); });
+  return nah || plaetze.find(p=>hatLuft(p)) || null;
+}
+
+function merken(){
+  stand.karten = {};
+  document.querySelectorAll('.k').forEach(k=>{
+    const p = k.parentElement;
+    stand.karten[k.dataset.id] = {
+      ort: p.dataset.ort || 'tisch', x: k._x, y: k._y, rot: k._rot };
+  });
+  stand.geprueft = false;
+}
+/* Streuung wie in SORT: versetztes Raster mit Zufallsversatz und leichter
+   Drehung - durcheinander, aber jede Karte bleibt lesbar und im Bild. */
+/* Der ungeordnete Tisch, in BAENDERN statt als Haufen.
+
+   NEU (2026-08-21): Stand bisher in themen/kombinatorik/etappen.js.
+   Kapitel 3 braucht seit heute dasselbe - dort liegen Fragen und
+   Rechenwege gemeinsam auf dem Tisch. Zweimal dieselben sechzig Zeilen
+   waeren der Anfang des Auseinanderlaufens; deshalb hier.
+
+   Die Begruendung von damals gilt unveraendert: Ein gemeinsamer Wust
+   zwingt dazu, erst die Sorte zu erkennen, bevor man ueberhaupt
+   vergleichen kann. Aufgefaechert bleibt die Unordnung INNERHALB der
+   Sorte - und die ist gewollt.
+
+   Ein Band: {art, name, ids()}  -  ids() liefert die Kartenkennungen.
+   `geschuettet` darf fehlen; dann liegen alle Baender von Anfang an. */
+function baenderOrdnen(tisch, baender, els, geschuettet){
+  tisch.querySelectorAll('.bandmarke').forEach(d => d.remove());
+  tisch.style.minHeight = '0px';
+  let y = 22;
+  baender.forEach(b => {
+    if (geschuettet && !geschuettet[b.art]) return;
+    const drauf = b.ids()
+      .filter(id => (stand.karten[id] || {}).ort === 'tisch')
+      .map(id => els[id]).filter(Boolean);
+    const m = document.createElement('div');
+    m.className = 'bandmarke';
+    m.style.top = (y - 16) + 'px';
+    m.textContent = b.name;
+    tisch.appendChild(m);
+    y = streuen(drauf, tisch, y) + 26;
+  });
+}
+
+function streuen(els, blatt, y0){
+  const kb = parseFloat(getComputedStyle(document.documentElement)
+              .getPropertyValue('--kb'));
+  const b = blatt.clientWidth || 460, spalte = kb * 0.70;
+  const spalten = Math.max(1, Math.floor((b - 16) / spalte));
+  const hoehe = kb * 0.62;
+  const oben = y0 === undefined ? 24 : y0;
+  els.slice().sort(()=>Math.random()-0.5).forEach((el, i)=>{
+    const c = i % spalten, r = Math.floor(i / spalten);
+    el._rot = (Math.random()*7 - 3.5).toFixed(1);
+    el._x = 8 + c*spalte + (Math.random()-0.5)*spalte*0.34;
+    el._y = oben + r*hoehe + (Math.random()-0.5)*hoehe*0.26;
+    el.style.zIndex = ++zmax;
+    blatt.appendChild(el); pos(el);
+  });
+  const unten = oben + Math.ceil(els.length/spalten)*hoehe + kb*0.30;
+  blatt.style.minHeight = Math.max(parseFloat(blatt.style.minHeight)||0, unten+20) + 'px';
+  return unten;
+}
+
+/* ───────── Gerüst ───────── */
+function buehne(auftrag, links, rechts, leiste, extra, drittens){
+  const b = document.getElementById('buehne');
+  // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
+  // weiter und sucht Felder, die es dort nicht mehr gibt.
+  window._nachAblegen = null;
+  // Die Farbe steht am body und aendert sich innerhalb eines Kapitels
+  // nicht mehr. auftrag.rolle traegt weiterhin die Phase des Skripts -
+  // sie steht im Rang links, faerbt aber nichts.
+  b.innerHTML = `
+    <div class="auftrag"><span class="rang">${auftrag.rang}</span>
+      <span class="titel">${auftrag.titel}</span>
+      <span class="text">${auftrag.text}</span></div>
+    ${extra||''}
+    <div class="buehne">
+      <div class="haelfte" id="links" style="flex:1.15"><div class="marke">${links}</div>
+        <div class="blatt" id="tisch" data-ort="tisch"></div></div>
+      <div class="haelfte rechts" id="rechts" style="flex:1.25"><div class="marke">${rechts}</div>
+        <div class="blatt" id="feld"></div></div>
+      ${drittens ? `<div class="haelfte ablageflaeche" id="dritt" style="flex:.72">
+        <div class="marke">${drittens}</div>
+        <div class="blatt" id="ablage"></div></div>` : ''}
+    </div>
+    <div class="leiste">${leiste}</div>`;
+  // FEHLERBEHOBEN: Der Regler vergroesserte nur die Karten, nicht die
+  // Felder - dann passte kein Paar mehr in seinen Platz. Jetzt zeichnet
+  // er alles neu. Minus und Plus davor, damit man sieht, was er tut.
+  const g = document.createElement('span');
+  g.className = 'groesse';
+  g.innerHTML = `<button class="stufe" data-s="-1">−</button>`
+    + `<input type="range" min="96" max="210" step="6" value="${
+        parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb'))}">`
+    + `<button class="stufe" data-s="1">+</button>`;
+  const regler = g.querySelector('input');
+  const setzen2 = v => {
+    v = Math.min(210, Math.max(96, v));
+    regler.value = v;
+    document.documentElement.style.setProperty('--kb', v+'px');
+    if (window._neuzeichnen) window._neuzeichnen();
+  };
+  regler.oninput = e => setzen2(parseFloat(e.target.value));
+  g.querySelectorAll('.stufe').forEach(k=>k.onclick=()=>
+    setzen2(parseFloat(regler.value) + 12*parseInt(k.dataset.s)));
+  b.querySelector('.leiste').appendChild(g);
+  const bild = document.createElement('button');
+  bild.className = 'knopf leer'; bild.textContent = 'Stand als Bild sichern';
+  bild.onclick = alsBild;
+  b.querySelector('.leiste').appendChild(bild);
+  if (stand.aufnahme && window.Aufnahme){
+    const auf = document.createElement('button');
+    auf.className = 'knopf leer';
+    auf.style.borderColor = '#C0392B'; auf.style.color = '#C0392B';
+    auf.textContent = 'Aufnahme beenden und sichern';
+    auf.onclick = ()=>{ Aufnahme.beenden();
+      Aufnahme.sichern(`kapitel${D.kapitel}_aufnahme`);
+      auf.remove(); };
+    b.querySelector('.leiste').appendChild(auf);
+  }
+}
+function alsBild(){
+  const flaeche = document.querySelector('.buehne');
+  const r = flaeche.getBoundingClientRect(), s = 2;
+  const c = document.createElement('canvas');
+  c.width = r.width*s; c.height = r.height*s;
+  const g = c.getContext('2d'); g.scale(s,s);
+  g.fillStyle = getComputedStyle(document.documentElement)
+                  .getPropertyValue('--papier').trim() || '#f8f4ec';
+  g.fillRect(0,0,r.width,r.height);
+  const warte = [];
+  document.querySelectorAll('.feld:not(.neu),.paar').forEach(d=>{
+    const q = d.getBoundingClientRect();
+    g.save(); g.setLineDash([6,4]); g.strokeStyle='#d8cdb8';
+    g.strokeRect(q.left-r.left, q.top-r.top, q.width, q.height); g.restore();
+    const t = d.querySelector('.gname,.kopf');
+    if (t){ g.fillStyle='#2d2924'; g.font='13px sans-serif';
+      g.fillText((t.value||t.textContent||'').slice(0,44),
+                 q.left-r.left+8, q.top-r.top+18); }
+  });
+  document.querySelectorAll('.k').forEach(k=>{
+    const q = k.getBoundingClientRect();
+    const im = k.querySelector('img');
+    // FEHLERBEHOBEN (2026-08-21): Beschreibbare Karten haben kein <img>.
+    // Die alte Fassung griff blind auf im.src zu - mit einer solchen
+    // Karte auf dem Tisch brach die Bildsicherung ab, und zwar still.
+    if (!im){
+      const feld = k.querySelector('textarea');
+      const x = q.left-r.left, y = q.top-r.top;
+      g.save();
+      g.fillStyle = '#fffefb'; g.strokeStyle = '#e4d9c7'; g.lineWidth = 1;
+      g.beginPath(); g.roundRect(x, y, q.width, q.height, 8);
+      g.fill(); g.stroke();
+      g.fillStyle = '#2d2924'; g.font = '12px sans-serif';
+      const worte = ((feld && feld.value) || '').split(/\s+/);
+      let zeile = '', zy = y + 26;
+      worte.forEach(w=>{
+        const probe = zeile ? zeile + ' ' + w : w;
+        if (g.measureText(probe).width > q.width - 16 && zeile){
+          g.fillText(zeile, x + 8, zy); zy += 16; zeile = w;
+        } else zeile = probe;
+      });
+      if (zeile) g.fillText(zeile, x + 8, zy);
+      g.restore();
+      return;
+    }
+    warte.push(new Promise(fertig=>{
+      const bild2 = new Image();
+      bild2.onload = ()=>{ g.drawImage(bild2, q.left-r.left, q.top-r.top,
+                                       q.width, q.height); fertig(); };
+      bild2.onerror = fertig; bild2.src = im.src;
+    }));
+  });
+  Promise.all(warte).then(()=>{
+    const a = document.createElement('a');
+    a.download = `kapitel${D.kapitel}_etappe${stand.etappe+1}.png`;
+    a.href = c.toDataURL('image/png'); a.click();
+  });
+}
+
+
+const ETAPPEN = [];        // fuellt die Kapiteldatei
+
+/* ───────── Startfeld ─────────
+   BERICHTIGT (2026-08-21, zweite Fassung): Die erste Fassung fragte, ob
+   die Gruppe vor Ort ist, und machte die Aufnahme daraus zur Pflicht.
+   Das stimmt nicht.
+
+   Die Regel ist einfacher: Es braucht fuenf Nachweise im Semester. Ein
+   Nachweis ist ENTWEDER eine Anwesenheit vor Ort ODER eine Aufnahme.
+   Beides zaehlt gleich, gemischt geht auch, mehr als fuenf ist erlaubt.
+   Die Aufnahme ist deshalb IMMER freiwillig - auch zu Hause. Wer zu
+   Hause nicht aufnimmt, hat fuer diesen Termin nur eben keinen Nachweis.
+   Das ist eine Folge, kein Zwang.
+
+   BESTAETIGT (2026-08-22): Hier stand ein PRUEFEN - «Zahlen aus Rikes
+   Ansage, nicht gegen ein Merkblatt geprueft». Rike hat sie an diesem
+   Tag ausdruecklich bestaetigt: «Sie muessen insgesamt FUENF
+   Sortieraktivitaeten bearbeiten. Entweder vor Ort oder daheim. Ich
+   brauch einfach fuenfmal, dass sie sich mit fuenf mindestens
+   auseinandergesetzt haben.»
+   Ihre Formulierung deckt sich mit dem, was hier steht: fuenf, und der
+   Ort ist frei.
+*/
+function startfeld(){
+  // Der Einstieg kommt aus den Kapiteldaten. Das Bild ist freiwillig -
+  // Kapitel ohne eigenes Einstiegsbild lassen es einfach weg.
+  const S = D.start || {};
+  document.getElementById('buehne').innerHTML=`<div class="start">
+    <h2>${S.titel || ''}</h2>
+    <div class="einstieg">
+      ${S.bild ? `<img src="${S.bild}" alt="">` : ''}
+      <div><p class="lage">${S.lage || ''}</p>
+      <p class="frage">${S.frage || ''}</p>
+      ${S.nachsatz ? `<p class="lage" style="font-size:14px">${S.nachsatz}</p>` : ''}</div>
+    </div>
+    <p style="color:var(--matt);margin-bottom:14px">Möchten Sie aufnehmen?</p>
+    <div class="wahl" data-a="1"><b>Ja, mit Aufnahme</b>
+      <span>Ihr Gespräch und Ihre Kartenzüge werden aufgezeichnet. Die Aufnahme
+      zählt als Nachweis — und hilft uns, die Aufgaben weiterzuentwickeln.</span></div>
+    <div class="wahl" data-a="0"><b>Nein, ohne Aufnahme</b>
+      <span>Die Aufgabe läuft genau gleich. Es wird nichts aufgezeichnet.</span></div>
+    <p class="hinweis"><b>Fünf Nachweise im Semester.</b> Ein Nachweis ist entweder
+    eine Anwesenheit vor Ort oder eine Aufnahme — beides zählt gleich, und Sie
+    dürfen mischen. Mehr als fünf ist möglich, aufnehmen dürfen Sie immer:
+    vor Ort ebenso wie zu Hause.</p></div>`;
+  document.querySelectorAll('.wahl').forEach(w=>w.onclick=()=>{
+    stand.aufnahme = w.dataset.a==='1'; stand.etappe=0;
+    if (stand.aufnahme) mikrofonprobe(); else los(); });
+}
+
+/* Mikrofonprobe: erst zeigen, dass es geht - dann erst aufnehmen. Ohne
+   diesen Schritt merkt eine Gruppe erst hinterher, dass nichts ankam. */
+function mikrofonprobe(){
+  document.getElementById('buehne').innerHTML = `<div class="start">
+    <h2>Kurze Mikrofonprobe</h2>
+    <p style="color:var(--matt)">Sprechen Sie bitte einen Satz. Wenn der
+       Balken ausschlägt, hört das Gerät Sie.</p>
+    <div style="height:16px;border:1px solid var(--linie);border-radius:9px;
+                background:var(--karte);overflow:hidden;margin:16px 0">
+      <div id="pegel" style="height:100%;width:0;background:var(--zugang);
+           transition:width .08s"></div></div>
+    <p id="pstatus" style="color:var(--matt);font-size:14px">Zugriff wird angefragt …</p>
+    <p style="color:var(--matt);font-size:14px;margin-top:12px">Reden Sie
+       miteinander — zu zweit oder zu dritt ist das leichter. Wenn Sie allein
+       arbeiten, sprechen Sie bitte trotzdem aus, was Sie überlegen: Eine
+       stumme Aufnahme zeigt nichts.</p>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="knopf" id="losgehts" disabled>Aufnahme starten und beginnen</button>
+      <button class="knopf leer" id="ohnedoch">Doch ohne Aufnahme</button></div>
+    <p class="hinweis">Es wird nichts hochgeladen. Am Ende speichern Sie Ton und
+       Verlauf selbst — die Ablage richten wir später ein.</p></div>`;
+  let probe = null;
+  const balken = document.getElementById('pegel');
+  const status = document.getElementById('pstatus');
+  Aufnahme.probe(p => { balken.style.width = Math.round(p*100)+'%'; })
+    .then(pr => { probe = pr;
+      status.textContent = 'Das Mikrofon ist bereit.';
+      document.getElementById('losgehts').disabled = false; })
+    .catch(e => { status.textContent =
+      'Kein Zugriff auf das Mikrofon. Sie können ohne Aufnahme weiterarbeiten.'; });
+  document.getElementById('losgehts').onclick = async ()=>{
+    const spur = probe ? probe.spur : null;
+    if (probe) probe.stopp();
+    await Aufnahme.starten(spur);
+    Aufnahme.merken('etappe', {nr: 1});
+    los();
+  };
+  const ohne = document.getElementById('ohnedoch');
+  if (ohne) ohne.onclick = ()=>{
+    if (probe) { probe.stopp(); probe.spur.getTracks().forEach(t=>t.stop()); }
+    stand.aufnahme = false; los();
+  };
+}
+
+/* ───────── Die Sprechblase ─────────
+
+   FEHLERBEHOBEN (2026-08-21, Rikes Rueckmeldung «kann man nicht lesen,
+   wenn die Karte falsch liegt»): Die Blase steckte IN der Karte und
+   damit in der rollenden Haelfte. Wer eine Karte am linken Rand der
+   rechten Haelfte liegen hatte, sah nur einen Streifen davon - das
+   Zurechtruecken half nicht, weil der Rahmen selbst zu eng war.
+
+   Ursache und Behebung: Die Blase haengt jetzt am <body> und steht
+   position:fixed. Damit kann sie ueberhaupt nicht mehr beschnitten
+   werden, und sie erbt auch den Massstab der Lupe nicht mehr - das war
+   der Grund, aus dem das Darueberfahren im Juli abgeschaltet wurde.
+   Beides faellt mit demselben Umbau weg. */
+let _blase = null;
+
+function blaseOeffnen(m, fest){
+  if (m.classList.contains('offen')){
+    if (fest) m.dataset.fest = '1';
+    return;
+  }
+  blasenSchliessen();
+  m.classList.add('offen');
+  if (fest) m.dataset.fest = '1';
+  const bl = document.createElement('div');
+  bl.className = 'blase';
+  bl.innerHTML = m._titel;
+  // Die Kapitelfarbe steht auf dem <html>-Element; am <body> haengend
+  // erbt die Blase sie weiterhin.
+  document.body.appendChild(bl);
+  _blase = bl;
+  blasePlatzieren(bl, m);
+}
+
+/* Unter der Marke, und wenn dort kein Platz ist, darueber. Gerechnet
+   wird gegen das FENSTER, nicht gegen die Haelfte - die Blase liegt
+   nicht mehr darin. */
+function blasePlatzieren(bl, m){
+  const r = m.getBoundingClientRect(), rand = 8;
+  bl.style.left = r.left + 'px';
+  bl.style.top  = (r.bottom + 7) + 'px';
+  const b = bl.getBoundingClientRect();
+  if (b.right > window.innerWidth - rand)
+    bl.style.left = Math.max(rand, window.innerWidth - rand - b.width) + 'px';
+  if (b.left < rand) bl.style.left = rand + 'px';
+  if (b.bottom > window.innerHeight - rand)
+    bl.style.top = Math.max(rand, r.top - 7 - b.height) + 'px';
+}
+
+/* Blase zu, und die Karte faellt in ihre Ebene zurueck. */
+function blasenSchliessen(){
+  if (_blase){ _blase.remove(); _blase = null; }
+  document.querySelectorAll('.marke.offen').forEach(o => {
+    o.classList.remove('offen');
+    delete o.dataset.fest;
+    const k = o.closest('.k');
+    if (k && k._zVorBlase !== undefined){
+      k.style.zIndex = k._zVorBlase;
+      delete k._zVorBlase;
+    }
+  });
+}
+
+/* Ein Klick irgendwo sonst schliesst die festgehaltene Blase. Ohne das
+   bliebe sie stehen und verdeckte die Karten darunter. */
+document.addEventListener('click', blasenSchliessen);
+/* Beim Rollen und beim Groesseumstellen wandert die Marke unter der
+   Blase weg. Dann ist Schliessen ehrlicher als Nachfuehren. */
+window.addEventListener('resize', blasenSchliessen);
+document.addEventListener('scroll', blasenSchliessen, true);
+
+/* ───────── Steuerung ───────── */
+function nav(){
+  const n=document.getElementById('nav'); n.innerHTML='';
+  // Die Zahl der Etappen sagt das Kapitel, nicht diese Datei.
+  const namen = ['Start', ...ETAPPEN.map((_,i)=>'Etappe '+(i+1))];
+  namen.forEach((t,i)=>{
+    const b=document.createElement('button'); b.textContent=t;
+    b.setAttribute('aria-current', stand.aufnahme===null ? i===0 : i===stand.etappe+1);
+    b.onclick=()=>{ if(i===0){stand.aufnahme=null;startfeld();}
+                    else {stand.etappe=i-1;los();} nav(); };
+    n.appendChild(b);
+  });
+}
+function los(){
+  // Kapitelfarbe einmal setzen. Faellt sie aus, bleibt der Grundwert
+  // aus dem CSS stehen, statt dass die Flaeche farblos wird.
+  document.body.dataset.farbe = D.farbe || 'aktion';
+  if (window.Aufnahme && Aufnahme.laeuft && stand.aufnahme!==null)
+    Aufnahme.merken('etappe', {nr: stand.etappe+1});
+  if (stand.aufnahme===null) startfeld();
+  else ETAPPEN[stand.etappe]();
+  nav();
+}

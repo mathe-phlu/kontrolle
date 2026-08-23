@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<!-- FEHLERBEHOBEN (2026-08-21): Der Browser hielt diese Seite fest und
+     zeigte nach einem Neubau die alte Fassung weiter. Beim Pruefen sah
+     es aus, als haette die Aenderung nicht gewirkt - zweimal fast auf
+     eine falsche Faehrte gefuehrt.
+     Die Seite selbst wird immer nachgefragt; sie ist klein. Die grossen
+     Teile daneben tragen ein ?v= mit dem Fingerabdruck ihres Inhalts
+     und duerfen im Zwischenspeicher bleiben, solange sie gleich sind. -->
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>Reflexion — Kapitel 1</title>
+<!-- ERSETZT (2026-08-22, Rikes Auftrag «können wir das nicht mitgeben,
+     damit nichts von Google live geholt wird?»): Hier standen drei
+     Zeilen, die Fira Sans, Source Sans und Patrick Hand von
+     fonts.googleapis.com holten.
+
+     Sie waren das EINZIGE Externe an einer sonst selbsttragenden Seite -
+     und sie hielten sie an: Ein <link rel=stylesheet> im <head> blockiert
+     die Ausfuehrung aller nachfolgenden Skripte, bis er geladen ist.
+     Haengt Google, laeuft das Flaechenskript nie an: Seite halb da,
+     Schrift falsch, Karten unbeweglich. Genau dieses Bild am 2026-08-22.
+
+     Dazu ging bei jedem Aufruf einer Schulklasse eine IP an einen
+     Dritten. Siehe bauen/schriften/HERKUNFT.md. -->
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+
+<link rel="stylesheet" href="flaeche.css?v=91b88465">
+</head><body>
+
+<header><div class="streifen"></div>
+  <h1>Kapitel 1 · Reflexion</h1>
+  <span class="entwurf" title="Zum Anschauen und Kritisieren">Entwurf 21. August 2026</span>
+  <nav id="nav"></nav>
+</header>
+<div id="buehne" style="flex:1 1 auto;display:flex;flex-direction:column;min-height:0"></div>
+
+<script>const D = {"kapitel": 1, "farbe": "aktion", "start": {"titel": "Kombinatorik — Die Kunst des Abzählens", "bild": "erkundung.png", "lage": "In einer Eisdiele gibt es 8 Sorten. Tim bestellt 3 Kugeln.", "frage": "Wie viele Möglichkeiten hat er?", "nachsatz": "Vergleichen Sie Ihre Ergebnisse."}, "einstieg": [1, 4, 6, 7, 8, 9, 12, 14], "anzeige": {"1": 1, "4": 2, "6": 3, "7": 4, "8": 5, "9": 6, "12": 7, "14": 8}, "karten": [{"id": "SS1", "typ": "SS"}, {"id": "SS4", "typ": "SS"}, {"id": "SS6", "typ": "SS"}, {"id": "SS7", "typ": "SS"}, {"id": "SS8", "typ": "SS"}, {"id": "SS9", "typ": "SS"}, {"id": "SS12", "typ": "SS"}, {"id": "SS14", "typ": "SS"}, {"id": "U1", "typ": "U"}, {"id": "U4a", "typ": "U"}, {"id": "U4b", "typ": "U"}, {"id": "U6a", "typ": "U"}, {"id": "U6b", "typ": "U"}, {"id": "U6c", "typ": "U"}, {"id": "U7a", "typ": "U"}, {"id": "U7b", "typ": "U"}, {"id": "U7c", "typ": "U"}, {"id": "U8", "typ": "U"}, {"id": "U9a", "typ": "U"}, {"id": "U9b", "typ": "U"}, {"id": "U12a", "typ": "U"}, {"id": "U12b", "typ": "U"}, {"id": "U14a", "typ": "U"}, {"id": "U14b", "typ": "U"}, {"id": "UD1", "typ": "UD"}, {"id": "UD2", "typ": "UD"}, {"id": "UD3", "typ": "UD"}, {"id": "UD4", "typ": "UD"}, {"id": "UD5", "typ": "UD"}, {"id": "UD6", "typ": "UD"}, {"id": "UD7", "typ": "UD"}, {"id": "UD8", "typ": "UD"}, {"id": "T1", "typ": "T"}, {"id": "T4a", "typ": "T"}, {"id": "T4b", "typ": "T"}, {"id": "T6a", "typ": "T"}, {"id": "T6b", "typ": "T"}, {"id": "T6c", "typ": "T"}, {"id": "T7a", "typ": "T"}, {"id": "T7b", "typ": "T"}, {"id": "T7c", "typ": "T"}, {"id": "T8", "typ": "T"}, {"id": "T9a", "typ": "T"}, {"id": "T9b", "typ": "T"}, {"id": "T12a", "typ": "T"}, {"id": "T12b", "typ": "T"}, {"id": "T14a", "typ": "T"}, {"id": "T14b", "typ": "T"}, {"id": "TD1", "typ": "TD"}, {"id": "TD2", "typ": "TD"}, {"id": "TD3", "typ": "TD"}, {"id": "TD4", "typ": "TD"}, {"id": "TD5", "typ": "TD"}, {"id": "TD6", "typ": "TD"}, {"id": "TD7", "typ": "TD"}, {"id": "TD8", "typ": "TD"}], "loesung": {"U1": 1, "U4a": 4, "U4b": 4, "U6a": 6, "U6b": 6, "U6c": 6, "U7a": 7, "U7b": 7, "U7c": 7, "U8": 8, "U9a": 9, "U9b": 9, "U12a": 12, "U12b": 12, "U14a": 14, "U14b": 14, "UD1": 0, "UD2": 0, "UD3": 0, "UD4": 0, "UD5": 0, "UD6": 0, "UD7": 0, "UD8": 0, "T1": 1, "T4a": 4, "T4b": 4, "T6a": 6, "T6b": 6, "T6c": 6, "T7a": 7, "T7b": 7, "T7c": 7, "T8": 8, "T9a": 9, "T9b": 9, "T12a": 12, "T12b": 12, "T14a": 14, "T14b": 14, "TD1": 0, "TD2": 0, "TD3": 0, "TD4": 0, "TD5": 0, "TD6": 0, "TD7": 0, "TD8": 0}, "paare": {"1": 1, "2": 2, "3": 3, "4": 3, "5": 1, "6": 2, "7": 2, "8": 2}, "situationstexte": {"SS1": "Tim bestellt 3 Kugeln <b>in die Waffel</b> (der Stapel ist sichtbar). Sorten dürfen sich wiederholen. Wie viele Möglichkeiten?", "SS4": "Tim bestellt 3 Kugeln in den <b>Becher</b>. Sorten dürfen sich wiederholen. Wie viele Möglichkeiten?", "SS6": "Waffel, <b>alle Sorten verschieden</b> – und Haselnuss darf <b>nicht zuoberst</b> liegen. Wie viele Möglichkeiten?", "SS7": "Waffel, Wiederholung erlaubt: <b>genau zwei</b> der drei Kugeln sollen die gleiche Sorte haben. Wie viele Möglichkeiten?", "SS8": "Tim nimmt <b>zwei oder drei</b> Kugeln in die Waffel (Wiederholung erlaubt). Wie viele Möglichkeiten?", "SS9": "Becher, alle Sorten verschieden – aber <b>mindestens eine</b> der 3 Sorbetsorten soll dabei sein. Wie viele Möglichkeiten?", "SS12": "Eine Reihe aus 8 <b>verschiedenen</b> Kugeln; die 3 Fruchtsorten sollen nebeneinander liegen. Wie viele Anordnungen?", "SS14": "8 verschiedene Kugeln <b>im Kreis</b> auf der Eistorte; gedrehte Anordnungen gelten als gleich. Wie viele Anordnungen?"}, "eis": [{"id": "SS2", "marke": "Eis 9", "art": "eis"}, {"id": "SS3", "marke": "Eis 10", "art": "eis"}, {"id": "SS5", "marke": "Eis 11", "art": "eis"}, {"id": "SS10", "marke": "Eis 12", "art": "eis"}, {"id": "SS11", "marke": "Eis 13", "art": "eis"}, {"id": "SS13", "marke": "Eis 14", "art": "eis"}, {"id": "SS15", "marke": "Eis 15", "art": "eis"}, {"id": "SS16", "marke": "Eis 16", "art": "eis"}], "skript": [{"id": "XPIN", "marke": "Aufgabe 1.1", "art": "skript"}, {"id": "XBLI", "marke": "Aufgabe 1.6", "art": "skript"}, {"id": "XLOT", "marke": "Aufgabe 1.9", "art": "skript"}, {"id": "XLIP", "marke": "Aufgabe 1.5", "art": "skript"}, {"id": "XKUG", "marke": "Aufgabe 1.7", "art": "skript"}, {"id": "XSTB", "marke": "Aufgabe 1.11", "art": "skript"}], "etappen": [{"nr": "1", "name": "Ordnen & gruppieren", "rang": "Pflicht", "rolle": "zugang", "auftrag": "Zu jeder Situation das passende Urnenmodell und den passenden Term legen. Wo mehrere Wege passen: warum ergeben sie dasselbe?"}, {"nr": "2", "name": "Strategien erkennen & entwickeln", "rang": "Pflicht", "rolle": "aktion", "auftrag": "Die Modellkarten wieder aufnehmen und nach der Strategie gruppieren, die in ihnen steckt. Jede Gruppe benennen."}, {"nr": "3a", "name": "Weitere Eis-Situationen", "rang": "Sicherung", "rolle": "aktion", "auftrag": "Neue Situationen aus derselben Eisdiele vor den eigenen Strategien anschauen. Reicht eine bestehende Gruppe, oder braucht es eine neue?"}, {"nr": "3b", "name": "Aufgaben aus dem Skript", "rang": "Sicherung", "rolle": "aktion", "auftrag": "Die sechs Skript-Aufgaben den eigenen Strategien zuordnen. Wo mehrere greifen: welche ist die naheliegendste?"}]};</script>
+<script src="flaeche.js?v=3c61721f"></script>
+<script src="etappen.js?v=0a825ca7"></script>
+<script>los();</script>
+<script>window.KASPER_RUECKMELDUNG={immer:true,projekt:"dz",sammeln:true,stueck:"Reflexion 1"};</script>
+<script src="paket.js?v=288615c7"></script>
+<script src="rueckmeldung.js?v=6e8d2149"></script>
+</body></html>
