@@ -716,9 +716,16 @@ function loesungsKnopf(neuZeichnen){
 /* Fuer Etappen ohne eindeutige Loesung (die Zielgruppen sind selbst
    benannt, siehe Kombinatorik Etappe 3): ein kurzer Text statt eines
    Feldes. Kein Umschalten von stand.karten - nichts zum Sichern. */
-function loesungsHinweis(html){
+/* `container` ist optional - noetig fuer Bildschirme ohne die normale
+   buehne()-Leiste, z.B. die Wahlbildschirme vor Etappe 3 (Kombinatorik,
+   A.2): dort gibt es weder `.leiste` noch `.buehne`, nur ein rohes
+   `.start`-div. FEHLERBEHOBEN (2026-08-24, Rikes Rueckmeldung): Genau
+   dort fehlte der Knopf bisher ganz - `loesungsHinweis()` gab still auf,
+   weil `.leiste` nicht existierte. Wer die Wahl nie anklickte, sah nie
+   eine Loesungsoption und hielt sie fuer Etappe 3 insgesamt fuer fehlend. */
+function loesungsHinweis(html, container){
   if (!window.KASPER_RUECKMELDUNG) return;
-  const leiste = document.querySelector('.leiste');
+  const leiste = container || document.querySelector('.leiste');
   if (!leiste) return;
   const kn = document.createElement('button');
   kn.className = 'knopf leer loesungknopf';
@@ -728,7 +735,8 @@ function loesungsHinweis(html){
       if (!panel){
         panel = document.createElement('div');
         panel.id = 'loesungpanel'; panel.className = 'loesungpanel';
-        document.querySelector('.buehne').insertAdjacentElement('afterend', panel);
+        if (container) container.appendChild(panel);
+        else document.querySelector('.buehne').insertAdjacentElement('afterend', panel);
       }
       panel.innerHTML = html;
       kn.textContent = 'Lösung verbergen';

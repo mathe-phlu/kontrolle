@@ -421,6 +421,14 @@ function etappe3(){
          wenn Etappe 1 und 2 leichtgefallen sind.</p></div>`;
     b.querySelectorAll('.wahl').forEach(w=>w.onclick=()=>{
       stand.e3 = w.dataset.w; stand.karten = {}; etappe3(); });
+    // Ohne diesen Aufruf sah man auf diesem Wahlbildschirm nie eine
+    // Loesungsoption - erst nach dem Anklicken einer Wahl. Siehe
+    // loesungsHinweis() in flaeche.js.
+    loesungsHinweis('<h4>Etappe 3 · Übertragen</h4>'
+      + '<div class="zeile matt">Beide Wege haben eine Lösung, sobald Sie '
+      + 'gewählt haben: Weg A eine richtige Zuordnung, Weg B nur eine '
+      + 'Vergröberungs-Notiz (die Mengen schreiben die Studierenden selbst).'
+      + '</div>', b.querySelector('.start'));
     return;
   }
   stand.e3 === 'a' ? etappe3a() : etappe3b();

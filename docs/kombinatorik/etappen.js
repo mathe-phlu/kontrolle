@@ -501,7 +501,32 @@ function etappe2(){
 }
 
 /* ───────── Etappe 3 ───────── */
+/* Moegliche Loesung fuer Etappe 3 - NEU (2026-08-25, Rikes Auftrag "auf
+   der Grundlage müsstest du Etappe 3 eine Lösung anbieten können"). Baut
+   dieselben zehn Gruppen wie Etappe 2 (gleiche Reihenfolge, damit die
+   Gruppenindizes uebereinstimmen) und legt jede Eis-Situation und jede
+   Skript-Aufgabe in die Gruppe, die D.loesung_e3 ihr zuweist (siehe
+   flaeche.py, _loesung_e3 - PRUEFEN, mit Rike nicht bestaetigt fuer die
+   sechs Skript-Karten). Erzwingt ausserdem stand.e3/e3gezeigt, damit die
+   Loesung sofort das volle Brett zeigt statt des Wahlbildschirms. */
+function _loesungStandE3(){
+  const namen = D.loesung_e2.gruppen.map(g=>g.name);
+  const idxVon = name => namen.indexOf(name);
+  const gruppen = namen.map(name=>({name, karten:[]}));
+  const karten = {};
+  D.eis.forEach(e=>{
+    const strat = D.loesung_e3.eis[e.id];
+    if (strat) karten[e.id] = {ort:'g'+idxVon(strat), x:0, y:0, rot:0};
+  });
+  D.skript.forEach(s=>{
+    const strat = D.loesung_e3.skript[s.id];
+    if (strat) karten[s.id] = {ort:'g'+idxVon(strat), x:0, y:0, rot:0};
+  });
+  return {karten, gruppen, e3:'eis', e3gezeigt:['eis','skript']};
+}
+
 function etappe3(){
+  loesungAnwenden(_loesungStandE3);
   if (!stand.e3){
     const b = document.getElementById('buehne');
     b.innerHTML = `<div class="start">
@@ -517,6 +542,17 @@ function etappe3(){
         dafür können Sie selbst nachzählen. Wenn Sie sicher sind, nehmen Sie diese.</span></div>
       <p class="hinweis">Eines genügt. Das andere lässt sich später dazunehmen.</p></div>`;
     b.querySelectorAll('.wahl').forEach(w=>w.onclick=()=>{stand.e3=w.dataset.w;etappe3();});
+    // GEAENDERT (2026-08-25): Springt jetzt direkt ins volle geloeste
+    // Brett, statt nur eine Texthinweis-Randnotiz zu zeigen - siehe
+    // _loesungStandE3() oben. Ohne diesen Knopf saehe man auf dem
+    // Wahlbildschirm ueberhaupt keine Loesungsoption.
+    if (window.KASPER_RUECKMELDUNG){
+      const kn = document.createElement('button');
+      kn.className = 'knopf leer loesungknopf';
+      kn.textContent = 'Lösung anzeigen';
+      kn.onclick = () => { stand.loesungOffen = true; etappe3(); };
+      b.querySelector('.start').appendChild(kn);
+    }
     return;
   }
   const a = D.etappen[stand.e3==='eis'?2:3];
@@ -606,16 +642,13 @@ function etappe3(){
     stand.e3gezeigt.push(stand.e3gezeigt[0]==='eis' ? 'skript' : 'eis');
     etappe3(); };
 
-  // Keine Loesung im engen Sinn: Die Zielgruppen sind die selbst
-  // benannten Strategien aus Etappe 2, nicht vorgegeben - was "richtig"
-  // ist, haengt davon ab, wie die Gruppe selbst zugeschnitten hat.
-  loesungsHinweis('<h4>Etappe 3 · Übertragen</h4>'
-    + '<div class="zeile matt">Keine hinterlegte Lösung: Die Zielgruppen sind '
-    + 'die in Etappe 2 selbst benannten Strategien, nicht vorgegebene. Ob eine '
-    + 'Zuordnung trägt, hängt an der Gruppierung, die diese Gruppe gewählt hat.'
-    + '</div><div class="zeile matt">Orientierung gibt <code>auswahl.STRATEGIE</code> '
-    + '— die Situationsnummern, aus denen jede Aufgabe stammt, zeigen, welche '
-    + 'Strategie in Etappe 2 am ehesten passte.</div>');
+  // GEAENDERT (2026-08-25): Zeigt jetzt das fertig sortierte Brett -
+  // siehe _loesungStandE3() oben. Die Zielgruppen sind zwar die in
+  // Etappe 2 selbst benannten Strategien, aber D.loesung_e3 ordnet jede
+  // Aufgabe trotzdem einer von ihnen zu (ueber die Situationsnummer bzw.
+  // die Aufgabenstruktur), als EIN mögliches Beispiel.
+  if (stand.loesungOffen) feld.querySelectorAll(':scope > .feld').forEach(gruppeOrdnen);
+  loesungsKnopf(() => etappe3());
 }
 
 
