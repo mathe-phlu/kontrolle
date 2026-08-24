@@ -402,6 +402,7 @@ function etappe1einordnen(){
     document.getElementById('befund').innerHTML = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
+  loesungsKnopf(() => D.loesung_e1);
 }
 
 /* ───────── Etappe 2 · Die drei, gegen die nichts spricht ─────────
@@ -547,6 +548,7 @@ function etappe2(){
     rechnen();
   }
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
+  loesungsKnopf(() => D.loesung_e2);
 }
 
 /* ───────── Etappe 3 · Immer, manchmal, nie ─────────
@@ -641,6 +643,7 @@ function etappe3(){
            + 'Begründen Sie sie an der Merkkarte.'
          : '');
   };
+  loesungsKnopf(() => D.loesung_e3);
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);

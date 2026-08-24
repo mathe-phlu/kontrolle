@@ -310,6 +310,20 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
 .leiste .beschriftung{font-size:13.5px;color:var(--matt);margin-right:-3px}
 .leiste > :not(.befund){order:1}
 .groesse{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--matt)}
+
+/* NEU (2026-08-24): Die Loesung - nur in der Kontrollfassung erreichbar
+   (siehe loesungsKnopf() in flaeche.js). Bewusst NICHT wie eine Karte
+   oder ein Feld gefaerbt, damit auf einen Blick klar ist: Das hier
+   gehoert nicht zur Sortierflaeche selbst, sondern liegt daneben. */
+.loesungpanel{flex:0 0 auto;margin:0 14px 10px;padding:12px 16px;
+  border:1.5px dashed var(--akzent);border-radius:10px;
+  background:rgba(0,0,0,.03);font-size:13.5px;line-height:1.55;
+  max-height:220px;overflow:auto}
+.loesungpanel h4{margin:0 0 6px;font-family:var(--hand);font-size:16px;
+  color:var(--akzent);font-weight:400}
+.loesungpanel .zeile{padding:2px 0;border-bottom:1px dotted var(--linie)}
+.loesungpanel .zeile:last-child{border-bottom:none}
+.loesungpanel .matt{color:var(--matt)}
 .groesse input{width:92px}
 .groesse .stufe{font:inherit;font-size:15px;line-height:1;width:24px;height:24px;
    border:1px solid var(--linie);background:var(--karte);border-radius:6px;

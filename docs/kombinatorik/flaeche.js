@@ -618,6 +618,46 @@ function buehneOben(auftrag, obenName, unten, leiste, extra){
     <div class="leiste">${leiste}</div>`;
   _leisteChrome(b);
 }
+/* ───────── Loesung (nur Kontrollfassung) ─────────
+   NEU (2026-08-24, Rikes Auftrag): Jede Sortierflaeche bekommt eine
+   fertige Loesung - richtige Zuordnung, wo es sie gibt, sonst eine
+   moegliche Loesung mit Hinweis auf die Vielfalt. Sie gehoert in
+   dieselbe index.html, die Maurus fuer die Rueckmeldung anschaut - NIE
+   in aufnahme.html, die Studierendenfassung. Der Unterschied ist schon
+   da: `window.KASPER_RUECKMELDUNG` wird nur in index.html gesetzt
+   (siehe kern/flaeche/__init__.py, RUECKMELDUNG_SKRIPT) - kein neues
+   Flag noetig.
+
+   Jede Etappe, die eine Loesung hat, ruft NACH buehne()/buehneOben()
+   `loesungsKnopf(() => '...')` auf. Etappen ohne Loesung (offene
+   Wahlbildschirme) rufen es einfach nicht auf - dann erscheint auch
+   kein Knopf, statt eines toten. */
+function loesungsKnopf(liefereHtml){
+  if (!window.KASPER_RUECKMELDUNG) return;
+  const leiste = document.querySelector('.leiste');
+  if (!leiste) return;
+  const kn = document.createElement('button');
+  kn.className = 'knopf leer loesungknopf';
+  const zeichnen = () => {
+    let panel = document.getElementById('loesungpanel');
+    if (stand.loesungOffen){
+      if (!panel){
+        panel = document.createElement('div');
+        panel.id = 'loesungpanel'; panel.className = 'loesungpanel';
+        document.querySelector('.buehne').insertAdjacentElement('afterend', panel);
+      }
+      panel.innerHTML = liefereHtml();
+      kn.textContent = 'Lösung verbergen';
+    } else {
+      if (panel) panel.remove();
+      kn.textContent = 'Lösung anzeigen';
+    }
+  };
+  kn.onclick = () => { stand.loesungOffen = !stand.loesungOffen; zeichnen(); };
+  leiste.appendChild(kn);
+  zeichnen();
+}
+
 function alsBild(){
   const flaeche = document.querySelector('.buehne');
   const r = flaeche.getBoundingClientRect(), s = 2;

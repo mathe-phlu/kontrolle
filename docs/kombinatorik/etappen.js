@@ -322,6 +322,7 @@ function etappe1(){
     b.textContent = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
+  loesungsKnopf(() => D.loesung_e1);
 }
 
 /* ───────── Etappe 2 ───────── */
@@ -446,6 +447,7 @@ function etappe2(){
   streuungMelden();
 
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
+  loesungsKnopf(() => D.loesung_e2);
 }
 
 /* ───────── Etappe 3 ───────── */
@@ -553,6 +555,17 @@ function etappe3(){
   if (w) w.onclick=()=>{
     stand.e3gezeigt.push(stand.e3gezeigt[0]==='eis' ? 'skript' : 'eis');
     etappe3(); };
+
+  // Keine Loesung im engen Sinn: Die Zielgruppen sind die selbst
+  // benannten Strategien aus Etappe 2, nicht vorgegeben - was "richtig"
+  // ist, haengt davon ab, wie die Gruppe selbst zugeschnitten hat.
+  loesungsKnopf(() => '<h4>Etappe 3 · Übertragen</h4>'
+    + '<div class="zeile matt">Keine hinterlegte Lösung: Die Zielgruppen sind '
+    + 'die in Etappe 2 selbst benannten Strategien, nicht vorgegebene. Ob eine '
+    + 'Zuordnung trägt, hängt an der Gruppierung, die diese Gruppe gewählt hat.'
+    + '</div><div class="zeile matt">Orientierung gibt <code>auswahl.STRATEGIE</code> '
+    + '— die Situationsnummern, aus denen jede Aufgabe stammt, zeigen, welche '
+    + 'Strategie in Etappe 2 am ehesten passte.</div>');
 }
 
 

@@ -61,6 +61,17 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
      background:linear-gradient(var(--creme) 70%,transparent);pointer-events:none}
 .haelfte.rechts > .marke{background:linear-gradient(var(--papier) 70%,transparent)}
 .blatt{position:relative;min-height:100%;min-width:100%}
+
+/* NEU (2026-08-24): Gestapeltes Brett statt Spalten nebeneinander -
+   agent/06_sortierflaechen.md, «Breit und niedrig statt hoch und
+   schmal»: Felder oben ueber die ganze Flaeche, Karten darunter. Rikes
+   Auftrag fuer Etappe 1 der Kombinatorik: oben EIN grosses sortiertes
+   Feld, darunter drei schmalere Quellflaechen (Situationen/Urnen/
+   Terme) statt der alten Ablage-Spalte rechts. Allgemein gehalten,
+   nicht kapitelspezifisch - siehe buehneOben() in flaeche.js. */
+.buehne.stapel{flex-direction:column}
+.buehne.stapel > .haelfte.oben{flex:1.6 1 0;min-height:0}
+.buehne.stapel > .unten{display:flex;gap:10px;flex:1 1 0;min-height:0}
 /* FEHLERBEHOBEN (2026-08-21): z-index 1 lag UNTER den Karten, die bei
    10 anfangen und beim Ziehen weiter steigen. Die Bandbeschriftungen
    «Situationen», «Urnenmodelle», «Terme» waren dadurch meist verdeckt -
@@ -299,6 +310,20 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
 .leiste .beschriftung{font-size:13.5px;color:var(--matt);margin-right:-3px}
 .leiste > :not(.befund){order:1}
 .groesse{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--matt)}
+
+/* NEU (2026-08-24): Die Loesung - nur in der Kontrollfassung erreichbar
+   (siehe loesungsKnopf() in flaeche.js). Bewusst NICHT wie eine Karte
+   oder ein Feld gefaerbt, damit auf einen Blick klar ist: Das hier
+   gehoert nicht zur Sortierflaeche selbst, sondern liegt daneben. */
+.loesungpanel{flex:0 0 auto;margin:0 14px 10px;padding:12px 16px;
+  border:1.5px dashed var(--akzent);border-radius:10px;
+  background:rgba(0,0,0,.03);font-size:13.5px;line-height:1.55;
+  max-height:220px;overflow:auto}
+.loesungpanel h4{margin:0 0 6px;font-family:var(--hand);font-size:16px;
+  color:var(--akzent);font-weight:400}
+.loesungpanel .zeile{padding:2px 0;border-bottom:1px dotted var(--linie)}
+.loesungpanel .zeile:last-child{border-bottom:none}
+.loesungpanel .matt{color:var(--matt)}
 .groesse input{width:92px}
 .groesse .stufe{font:inherit;font-size:15px;line-height:1;width:24px;height:24px;
    border:1px solid var(--linie);background:var(--karte);border-radius:6px;

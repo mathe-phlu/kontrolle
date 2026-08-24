@@ -43,21 +43,33 @@ function vergleichspunkt(buchstabe){
    stuerzt an einer anderen Stelle. */
 function etappe1(){
   const a = D.etappen[0];
+  if (stand.e1stufe === undefined) stand.e1stufe = 0;
+  const mehrDa = stand.e1stufe < D.e1.stufen.length - 1;
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 1 · Ordnen',
     text:'Diese Karten behaupten alle dasselbe: Sie schreiben auf, was bei '
-       + 'Tims Bestellung herauskommen kann. <b>Fünf davon sind kaputt.</b> '
+       + 'Tims Bestellung herauskommen kann. <b>Manche davon sind kaputt.</b> '
        + '<span class="zart">Prüfen Sie jede Karte an zwei Fragen: Kommt '
        + '<b>jeder</b> mögliche Ausgang darin vor? Und kommt jeder nur '
-       + '<b>einmal</b> vor?</span>'},
+       + '<b>einmal</b> vor? Es liegen zunächst nicht alle Karten aus — wer '
+       + 'fertig ist oder mehr will, holt sich weitere.</span>'},
     'Tisch — ungeordnet', 'Ihre Sortierung',
-    `<button class="knopf leer" id="zurueck" title="Alle Karten zurück auf den Tisch">↺</button>
+    `<span class="beschriftung">Auf dem Tisch: ${D.e1.stufen[stand.e1stufe]}</span>
+     ${mehrDa
+        ? `<button class="knopf leer" id="mehrstufe">Weitere Karten zuschalten</button>`
+        : `<span class="beschriftung">Alle Karten liegen aus.</span>`}
+     <button class="knopf leer" id="zurueck" title="Alle Karten zurück auf den Tisch">↺</button>
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 2 →</button>`,
     praemisse('A'));
 
   const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
+  // GEAENDERT (2026-08-24, Rikes Auftrag "genauso wie Kombinatorik"):
+  // Nicht mehr alle elf Karten auf einmal - `alle` bleibt die
+  // Gesamtmenge (fuer die Pruefung), `sichtbar` ist die freigeschaltete
+  // Teilmenge. Siehe agent/16_herkunft.md.
   const alle = D.e1.gueltig.concat(D.e1.kaputt);
+  const sichtbar = alle.filter(id => (D.e1.stufe[id] ?? 0) <= stand.e1stufe);
   const els = {};
   alle.forEach(id => { els[id] = karte(id); });
 
@@ -93,14 +105,17 @@ function etappe1(){
   window._neuzeichnen = felder;
   felder();
 
-  const neu = alle.filter(id => !(id in stand.karten)).map(id => els[id]);
+  const neu = sichtbar.filter(id => !(id in stand.karten)).map(id => els[id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
+
+  const mehrstufe = document.getElementById('mehrstufe');
+  if (mehrstufe) mehrstufe.onclick = ()=>{ stand.e1stufe++; etappe1(); };
 
   document.getElementById('zurueck').onclick = ()=>{
     stand.karten = {}; document.getElementById('befund').textContent='';
     document.querySelectorAll('.k').forEach(k=>
       k.classList.remove('ok','falsch','fastok'));
-    felder(); streuen(alle.map(id=>els[id]), tisch); merken();
+    felder(); streuen(sichtbar.map(id=>els[id]), tisch); merken();
   };
 
   document.getElementById('pruefen').onclick = ()=>{
@@ -117,12 +132,16 @@ function etappe1(){
       if (ok) richtig++;
     });
     stand.geprueft = true;
-    const offen = alle.length - gelegt;
+    // GEAENDERT (2026-08-24): "offen" und die Vollstaendigkeit zaehlen nur
+    // gegen die freigeschaltete Welle, nicht gegen alle elf - sonst
+    // meldete der Knopf staendig "liegen noch auf dem Tisch" fuer Karten,
+    // die noch gar nicht ausliegen.
+    const offen = sichtbar.length - gelegt;
     const b = document.getElementById('befund');
     if (!gelegt){ b.textContent = 'Es liegt noch nichts in den Fächern.'; return; }
     b.textContent = `${richtig} von ${gelegt} richtig.`
       + (offen ? ` ${offen} liegen noch auf dem Tisch.` : '')
-      + (richtig === alle.length
+      + (richtig === sichtbar.length
          ? ' — Klicken Sie eine kaputte Karte an, um zu sehen, woran sie scheitert.'
          : '');
     // Die Aufloesung erst NACH dem Pruefen, und nur auf Verlangen: Der
@@ -135,6 +154,7 @@ function etappe1(){
     });
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
+  loesungsKnopf(() => D.loesung_e1);
 }
 
 /* ───────── Etappe 2 · Strategien ─────────
@@ -144,6 +164,8 @@ function etappe1(){
    M2 traegt alle zehn Ereignisse, M10k genau eines. */
 function etappe2(){
   const a = D.etappen[1];
+  if (stand.e2stufe === undefined) stand.e2stufe = 0;
+  const mehrDa = stand.e2stufe < D.e2.stufen.length - 1;
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 2 · Strategien',
     text:'Jetzt die Ereignisse. Legen Sie jedes Ereignis in <b>jede</b> Menge, '
        + 'in der es sich hinschreiben lässt — und <b>schreiben Sie es dort '
@@ -151,9 +173,15 @@ function etappe2(){
        + '<span class="zart">Das Feld dafür erscheint, sobald die Karte in '
        + 'einer Menge liegt. Passt das Ereignis in mehrere, legen Sie mit '
        + 'dem <b>+</b> eine zweite Kopie an — und schreiben Sie es dort '
-       + 'anders hin. Passt es in keine, lassen Sie es liegen.</span>'},
+       + 'anders hin. Passt es in keine, lassen Sie es liegen. Es liegen '
+       + 'zunächst nicht alle Ereignisse aus — wer fertig ist oder mehr '
+       + 'will, holt sich weitere.</span>'},
     'Ereignisse', 'Die sechs Mengen, die passen',
-    `<button class="knopf leer" id="zurueck" title="Alle Karten zurück">↺</button>
+    `<span class="beschriftung">Auf dem Tisch: ${D.e2.stufen[stand.e2stufe]}</span>
+     ${mehrDa
+        ? `<button class="knopf leer" id="mehrstufe">Weitere Ereignisse zuschalten</button>`
+        : `<span class="beschriftung">Alle Ereignisse liegen aus.</span>`}
+     <button class="knopf leer" id="zurueck" title="Alle Karten zurück">↺</button>
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 3 →</button>`,
@@ -267,9 +295,17 @@ function etappe2(){
   }
 
   reihen();
-  const neu = Object.keys(els).filter(id=>!(id in stand.karten)).map(id=>els[id]);
+  // GEAENDERT (2026-08-24): Nur die freigeschaltete Welle wird beim
+  // ersten Zeichnen ausgeschuettet - Kopien (id#N), die schon in
+  // stand.karten stehen, sind davon unberuehrt, die platziert reihen()
+  // selbst ueber ihren gespeicherten Ort.
+  const sichtbarE = D.e2.ereignisse.filter(id => (D.e2.stufe[id] ?? 0) <= stand.e2stufe);
+  const neu = sichtbarE.filter(id=>!(id in stand.karten)).map(id=>els[id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
   teilmengenZeigen();
+
+  const mehrstufe2 = document.getElementById('mehrstufe');
+  if (mehrstufe2) mehrstufe2.onclick = ()=>{ stand.e2stufe++; etappe2(); };
 
   document.getElementById('zurueck').onclick = ()=>{
     stand.karten = {}; stand.dupl = 0;
@@ -289,7 +325,9 @@ function etappe2(){
       (gelegt[grund(id)] = gelegt[grund(id)] || new Set()).add(s.ort);
     });
     let stimmt=0, zuviel=0, fehlt=0;
-    D.e2.ereignisse.forEach(r=>{
+    // GEAENDERT (2026-08-24): Nur gegen die freigeschaltete Welle pruefen -
+    // sonst meldet "fehlt" Karten, die noch gar nicht ausliegen.
+    sichtbarE.forEach(r=>{
       const soll = new Set(D.e2.traegt[r] || []);
       const ist = gelegt[r] || new Set();
       ist.forEach(m=>{ if (!soll.has(m)) zuviel++; });
@@ -306,7 +344,10 @@ function etappe2(){
     if (zuviel) satz.push(`${zuviel} liegen in einer Menge, in der sich das `
       + `Ereignis nicht ausdrücken lässt.`);
     if (fehlt) satz.push(`${fehlt} Möglichkeiten fehlen noch.`);
-    if (!zuviel && !fehlt){
+    // GEAENDERT (2026-08-24): Die Pointe («Vollstaendig») erst aussprechen,
+    // wenn wirklich alle Wellen ausliegen - sonst faellt die Schlussfolgerung,
+    // waehrend noch Ereignisse fehlen, die einfach noch nicht ausliegen.
+    if (!zuviel && !fehlt && stand.e2stufe >= D.e2.stufen.length - 1){
       // Die Pointe benennen. Seit die Nummern weg sind, werden die
       // beiden Mengen ueber ihre GROESSE benannt - die steht als |Ω|
       // auf der Karte und ist damit auf dem Tisch nachzusehen.
@@ -325,6 +366,7 @@ function etappe2(){
     document.getElementById('befund').textContent = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
+  loesungsKnopf(() => D.loesung_e2);
 }
 
 /* ───────── Etappe 3 · Übertragen ─────────
@@ -359,19 +401,33 @@ function etappe3(){
 /* Weg A — in der Eisdiele bleiben. Situationen B und C. */
 function etappe3a(){
   const a = D.etappen[2];
+  if (stand.e3astufe === undefined) stand.e3astufe = 0;
+  const mehrDa = stand.e3astufe < D.e3.wegA.stufen.length - 1;
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Zwei weitere Bestellungen',
     text:'Dieselbe Eisdiele, zwei andere Bestellungen. Welche Mengenkarten '
        + 'passen jetzt? <span class="zart">Achtung: Eine Karte kann zu '
-       + 'beiden passen — legen Sie sie dann mit dem <b>+</b> zweimal.</span>'},
+       + 'beiden passen — legen Sie sie dann mit dem <b>+</b> zweimal. '
+       + 'Situation C liegt noch nicht aus — wer mit B fertig ist, holt '
+       + 'sie sich.</span>'},
     'Alle Mengenkarten', 'Situation B und C',
-    `<button class="knopf leer" id="zurueck" title="Alle Karten zurück auf den Tisch">↺</button>
+    `<span class="beschriftung">Ausliegend: ${D.e3.wegA.stufen[stand.e3astufe]}</span>
+     ${mehrDa
+        ? `<button class="knopf leer" id="mehrstufe">${D.e3.wegA.stufen[stand.e3astufe+1]} zuschalten</button>`
+        : `<span class="beschriftung">Beide Situationen liegen aus.</span>`}
+     <button class="knopf leer" id="zurueck" title="Alle Karten zurück auf den Tisch">↺</button>
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="andererweg" style="margin-left:auto">Doch der andere Weg</button>`,
     vergleichspunkt('A'));
 
   const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
+  // GEAENDERT (2026-08-24): Nur die neuen Mengenkarten (wegA.mengen)
+  // werden gestaffelt - die sechs aus Situation A sind schon bekannt und
+  // liegen die ganze Etappe ueber aus.
   const alle = D.e3.wegA.mengen.concat(D.e1.gueltig);
+  const sichtbar = D.e3.wegA.mengen
+    .filter(id => (D.e3.wegA.stufe[id] ?? 0) <= stand.e3astufe)
+    .concat(D.e1.gueltig);
   const els = {};
   const grund = id => id.split('#')[0];
 
@@ -418,8 +474,11 @@ function etappe3a(){
   window._neuzeichnen = felder;
   window._nachAblegen = ()=>faecherSetzen(feld);
   felder();
-  const neu = Object.keys(els).filter(id=>!(id in stand.karten)).map(id=>els[id]);
+  const neu = sichtbar.filter(id=>!(id in stand.karten)).map(id=>els[id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
+
+  const mehrstufe3a = document.getElementById('mehrstufe');
+  if (mehrstufe3a) mehrstufe3a.onclick = ()=>{ stand.e3astufe++; etappe3a(); };
 
   document.getElementById('pruefen').onclick = ()=>{
     document.querySelectorAll('.k').forEach(k=>
@@ -433,8 +492,12 @@ function etappe3a(){
       els[id].classList.add(soll?'ok':'falsch');
       soll ? stimmt++ : daneben++;
     });
+    // GEAENDERT (2026-08-24): "fehlt" nur gegen ausliegende Karten zaehlen -
+    // sonst meldet Situation C staendig vier fehlende Karten, bevor sie
+    // ueberhaupt zugeschaltet ist.
     D.e3.wegA.situationen.forEach(s=>{
       (D.e3.wegA.gueltig[s]||[]).forEach(m=>{
+        if (!sichtbar.includes(m)) return;
         if (!(gelegt[s]&&gelegt[s].has(m))) fehlt++; });
     });
     stand.geprueft=true;
@@ -456,6 +519,7 @@ function etappe3a(){
   };
   document.getElementById('andererweg').onclick = ()=>{
     stand.e3='b'; stand.karten={}; etappe3(); };
+  loesungsKnopf(() => D.loesung_e3a);
 }
 
 /* Weg B — die Eisdiele verlassen. Vier Skript-Aufgaben, und die
@@ -587,6 +651,7 @@ function etappe3b(){
   document.getElementById('andererweg').onclick = ()=>{
     document.getElementById('links').style.display = '';
     stand.e3='a'; stand.karten={}; etappe3(); };
+  loesungsKnopf(() => D.loesung_e3b);
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);

@@ -218,6 +218,17 @@ function ablegen(el, x, y, heim){
   const feld = unterCursor(x, y, '.feld:not(.neu)');
   const blatt = unterCursor(x, y, '.blatt');
 
+  // FEHLERBEHOBEN (2026-08-24): Ein Platz kann sich mit `data-nur` auf
+  // ein Karten-Praefix beschraenken - Kombinatoriks Situationskopf traegt
+  // `data-nur="SS"`, damit dort keine Urne oder ein Term landet, nur weil
+  // die Karte zufaellig nahe genug am Kopf losgelassen wurde. Passt die
+  // Karte nicht, zaehlt der Platz hier als nicht getroffen; die Suche
+  // faellt auf das umgebende Feld zurueck und findet dort den passenden
+  // Paarplatz. Allgemein gehalten, nicht Kombinatorik-spezifisch - jedes
+  // Kapitel kann `data-nur` auf einem Platz setzen.
+  if (paar && paar.dataset.nur && !el.dataset.id.startsWith(paar.dataset.nur))
+    paar = null;
+
   // FEHLERBEHOBEN (2026-08-21): Wer eine Karte DIREKT auf einen
   // Paarplatz zog, umging die Pruefung auf freien Platz - die gab es
   // nur im nachsichtigen Zweig weiter unten. Ein Platz nahm dadurch
@@ -515,32 +526,11 @@ function streuen(els, blatt, y0){
 }
 
 /* ───────── Gerüst ───────── */
-function buehne(auftrag, links, rechts, leiste, extra, drittens){
-  const b = document.getElementById('buehne');
-  // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
-  // weiter und sucht Felder, die es dort nicht mehr gibt.
-  window._nachAblegen = null;
-  // Die Farbe steht am body und aendert sich innerhalb eines Kapitels
-  // nicht mehr. auftrag.rolle traegt weiterhin die Phase des Skripts -
-  // sie steht im Rang links, faerbt aber nichts.
-  b.innerHTML = `
-    <div class="auftrag"><span class="rang">${auftrag.rang}</span>
-      <span class="titel">${auftrag.titel}</span>
-      <span class="text">${auftrag.text}</span></div>
-    ${extra||''}
-    <div class="buehne">
-      <div class="haelfte" id="links" style="flex:1.15"><div class="marke">${links}</div>
-        <div class="blatt" id="tisch" data-ort="tisch"></div></div>
-      <div class="haelfte rechts" id="rechts" style="flex:1.25"><div class="marke">${rechts}</div>
-        <div class="blatt" id="feld"></div></div>
-      ${drittens ? `<div class="haelfte ablageflaeche" id="dritt" style="flex:.72">
-        <div class="marke">${drittens}</div>
-        <div class="blatt" id="ablage"></div></div>` : ''}
-    </div>
-    <div class="leiste">${leiste}</div>`;
-  // FEHLERBEHOBEN: Der Regler vergroesserte nur die Karten, nicht die
-  // Felder - dann passte kein Paar mehr in seinen Platz. Jetzt zeichnet
-  // er alles neu. Minus und Plus davor, damit man sieht, was er tut.
+/* Groessenregler, «Stand als Bild sichern», Aufnahme-Knopf - der Teil
+   der Leiste, den JEDE Buehnenform braucht. Herausgeloest am 2026-08-24,
+   als buehneOben() dazukam: vorher stand das nur in buehne() und waere
+   ein zweites Mal abgeschrieben worden. */
+function _leisteChrome(b){
   const g = document.createElement('span');
   g.className = 'groesse';
   g.innerHTML = `<button class="stufe" data-s="-1">−</button>`
@@ -573,6 +563,101 @@ function buehne(auftrag, links, rechts, leiste, extra, drittens){
     b.querySelector('.leiste').appendChild(auf);
   }
 }
+
+function buehne(auftrag, links, rechts, leiste, extra, drittens){
+  const b = document.getElementById('buehne');
+  // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
+  // weiter und sucht Felder, die es dort nicht mehr gibt.
+  window._nachAblegen = null;
+  // Die Farbe steht am body und aendert sich innerhalb eines Kapitels
+  // nicht mehr. auftrag.rolle traegt weiterhin die Phase des Skripts -
+  // sie steht im Rang links, faerbt aber nichts.
+  b.innerHTML = `
+    <div class="auftrag"><span class="rang">${auftrag.rang}</span>
+      <span class="titel">${auftrag.titel}</span>
+      <span class="text">${auftrag.text}</span></div>
+    ${extra||''}
+    <div class="buehne">
+      <div class="haelfte" id="links" style="flex:1.15"><div class="marke">${links}</div>
+        <div class="blatt" id="tisch" data-ort="tisch"></div></div>
+      <div class="haelfte rechts" id="rechts" style="flex:1.25"><div class="marke">${rechts}</div>
+        <div class="blatt" id="feld"></div></div>
+      ${drittens ? `<div class="haelfte ablageflaeche" id="dritt" style="flex:.72">
+        <div class="marke">${drittens}</div>
+        <div class="blatt" id="ablage"></div></div>` : ''}
+    </div>
+    <div class="leiste">${leiste}</div>`;
+  _leisteChrome(b);
+}
+
+/* NEU (2026-08-24, Rikes Auftrag): Gestapelte Buehne statt Spalten
+   nebeneinander - siehe agent/06_sortierflaechen.md, «Breit und niedrig
+   statt hoch und schmal». Oben EIN grosses sortiertes Feld ueber die
+   ganze Breite, darunter eine Reihe von Quellflaechen (`unten`, je
+   {id, name}). Anders als bei buehne() gibt es keine separate Ablage
+   fuer «passt zu keiner Situation» - eine Gruppe ohne Situationskopf
+   ist im gestapelten Modell keine zweite Kategorie, nur eine
+   unvollstaendige (oder, bei Distraktoren, eine fertige) Gruppe.
+   Erster Einsatz: Etappe 1 der Kombinatorik. */
+function buehneOben(auftrag, obenName, unten, leiste, extra){
+  const b = document.getElementById('buehne');
+  window._nachAblegen = null;
+  b.innerHTML = `
+    <div class="auftrag"><span class="rang">${auftrag.rang}</span>
+      <span class="titel">${auftrag.titel}</span>
+      <span class="text">${auftrag.text}</span></div>
+    ${extra||''}
+    <div class="buehne stapel">
+      <div class="haelfte rechts oben" id="obenhaelfte"><div class="marke">${obenName}</div>
+        <div class="blatt" id="feld"></div></div>
+      <div class="unten">
+        ${unten.map(z => `<div class="haelfte" id="hal${z.id}"><div class="marke">${z.name}</div>
+          <div class="blatt" id="feld${z.id}" data-ort="tisch${z.id}"></div></div>`).join('')}
+      </div>
+    </div>
+    <div class="leiste">${leiste}</div>`;
+  _leisteChrome(b);
+}
+/* ───────── Loesung (nur Kontrollfassung) ─────────
+   NEU (2026-08-24, Rikes Auftrag): Jede Sortierflaeche bekommt eine
+   fertige Loesung - richtige Zuordnung, wo es sie gibt, sonst eine
+   moegliche Loesung mit Hinweis auf die Vielfalt. Sie gehoert in
+   dieselbe index.html, die Maurus fuer die Rueckmeldung anschaut - NIE
+   in aufnahme.html, die Studierendenfassung. Der Unterschied ist schon
+   da: `window.KASPER_RUECKMELDUNG` wird nur in index.html gesetzt
+   (siehe kern/flaeche/__init__.py, RUECKMELDUNG_SKRIPT) - kein neues
+   Flag noetig.
+
+   Jede Etappe, die eine Loesung hat, ruft NACH buehne()/buehneOben()
+   `loesungsKnopf(() => '...')` auf. Etappen ohne Loesung (offene
+   Wahlbildschirme) rufen es einfach nicht auf - dann erscheint auch
+   kein Knopf, statt eines toten. */
+function loesungsKnopf(liefereHtml){
+  if (!window.KASPER_RUECKMELDUNG) return;
+  const leiste = document.querySelector('.leiste');
+  if (!leiste) return;
+  const kn = document.createElement('button');
+  kn.className = 'knopf leer loesungknopf';
+  const zeichnen = () => {
+    let panel = document.getElementById('loesungpanel');
+    if (stand.loesungOffen){
+      if (!panel){
+        panel = document.createElement('div');
+        panel.id = 'loesungpanel'; panel.className = 'loesungpanel';
+        document.querySelector('.buehne').insertAdjacentElement('afterend', panel);
+      }
+      panel.innerHTML = liefereHtml();
+      kn.textContent = 'Lösung verbergen';
+    } else {
+      if (panel) panel.remove();
+      kn.textContent = 'Lösung anzeigen';
+    }
+  };
+  kn.onclick = () => { stand.loesungOffen = !stand.loesungOffen; zeichnen(); };
+  leiste.appendChild(kn);
+  zeichnen();
+}
+
 function alsBild(){
   const flaeche = document.querySelector('.buehne');
   const r = flaeche.getBoundingClientRect(), s = 2;

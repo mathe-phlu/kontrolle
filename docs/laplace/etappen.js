@@ -441,6 +441,7 @@ function etappe1(){
     }
     stand.etappe = 1; los();
   };
+  loesungsKnopf(() => D.loesung_e1);
 }
 
 /* ───────── Etappe 2 · Strategien ─────────
@@ -497,6 +498,7 @@ function etappe2(){
   window._neuzeichnen = ()=>etappe2();
   window._nachAblegen = null;
   document.getElementById('weiter').onclick = ()=>{ stand.etappe = 2; los(); };
+  loesungsKnopf(() => D.loesung_e2);
 }
 
 /* ───────── Etappe 3 · Übertragen ─────────
@@ -568,6 +570,7 @@ function etappe3(){
   felder();
   const neu = D.transfer.filter(t=>!(t.id in stand.karten)).map(t=>els[t.id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
+  loesungsKnopf(() => D.loesung_e3);
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);
