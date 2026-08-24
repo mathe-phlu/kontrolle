@@ -61,6 +61,17 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
      background:linear-gradient(var(--creme) 70%,transparent);pointer-events:none}
 .haelfte.rechts > .marke{background:linear-gradient(var(--papier) 70%,transparent)}
 .blatt{position:relative;min-height:100%;min-width:100%}
+
+/* NEU (2026-08-24): Gestapeltes Brett statt Spalten nebeneinander -
+   agent/06_sortierflaechen.md, «Breit und niedrig statt hoch und
+   schmal»: Felder oben ueber die ganze Flaeche, Karten darunter. Rikes
+   Auftrag fuer Etappe 1 der Kombinatorik: oben EIN grosses sortiertes
+   Feld, darunter drei schmalere Quellflaechen (Situationen/Urnen/
+   Terme) statt der alten Ablage-Spalte rechts. Allgemein gehalten,
+   nicht kapitelspezifisch - siehe buehneOben() in flaeche.js. */
+.buehne.stapel{flex-direction:column}
+.buehne.stapel > .haelfte.oben{flex:1.6 1 0;min-height:0}
+.buehne.stapel > .unten{display:flex;gap:10px;flex:1 1 0;min-height:0}
 /* FEHLERBEHOBEN (2026-08-21): z-index 1 lag UNTER den Karten, die bei
    10 anfangen und beim Ziehen weiter steigen. Die Bandbeschriftungen
    «Situationen», «Urnenmodelle», «Terme» waren dadurch meist verdeckt -

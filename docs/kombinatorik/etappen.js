@@ -1,39 +1,81 @@
 /* ───────── Etappe 1 ─────────
    NEU (2026-08-21, nach Rikes Vorschlag): Kein Raster fertiger
-   Situationsfelder mehr. ALLE Karten liegen auf dem Tisch, auch die
-   Situationen. Wer eine Situationskarte nach rechts legt, macht damit
-   ein Feld auf; darunter kommen die Paare.
+   Situationsfelder mehr. Wer eine Karte auf den Wink legt, macht damit
+   eine neue Gruppe auf; darunter kommen die Paare.
 
    Warum das besser ist: Vorher musste man die Liste von oben nach unten
    durchgehen - erst Situation 1, dann 2. Jetzt darf man mit dem
    anfangen, was man zuerst sieht. Vielleicht faellt ein Term auf, bevor
    die Situation dazu gefunden ist.
 
-   Die Ablage «passt zu keiner Situation» steht oben und nicht ganz
-   unten - sonst muesste man jedes Mal ans Ende rollen.
+   GEAENDERT (2026-08-24, Rikes Auftrag): Vier Bereiche statt drei -
+   oben EIN grosses sortiertes Feld, darunter drei Quellflaechen
+   (Situationen/Urnen/Terme). Keine eigene Ablage-Spalte mehr fuer
+   «passt zu keiner Situation»: Eine Gruppe ohne Situationskopf ist die
+   Regel, nicht die Ausnahme, solange nicht alle Wellen aus sind - und
+   bei Distraktorpaaren dauerhaft richtig. Siehe agent/16_herkunft.md.
+
+   Und gestaffelt (2026-08-24, Anstoss Maurus/Rike, ebenda): Die drei
+   Quellflaechen zeigen nicht den ganzen Einstiegssatz auf einmal,
+   sondern wellenweise - siehe auswahl.STUFEN.
 */
 function etappe1(){
   const a = D.etappen[0];
-  buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 1 · Ordnen',
-    text:'Legen Sie eine Situationskarte nach rechts — darunter das passende '
-       + 'Urnenmodell und den passenden Term, als Paar. '
+  if (stand.e1stufe === undefined) stand.e1stufe = 0;
+  const mehrDa = stand.e1stufe < D.stufen.length - 1;
+
+  // GEAENDERT (2026-08-24, Rikes Auftrag): Vier statt drei Bereiche.
+  // Oben EIN grosses sortiertes Feld, darunter drei Quellflaechen -
+  // Situationen, Urnenmodelle, Terme. Die alte Ablage «ohne Situation,
+  // aber paarweise» ist keine eigene Spalte mehr: Eine Gruppe ohne
+  // Situationskopf ist jetzt keine zweite Kategorie, sondern entweder
+  // eine noch unvollstaendige Gruppe (Situation fehlt noch, kommt
+  // vielleicht mit der naechsten Welle) oder - bei den Distraktorpaaren -
+  // ihr endgueltiger, richtiger Platz. Eine Situation existiert im
+  // Prinzip immer; es fragt sich nur, ob das passende Kaertchen schon
+  // da ist. Siehe agent/16_herkunft.md.
+  //
+  // Und weiterhin gestaffelt (2026-08-24, Anstoss Maurus/Rike): Auf den
+  // Quellflaechen liegt zu Beginn nur die erste Welle - vollstaendig,
+  // mit ihren Distraktoren. «Weitere Situationen zuschalten» holt die
+  // naechste Welle dazu, immer als Situation-Urne-Term-Paket.
+  buehneOben({rolle:a.rolle, rang:a.rang, titel:'Etappe 1 · Ordnen',
+    text:'Legen Sie zusammen, was zu derselben Situation gehört — Situation, '
+       + 'Urnenmodell und Term als Gruppe. '
        + '<span class="zart">Zu den meisten Situationen gibt es <b>zwei</b> Wege, '
-       + 'zu manchen sogar drei. Und manche Modelle und Terme passen zu keiner '
-       + 'Situation — aber zueinander.</span>'},
-    'Tisch — ungeordnet', 'Ihre Zuordnung',
-    `<span class="beschriftung">Ausschütten:</span>
-     <button class="knopf leer" id="schuettS">Situationen</button>
-     <button class="knopf leer" id="schuettU">Urnen</button>
-     <button class="knopf leer" id="schuettT">Terme</button>
+       + 'zu manchen sogar drei. Manche Urnen und Terme passen zu keiner der '
+       + 'ausliegenden Situationen — aber zueinander: Bilden Sie auch daraus '
+       + 'eine Gruppe, nur ohne Situationskarte obendrauf. Es liegen zunächst '
+       + 'nicht alle Situationen aus — wer fertig ist oder mehr will, holt '
+       + 'sich weitere.</span>'},
+    'Ihre Zuordnung',
+    [{id:'S', name:'Situationen'}, {id:'U', name:'Urnenmodelle'}, {id:'T', name:'Terme'}],
+    `<span class="beschriftung">Auf dem Tisch: ${D.stufen[stand.e1stufe]}</span>
+     ${mehrDa
+        ? `<button class="knopf leer" id="mehrstufe">Weitere Situationen zuschalten</button>`
+        : `<span class="beschriftung">Alle Situationen des Einstiegssatzes liegen aus.</span>`}
      <button class="knopf leer" id="zurueckalles" title="Alle Karten zurück auf den Tisch">↺</button>
      <button class="knopf" id="fertig">Prüfen</button>
      <span class="befund" id="befund"></span>
-     <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 2 →</button>`,
-    '', 'Ablage — ohne Situation, aber paarweise');
+     <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 2 →</button>`);
 
-  const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
+  const feld = document.getElementById('feld');
+  const feldS = document.getElementById('feldS');
   if (!stand.e1gruppen) stand.e1gruppen = [];
-  if (!stand.ablagepaare) stand.ablagepaare = 3;
+
+  // Welche Quellflaeche gehoert zu welchem Kartentyp?
+  function ortFuerTyp(ty){
+    if (ty === 'SS') return 'tischS';
+    return (ty === 'U' || ty === 'UD') ? 'tischU' : 'tischT';
+  }
+
+  // Karten der freigeschalteten Wellen auf ihre Quellflaeche legen, wenn
+  // sie noch nirgends liegen. Schon einsortierte Karten bleiben unangetastet.
+  function freischalten(bisStufe){
+    D.karten.filter(k => (D.stufe[k.id] ?? 0) <= bisStufe && !(k.id in stand.karten))
+      .forEach(k => { stand.karten[k.id] = {ort: ortFuerTyp(k.typ), x:0, y:0, rot:0}; });
+  }
+  freischalten(stand.e1stufe);
 
   // NEU (2026-08-21): Die Situationskarten tragen ihre Nummer. Nur so
   // laesst sich in Etappe 2 und 3 auf sie zurueckverweisen - dort steht
@@ -48,12 +90,17 @@ function etappe1(){
   function kbw(){ return parseFloat(getComputedStyle(document.documentElement)
                     .getPropertyValue('--kb')); }
 
+  // GEAENDERT (2026-08-24, Rikes Auftrag): Gruppen liegen nebeneinander
+  // statt untereinander - ein Raster, oben die Situationen, darunter je
+  // Spalte die Paare. Die Spaltenbreite ist deshalb FEST (an der
+  // Kartenbreite orientiert), nicht mehr an der Panelbreite - sonst
+  // gaebe es bei zwei, drei Gruppen nichts zum Scrollen. Das Feld
+  // scrollt jetzt auch seitlich, siehe minWidth unten.
   function felder(){
     feld.querySelectorAll('.feld,.paar').forEach(d=>d.remove());
     const kb = kbw(), kh = kb*0.845 + 10;
-    const bb = feld.clientWidth || 520;
-    const fw = Math.min(Math.max(bb - 16, kb*2 + 44), kb*2 + 70);
-    let y = 26;
+    const fw = kb*2 + 44;
+    let x = 8, hoechste = 58;      // 58 = Hoehe des Winks, Referenzwert
 
     const paarplaetze = (d, id, zahl, oben, plus) => {
       for (let i=0;i<zahl;i++){
@@ -74,123 +121,115 @@ function etappe1(){
       d.appendChild(p);
     };
 
-    // Die Ablage hat eine eigene Flaeche ganz rechts, damit man beim
-    // Suchen nach einem Platz nicht durch sie hindurch muss.
-    const ablBlatt = document.getElementById('ablage');
-    if (ablBlatt){
-      ablBlatt.querySelectorAll('.feld,.paar').forEach(d=>d.remove());
-      const aw = Math.max((ablBlatt.clientWidth||220) - 16, kb + 24);
-      const abl = document.createElement('div');
-      abl.className='feld'; abl.dataset.ort='rest';
-      abl.style.left='8px'; abl.style.top='26px'; abl.style.width=aw+'px';
-      abl.style.height=(10 + stand.ablagepaare*(kh*0.62+8) + 32)+'px';
-      abl.style.borderStyle='solid';
-      // In der schmalen Flaeche liegen Urne und Term untereinander,
-      // nicht nebeneinander - dafuer ist kein Platz.
-      for (let i=0;i<stand.ablagepaare;i++){
-        const pz=document.createElement('div');
-        pz.className='paar'; pz.dataset.ort='rest/p'+i;
-        pz.style.left='7px'; pz.style.top=(10+i*(kh*0.62+8))+'px';
-        pz.style.width=(aw-14)+'px'; pz.style.height=(kh*0.62)+'px';
-        if(i===0) pz.innerHTML='<span class="hint">ein Paar</span>';
-        abl.appendChild(pz);
-      }
-      const pp=document.createElement('div');
-      pp.className='feld neu'; pp.style.position='absolute';
-      pp.style.left='7px'; pp.style.top=(10+stand.ablagepaare*(kh*0.62+8))+'px';
-      pp.style.width=(aw-14)+'px'; pp.style.height='26px';
-      pp.innerHTML='<span>+ weiteres Paar</span>';
-      pp.onclick=()=>{ stand.ablagepaare++; felder(); };
-      abl.appendChild(pp);
-      ablBlatt.appendChild(abl);
-      ablBlatt.style.minHeight=(60+parseFloat(abl.style.height))+'px';
-    }
-
     stand.e1gruppen.forEach((g, gi)=>{
       const d = document.createElement('div');
       d.className='feld'; d.dataset.ort='g'+gi;
-      d.style.left='8px'; d.style.top=y+'px'; d.style.width=fw+'px';
+      d.style.left=x+'px'; d.style.top='26px'; d.style.width=fw+'px';
       const kopfH = kh + 12;
       const h = kopfH + g.paare*(kh+8) + 32;
       d.style.height = h+'px';
+      hoechste = Math.max(hoechste, h);
       const kopf = document.createElement('div');
       kopf.className='paar'; kopf.dataset.ort='g'+gi+'/sit';
       // Genau EINE Situationskarte. Ohne diese Angabe faellt der Kopf
       // unter die Regel «zwei Karten je Platz», und eine zweite
       // Situation legte sich unbemerkt ueber die erste.
       kopf.dataset.fasst = '1';
+      // FEHLERBEHOBEN (2026-08-24): Ohne diese Marke konnte eine Urnen-
+      // oder Termkarte im Kopf landen, wenn man sie nahe genug daran
+      // losliess - der Kopf pruefte bisher nur die Anzahl, nicht die
+      // Sorte. Siehe flaeche.js, `data-nur`.
+      kopf.dataset.nur = 'SS';
       kopf.style.left='7px'; kopf.style.top='7px';
       kopf.style.width=(fw-14)+'px'; kopf.style.height=kh+'px';
       kopf.style.background='rgba(152,103,165,.09)';
-      kopf.innerHTML='<span class="hint">Situation</span>';
+      // GEAENDERT (2026-08-24): Der Kopf ist jetzt ausdruecklich als
+      // optional beschriftet - eine Gruppe ohne Situationskarte ist
+      // kein Fehler, sondern der Normalfall bei Distraktorpaaren und ein
+      // Zwischenstand bei allem anderen.
+      kopf.innerHTML='<span class="hint">Situation (falls vorhanden)</span>';
       d.appendChild(kopf);
       paarplaetze(d, 'g'+gi, g.paare, kopfH, ()=>{ g.paare++; });
-      feld.appendChild(d); y += h + 14;
+      feld.appendChild(d); x += fw + 14;
     });
 
     const wink = document.createElement('div');
     wink.className='feld neu'; wink.dataset.ort='neuegruppe';
-    wink.style.left='8px'; wink.style.top=y+'px';
+    wink.style.left=x+'px'; wink.style.top='26px';
     wink.style.width=fw+'px'; wink.style.height='58px';
-    wink.innerHTML='<span>Situationskarte hierher ziehen</span>';
+    // GEAENDERT (2026-08-24): Nicht mehr nur Situationskarten - jede
+    // Karte darf hier eine neue Gruppe eroeffnen, auch ein Distraktorpaar.
+    wink.innerHTML='<span>Karte hierher ziehen — eröffnet eine neue Gruppe</span>';
     feld.appendChild(wink);
-    feld.style.minHeight = (y + 78)+'px';
+    // GEAENDERT (2026-08-24): Breite statt Hoehe waechst mit der Zahl der
+    // Gruppen - das Feld scrollt jetzt seitlich. Die Hoehe richtet sich
+    // nach der hoechsten Gruppe (unterschiedlich viele Paare je Situation).
+    feld.style.minWidth = (x + fw + 20)+'px';
+    feld.style.minHeight = (hoechste + 46)+'px';
 
     // Karten an ihre Plaetze
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el = els[id]; if (!el) return;
-      const ziel = s.ort==='tisch' ? tisch
-        : (document.querySelector(`[data-ort="${s.ort}"]`) || tisch);
+      const ziel = document.querySelector(`[data-ort="${s.ort}"]`) || feldS;
       ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el);
     });
   }
   window._neuzeichnen = ()=>{ felder(); tischOrdnen(); };
 
-  // Eine Situationskarte auf dem Wink oder im freien Feld macht ein Feld auf
+  // GEAENDERT (2026-08-24): Jede Karte darf auf dem Wink eine neue Gruppe
+  // eroeffnen, nicht mehr nur Situationskarten - siehe agent/16_herkunft.md,
+  // Rikes Umbau der Ablage. Eine Situationskarte geht in den Kopf, alles
+  // andere ins erste Paarfeld. Ob eine Gruppe eine Situation hat, wird
+  // beim Pruefen live aus dem Kopf gelesen (siehe unten bei «fertig») -
+  // nicht hier gespeichert, sonst liefe der Stand auseinander, sobald
+  // jemand eine Situationskarte nachtraeglich in einen leeren Kopf zieht.
   window._e1ablage = (el, zielOrt) => {
     const id = el.dataset.id;
-    if (!id.startsWith('SS')) return zielOrt;
     if (zielOrt === 'neuegruppe' || zielOrt === null){
-      stand.e1gruppen.push({sit:id, paare:2});
-      return 'g' + (stand.e1gruppen.length-1) + '/sit';
+      stand.e1gruppen.push({paare:2});
+      const gi = stand.e1gruppen.length - 1;
+      return id.startsWith('SS') ? ('g'+gi+'/sit') : ('g'+gi+'/p0');
     }
     return zielOrt;
   };
 
-  felder();
-
-  // NEU (2026-08-21): DREI Baender statt eines Haufens. Ein gemeinsamer
-  // Wust aus Situationen, Urnen und Termen zwingt dazu, erst die Sorte zu
-  // erkennen, bevor man ueberhaupt vergleichen kann. Aufgefaechert bleibt
-  // die Unordnung innerhalb der Sorte - und die ist gewollt.
-  const BAENDER = [
-    {art:'S', name:'Situationen',  passt:k=>k.typ==='SS'},
-    {art:'U', name:'Urnenmodelle', passt:k=>k.typ==='U'||k.typ==='UD'},
-    {art:'T', name:'Terme',        passt:k=>k.typ==='T'||k.typ==='TD'},
+  // GEAENDERT (2026-08-24): Keine Baender mehr innerhalb einer Flaeche -
+  // jede der drei Quellflaechen ist bereits typrein, also genuegt
+  // einfaches Streuen je Flaeche. Nur, was zur freigeschalteten Welle
+  // gehoert, wird gezeigt.
+  const QUELLEN = [
+    {id:'S', ort:'tischS', passt:k=>k.typ==='SS'
+                                   && (D.stufe[k.id] ?? 0) <= stand.e1stufe},
+    {id:'U', ort:'tischU', passt:k=>(k.typ==='U'||k.typ==='UD')
+                                   && (D.stufe[k.id] ?? 0) <= stand.e1stufe},
+    {id:'T', ort:'tischT', passt:k=>(k.typ==='T'||k.typ==='TD')
+                                   && (D.stufe[k.id] ?? 0) <= stand.e1stufe},
   ];
-  if (!stand.geschuettet) stand.geschuettet = {};
-
-  // Steht seit dem 2026-08-21 in der gemeinsamen Flaeche - Kapitel 3
-  // braucht dasselbe.
-  BAENDER.forEach(b => { b.ids = () => D.karten.filter(b.passt).map(k=>k.id); });
   function tischOrdnen(){
-    baenderOrdnen(tisch, BAENDER, els, stand.geschuettet);
+    QUELLEN.forEach(q=>{
+      const blatt = document.getElementById('feld'+q.id);
+      const drauf = D.karten.filter(q.passt).map(k=>k.id)
+        .filter(id => (stand.karten[id]||{}).ort === q.ort)
+        .map(id => els[id]).filter(Boolean);
+      streuen(drauf, blatt);
+    });
   }
   window._tischOrdnen = tischOrdnen;
 
-  const ausschuetten = art => {
-    const b = BAENDER.find(x=>x.art===art);
-    D.karten.filter(b.passt).forEach(k=>{
-      if (!(k.id in stand.karten)) stand.karten[k.id] = {ort:'tisch',x:0,y:0,rot:0};
-    });
-    stand.geschuettet[art] = true;
-    tischOrdnen(); merken();
+  felder();
+  tischOrdnen();            // die freigeschalteten Wellen sofort zeigen,
+                             // kein Knopf mehr noetig fuer die erste Welle
+
+  const mehrstufe = document.getElementById('mehrstufe');
+  if (mehrstufe) mehrstufe.onclick = ()=>{
+    stand.e1stufe++;
+    freischalten(stand.e1stufe);
+    merken();
+    etappe1();               // Buehne neu aufbauen: neuer Stufenname, ggf. Knopf weg
   };
-  document.getElementById('schuettS').onclick = ()=>ausschuetten('S');
-  document.getElementById('schuettU').onclick = ()=>ausschuetten('U');
-  document.getElementById('schuettT').onclick = ()=>ausschuetten('T');
   document.getElementById('zurueckalles').onclick = ()=>{
-    stand.karten={}; stand.e1gruppen=[]; stand.geschuettet={};
+    stand.karten={}; stand.e1gruppen=[];
+    freischalten(stand.e1stufe);
     felder(); tischOrdnen(); merken();
     document.getElementById('befund').textContent='';
   };
@@ -200,41 +239,37 @@ function etappe1(){
      NEU (2026-08-21, Rikes Entscheidung): Ein falsch angelegter
      Situationskopf machte bisher ALLE Paare darunter falsch, auch wenn
      das Paar selbst stimmte - das bestraft richtige Arbeit fuer einen
-     Fehler eine Zeile hoeher. Jetzt werden zwei Dinge unterschieden:
+     Fehler eine Zeile hoeher. Zwei Dinge werden unterschieden:
 
        haelt das Paar zusammen?   Urne und Term derselben Situation
        steht es am richtigen Ort? unter dem passenden Kopf
 
-     Daraus drei Zustaende: richtig (gruen), Paar stimmt aber der Kopf
-     nicht (ocker), falsch (rot).
+     GEAENDERT (2026-08-24, Rikes Umbau der Ablage): Es gibt keine
+     eigene Ablage-Spalte mehr, also auch keinen separaten «fastAblage»-
+     Fall. Der Kopf einer Gruppe wird nicht mehr aus einem gespeicherten
+     `g.sit` gelesen (das lief auseinander, sobald jemand eine
+     Situationskarte nachtraeglich in einen leeren Kopf zog), sondern
+     live aus dem, was tatsaechlich im Kopf liegt.
 
-     ENTSCHEIDUNG (Kasper): In der Ablage wird jetzt auch das PAAR
-     geprueft, nicht nur «ist ein Distraktor». Der Generator sagt es
-     ausdruecklich - «Distraktor-Paare: Urne UDk + Term TDk» -, und die
-     Ablage heisst «ohne Situation, aber PAARWEISE». Vorher galt dort
-     jede beliebige Zusammenstellung als richtig, und der zweite Teil
-     des Auftrags wurde gar nicht geprueft.
-     Verworfene Alternative: in der Ablage weiter nur die Sorte pruefen -
-     dann ist die Rueckmeldung dort weicher als im Feld daneben, ohne
-     dass die Aufgabe leichter waere. */
+     Drei Zustaende, nicht mehr vier:
+       richtig (gruen)   Paar stimmt, UND die Situation stimmt (oder es
+                          ist ein Distraktorpaar OHNE Situationskopf -
+                          das ist sein richtiger, endgueltiger Platz)
+       auf dem Weg (ocker) Paar stimmt, aber die Situation fehlt noch
+                          oder ist falsch - oder ein Distraktorpaar liegt
+                          faelschlich UNTER einer Situation
+       falsch (rot)       Karten, die nicht zueinander gehoeren, oder ein
+                          Distraktor mit einer echten Karte gemischt */
   document.getElementById('fertig').onclick = ()=>{
     document.querySelectorAll('.k').forEach(k=>
       k.classList.remove('ok','falsch','fastok'));
 
-    // Zwei Sorten «fast»: im Feld stimmt das Paar, aber der Kopf nicht -
-    // in der Ablage gibt es keinen Kopf, dort gehoeren die beiden Karten
-    // nicht zueinander. Ein gemeinsamer Satz waere fuer einen der beiden
-    // Faelle falsch.
-    let richtig=0, fastFeld=0, fastAblage=0, falsch=0, gelegt=0;
-
-    const setz = (karten, zustand, wo) => {
+    let richtig=0, fast=0, falsch=0, gelegt=0;
+    const setz = (karten, zustand) => {
       karten.forEach(k=>k.classList.add(zustand==='fast' ? 'fastok' : zustand));
       gelegt += karten.length;
       if (zustand==='ok') richtig += karten.length;
-      else if (zustand==='fast'){
-        if (wo==='ablage') fastAblage += karten.length;
-        else fastFeld += karten.length;
-      }
+      else if (zustand==='fast') fast += karten.length;
       else falsch += karten.length;
     };
 
@@ -245,40 +280,45 @@ function etappe1(){
       if (!karten.length) return;
       const soll = karten.map(k=>D.loesung[k.dataset.id]);
 
-      if (ort.startsWith('rest')){
-        // Ablage: zwei Distraktoren, und zwar die zusammengehoerigen.
-        const alleDistraktoren = soll.every(s=>s===0);
-        if (!alleDistraktoren){ setz(karten, 'falsch', 'ablage'); return; }
-        if (karten.length < 2){ setz(karten, 'fast', 'ablage'); return; }
+      const gi = parseInt(ort.slice(1));
+      // Live aus dem Kopf lesen, nicht aus einem gespeicherten Feld -
+      // siehe Vermerk oben und bei _e1ablage.
+      const kopfKarte = document.querySelector(`[data-ort="g${gi}/sit"] > .k`);
+      const kopf = kopfKarte ? parseInt(kopfKarte.dataset.id.slice(2)) : null;
+
+      const alleDistraktoren = soll.every(s=>s===0);
+      if (alleDistraktoren){
+        if (karten.length < 2){ setz(karten, 'fast'); return; }
+        // Nicht nur «beides Distraktoren», sondern das ZUSAMMENGEHOERIGE
+        // Paar - der Generator sagt ausdruecklich «Distraktor-Paare:
+        // Urne UDk + Term TDk».
         const nr = karten.map(k=>k.dataset.id.replace(/^[UT]D/, ''));
-        setz(karten, nr[0]===nr[1] ? 'ok' : 'fast', 'ablage');
+        const passtZusammen = nr[0] === nr[1];
+        // Ein Distraktorpaar gehoert NIE unter eine Situation - das ist
+        // sein richtiger Platz, keine Zwischenstation.
+        setz(karten, (passtZusammen && kopf===null) ? 'ok' : 'fast');
         return;
       }
+      if (soll.some(s=>s===0)){ setz(karten, 'falsch'); return; }  // Distraktor mit echter Karte gemischt
 
-      const gi = parseInt(ort.slice(1));
-      const g = stand.e1gruppen[gi];
-      const kopf = g ? parseInt(g.sit.slice(2)) : null;
-
-      if (soll.some(s=>s===0)){ setz(karten, 'falsch', 'feld'); return; }
-      const haeltZusammen = karten.length===2 && soll[0]===soll[1];
-      const amRichtigenOrt = soll[0]===kopf;
-
-      if (karten.length===1) setz(karten, amRichtigenOrt ? 'ok' : 'falsch', 'feld');
-      else if (haeltZusammen && amRichtigenOrt) setz(karten, 'ok', 'feld');
-      else if (haeltZusammen) setz(karten, 'fast', 'feld');
-      else setz(karten, 'falsch', 'feld');
+      if (karten.length===1){
+        if (kopf!==null && soll[0]===kopf) setz(karten,'ok');
+        else if (kopf!==null) setz(karten,'falsch');       // unter der falschen Situation
+        else setz(karten,'fast');                            // richtig, aber noch ohne Partner/Situation
+        return;
+      }
+      const haeltZusammen = soll[0]===soll[1];
+      if (!haeltZusammen){ setz(karten,'falsch'); return; }
+      if (kopf===null){ setz(karten,'fast'); return; }        // Paar stimmt, Situation fehlt noch
+      setz(karten, soll[0]===kopf ? 'ok' : 'fast');
     });
 
     stand.geprueft = true;
     const b = document.getElementById('befund');
     if (!gelegt){ b.textContent = 'Es liegt noch nichts in den Feldern.'; return; }
-    // Kurz halten: Die Leiste ist schmal, und drei lange Saetze machen
-    // aus ihr einen Absatz.
     const satz = [`${richtig} von ${gelegt} richtig.`];
-    if (fastFeld) satz.push(`${fastFeld} richtig gepaart, aber unter der `
-      + `falschen Situation.`);
-    if (fastAblage) satz.push(`${fastAblage} in der Ablage gehören nicht `
-      + `zueinander.`);
+    if (fast) satz.push(`${fast} auf einem guten Weg — Paar oder Situation `
+      + `noch nicht vollständig.`);
     b.textContent = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
@@ -312,7 +352,12 @@ function etappe2(){
   // Auch in ihnen steckt eine Strategie - aber hier soll die Strategie an
   // eine Situation gekoppelt werden, und dazu haben sie keine. Sie
   // blieben in Etappe 1 liegen, wo sie hingehoeren.
-  const modelle = D.karten.filter(k=>k.typ==='U').map(k=>k.id);
+  // NEU (2026-08-24): Nur Modelle aus Wellen, die in Etappe 1 tatsaechlich
+  // freigeschaltet wurden - sonst tauchen hier Strategiekarten zu
+  // Situationen auf, die eine Gruppe nie gesehen hat, weil sie mit der
+  // ersten oder zweiten Welle in Etappe 1 aufgehoert hat.
+  const modelle = D.karten.filter(k=>k.typ==='U'
+    && (D.stufe[k.id] ?? 0) <= (stand.e1stufe ?? 0)).map(k=>k.id);
   const els = {};
   modelle.forEach(id=>{
     const n = D.loesung[id];
@@ -351,7 +396,14 @@ function etappe2(){
     feld.style.minHeight=(26+Math.ceil((i+1)/sp)*(fh+10)+20)+'px';
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el=els[id]; if(!el) return;
-      const ziel = s.ort==='tisch' ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
+      // FEHLERBEHOBEN (2026-08-24): Etappe 1 legt frisch freigeschaltete
+      // Karten jetzt auf 'tischS'/'tischU'/'tischT' ab (drei Quellflaechen
+      // statt einem Tisch), nicht mehr auf das schlichte 'tisch'. Ein
+      // Modell, das in Etappe 1 nie angefasst wurde, trug deshalb einen
+      // Ort, den Etappe 2 nicht kannte - `feld.querySelector` fand nichts,
+      // `ziel` blieb undefined, und die Karte erschien nirgends. Gemessen:
+      // Direkt zu Etappe 2 gesprungen, «Modellkarten» komplett leer.
+      const ziel = s.ort.startsWith('tisch') ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
       if(ziel){ ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el); }
     });
   }
@@ -361,7 +413,7 @@ function etappe2(){
   if (neu.length) { streuen(neu, tisch); merken(); }
   else Object.entries(stand.karten).forEach(([id,s])=>{
     const el=els[id]; if(!el) return;
-    const ziel = s.ort==='tisch' ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
+    const ziel = s.ort.startsWith('tisch') ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
     if(ziel){ ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el); }
   });
 
