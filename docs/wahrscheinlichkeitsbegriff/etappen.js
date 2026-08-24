@@ -259,7 +259,25 @@ function etappe1(){
 }
 
 /* ───────── Etappe 1 · Zug 2 — Einordnen ───────── */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - jede Erhebung zu dem
+   Axiom, das sie verletzt (D.e1.erhebungen[].verletzt ist eine Liste -
+   zwei Erhebungen verstossen gegen zwei Axiome zugleich und brauchen
+   eine Kartenkopie). Keine Verletzung -> Fach 'ok'. */
+function _loesungStandE1Zug2(){
+  const karten = {};
+  let n = 0;
+  D.e1.erhebungen.forEach(e=>{
+    const ziele = e.verletzt.length ? e.verletzt : ['ok'];
+    ziele.forEach((ort, i)=>{
+      const id = i === 0 ? e.id : (e.id + '#loesung' + (++n));
+      karten[id] = {ort, x:0, y:0, rot:0};
+    });
+  });
+  return {karten};
+}
+
 function etappe1einordnen(){
+  loesungAnwenden(_loesungStandE1Zug2);
   const a = D.etappen[0];
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 1 · Zug 2 — Einordnen',
     text:'Jetzt die Frage, die im ersten Zug offen blieb: <b>Wogegen verstösst '
@@ -402,7 +420,7 @@ function etappe1einordnen(){
     document.getElementById('befund').innerHTML = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
-  loesungsKnopf(() => D.loesung_e1);
+  loesungsKnopf(() => etappe1einordnen());
 }
 
 /* ───────── Etappe 2 · Die drei, gegen die nichts spricht ─────────
@@ -548,7 +566,7 @@ function etappe2(){
     rechnen();
   }
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
-  loesungsKnopf(() => D.loesung_e2);
+  loesungsHinweis(D.loesung_e2);
 }
 
 /* ───────── Etappe 3 · Immer, manchmal, nie ─────────
@@ -556,7 +574,17 @@ function etappe2(){
    das, was in Etappe 1 und 2 erlebt wurde. Die Merkkarte zum
    Bernoullischen Satz liegt daneben - an ihr lassen sich die beiden
    «manchmal» begruenden statt aus dem Bauch. */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - jede Aussage unter
+   ihre richtige Antwort (D.e3.aussagen[].antwort ist 'immer'/'manchmal'
+   /'nie', genau die dataset.ort-Werte der drei Faecher unten). */
+function _loesungStandE3(){
+  const karten = {};
+  D.e3.aussagen.forEach(s => { karten[s.id] = {ort: s.antwort, x:0, y:0, rot:0}; });
+  return {karten};
+}
+
 function etappe3(){
+  loesungAnwenden(_loesungStandE3);
   const a = D.etappen[2];
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Immer, manchmal, nie',
     text:'Acht Aussagen über das, was Sie gerade erlebt haben. Gilt jede '
@@ -643,7 +671,7 @@ function etappe3(){
            + 'Begründen Sie sie an der Merkkarte.'
          : '');
   };
-  loesungsKnopf(() => D.loesung_e3);
+  loesungsKnopf(() => etappe3());
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);

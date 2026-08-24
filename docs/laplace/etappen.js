@@ -112,6 +112,18 @@ function loesungskarte(l){
    mal einer von vieren. Am einzelnen Kaertchen zu urteilen laesst das
    offen.
 */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - nur fuer Zug 2, dessen
+   Brett feste Reihen je Frage hat (dataset.ort = Fragen-ID direkt).
+   Zug 1 hat ein dynamisches Brett wie Kombinatoriks Etappe 1 (Reihen
+   werden erst durchs Herueberziehen einer Fragekarte eroeffnet) - dafuer
+   gibt es hier bewusst keine Loesungsansicht, das waere derselbe Aufwand
+   wie in Kombinatorik noch einmal, an einer Stelle ohne eigene Wertung. */
+function _loesungStandZug2(){
+  const karten = {};
+  D.loesungen.forEach(l => { karten[l.id] = {ort: l.frage, x:0, y:0, rot:0}; });
+  return {karten};
+}
+
 function etappe1(){
   const a = D.etappen[0];
   if (!stand.runde) stand.runde = 1;
@@ -120,6 +132,7 @@ function etappe1(){
   const runde = D.runden.find(r=>r.nr === stand.runde) || D.runden[0];
   const letzte = stand.runde >= D.runden.length;
   const zug2 = stand.zug === 2;
+  if (zug2) loesungAnwenden(_loesungStandZug2);
 
   const auftrag = zug2
     ? 'Bei manchen Fragen liegt jetzt <b>mehr als ein Versuch</b>. '
@@ -441,7 +454,8 @@ function etappe1(){
     }
     stand.etappe = 1; los();
   };
-  loesungsKnopf(() => D.loesung_e1);
+  // Nur in Zug 2 - siehe _loesungStandZug2().
+  if (zug2) loesungsKnopf(() => etappe1());
 }
 
 /* ───────── Etappe 2 · Strategien ─────────
@@ -450,7 +464,17 @@ function etappe1(){
    zugeordnete Ereignisse. Hier hatte sie bisher keines und wirkte wie
    ein blosses Gespraech. Das Material nennt das Ergebnis aber selbst:
    drei geschriebene Prueffragen, eine je Stapel. */
+/* Fuellt die drei Pruefframen-Textfelder mit der Formulierung, mit der
+   geplant wurde (thema.STAPEL) - keine feste Loesung, aber eine
+   moegliche, lesbare Fassung statt eines leeren Feldes. */
+function _loesungStandE2(){
+  const texte = {};
+  Object.entries(D.stapel).forEach(([nr, s]) => { texte['prueffrage'+nr] = s.prueffrage; });
+  return {texte};
+}
+
 function etappe2(){
+  loesungAnwenden(_loesungStandE2);
   const a = D.etappen[1];
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 2 · Strategien',
     text:'Die Versuche bleiben liegen. Sehen Sie sich an, was die drei Stapel '
@@ -498,7 +522,7 @@ function etappe2(){
   window._neuzeichnen = ()=>etappe2();
   window._nachAblegen = null;
   document.getElementById('weiter').onclick = ()=>{ stand.etappe = 2; los(); };
-  loesungsKnopf(() => D.loesung_e2);
+  loesungsKnopf(() => etappe2());
 }
 
 /* ───────── Etappe 3 · Übertragen ─────────
@@ -570,7 +594,7 @@ function etappe3(){
   felder();
   const neu = D.transfer.filter(t=>!(t.id in stand.karten)).map(t=>els[t.id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
-  loesungsKnopf(() => D.loesung_e3);
+  loesungsHinweis(D.loesung_e3);
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);

@@ -41,7 +41,17 @@ function vergleichspunkt(buchstabe){
    Elf Mengenkarten zu Situation A: sechs gueltige, fuenf kaputte. Der
    ganze Lerngegenstand steckt in der Sortierung - jede kaputte Karte
    stuerzt an einer anderen Stelle. */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - gueltig gegen kaputt,
+   die beiden festen Faecher aus etappe1(). */
+function _loesungStandE1(){
+  const karten = {};
+  D.e1.gueltig.forEach(id => { karten[id] = {ort:'gut', x:0, y:0, rot:0}; });
+  D.e1.kaputt.forEach(id => { karten[id] = {ort:'kaputt', x:0, y:0, rot:0}; });
+  return {karten};
+}
+
 function etappe1(){
+  loesungAnwenden(_loesungStandE1);
   const a = D.etappen[0];
   if (stand.e1stufe === undefined) stand.e1stufe = 0;
   const mehrDa = stand.e1stufe < D.e1.stufen.length - 1;
@@ -154,7 +164,7 @@ function etappe1(){
     });
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
-  loesungsKnopf(() => D.loesung_e1);
+  loesungsKnopf(() => etappe1());
 }
 
 /* ───────── Etappe 2 · Strategien ─────────
@@ -162,7 +172,25 @@ function etappe1(){
    UNBRAUCHBAR sein. Sie landet erst, wenn mehrere gueltige
    nebeneinanderliegen - deshalb alle sechs, nicht eine Auswahl.
    M2 traegt alle zehn Ereignisse, M10k genau eines. */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - jedes Ereignis in
+   jede Menge, die es traegt (D.e2.traegt). Traegt ein Ereignis mehrere
+   Mengen, braucht es dieselben Kartenkopien wie beim Legen von Hand -
+   der Suffix ist frei waehlbar, grund() in etappe2() liest nur, was vor
+   dem ersten «#» steht. */
+function _loesungStandE2(){
+  const karten = {};
+  let n = 0;
+  D.e2.ereignisse.forEach(r=>{
+    (D.e2.traegt[r] || []).forEach((m, i)=>{
+      const id = i === 0 ? r : (r + '#loesung' + (++n));
+      karten[id] = {ort:m, x:0, y:0, rot:0};
+    });
+  });
+  return {karten};
+}
+
 function etappe2(){
+  loesungAnwenden(_loesungStandE2);
   const a = D.etappen[1];
   if (stand.e2stufe === undefined) stand.e2stufe = 0;
   const mehrDa = stand.e2stufe < D.e2.stufen.length - 1;
@@ -366,7 +394,7 @@ function etappe2(){
     document.getElementById('befund').textContent = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
-  loesungsKnopf(() => D.loesung_e2);
+  loesungsKnopf(() => etappe2());
 }
 
 /* ───────── Etappe 3 · Übertragen ─────────
@@ -399,7 +427,23 @@ function etappe3(){
 }
 
 /* Weg A — in der Eisdiele bleiben. Situationen B und C. */
+/* Fertig sortiertes Brett fuer loesungsKnopf() - welche Mengen passen
+   zu Situation B und C (D.e3.wegA.gueltig). Eine Menge, die zu beiden
+   passt, braucht eine Kartenkopie fuer die zweite Situation. */
+function _loesungStandE3a(){
+  const karten = {};
+  let n = 0;
+  D.e3.wegA.situationen.forEach(s=>{
+    (D.e3.wegA.gueltig[s] || []).forEach(m=>{
+      const id = (m in karten) ? (m + '#loesung' + (++n)) : m;
+      karten[id] = {ort:s, x:0, y:0, rot:0};
+    });
+  });
+  return {karten};
+}
+
 function etappe3a(){
+  loesungAnwenden(_loesungStandE3a);
   const a = D.etappen[2];
   if (stand.e3astufe === undefined) stand.e3astufe = 0;
   const mehrDa = stand.e3astufe < D.e3.wegA.stufen.length - 1;
@@ -519,7 +563,7 @@ function etappe3a(){
   };
   document.getElementById('andererweg').onclick = ()=>{
     stand.e3='b'; stand.karten={}; etappe3(); };
-  loesungsKnopf(() => D.loesung_e3a);
+  loesungsKnopf(() => etappe3a());
 }
 
 /* Weg B — die Eisdiele verlassen. Vier Skript-Aufgaben, und die
@@ -651,7 +695,7 @@ function etappe3b(){
   document.getElementById('andererweg').onclick = ()=>{
     document.getElementById('links').style.display = '';
     stand.e3='a'; stand.karten={}; etappe3(); };
-  loesungsKnopf(() => D.loesung_e3b);
+  loesungsHinweis(D.loesung_e3b);
 }
 
 ETAPPEN.push(etappe1, etappe2, etappe3);

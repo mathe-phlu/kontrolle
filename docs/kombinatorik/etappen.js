@@ -19,8 +19,36 @@
    Quellflaechen zeigen nicht den ganzen Einstiegssatz auf einmal,
    sondern wellenweise - siehe auswahl.STUFEN.
 */
+/* Baut den Stand, der Etappe 1 fertig sortiert zeigt - fuer
+   loesungsKnopf(). Dieselben Feldnamen wie ein von Hand sortiertes
+   Brett (g0/sit, g0/p0, …), damit felder() sie genauso zeichnet wie
+   die eigene Arbeit. Zwei Karten je Paarplatz: links die Urne (x=4),
+   rechts der Term (x=halb+2) - dieselbe Rechnung wie einrasten() in
+   flaeche.js, hier nur vorweggenommen, weil die Karten nie tatsaechlich
+   fallengelassen werden. */
+function _loesungStandE1(){
+  const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb'));
+  const halb = Math.round(((kb*2+44)-14)/2);
+  const karten = {}, gruppen = [];
+  D.loesung_e1.gruppen.forEach(g=>{
+    const gi = gruppen.length;
+    gruppen.push({paare: g.urnen.length});
+    karten[g.sit] = {ort:'g'+gi+'/sit', x:4, y:4, rot:0};
+    g.urnen.forEach((u,i)=>{ karten[u] = {ort:'g'+gi+'/p'+i, x:4, y:4, rot:0}; });
+    g.terme.forEach((t,i)=>{ karten[t] = {ort:'g'+gi+'/p'+i, x:halb+2, y:4, rot:0}; });
+  });
+  D.loesung_e1.distraktoren.forEach(d=>{
+    const gi = gruppen.length;
+    gruppen.push({paare:1});
+    karten[d.urne] = {ort:'g'+gi+'/p0', x:4, y:4, rot:0};
+    karten[d.term] = {ort:'g'+gi+'/p0', x:halb+2, y:4, rot:0};
+  });
+  return {karten, e1gruppen: gruppen};
+}
+
 function etappe1(){
   const a = D.etappen[0];
+  loesungAnwenden(_loesungStandE1);
   if (stand.e1stufe === undefined) stand.e1stufe = 0;
   const mehrDa = stand.e1stufe < D.stufen.length - 1;
 
@@ -322,12 +350,27 @@ function etappe1(){
     b.textContent = satz.join(' ');
   };
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
-  loesungsKnopf(() => D.loesung_e1);
+  loesungsKnopf(() => etappe1());
 }
 
 /* ───────── Etappe 2 ───────── */
+/* Ein moegliches Beispiel aus auswahl.STRATEGIE, als fertig benanntes
+   und sortiertes Brett - siehe _loesung_e2() in flaeche.py. Die
+   Positionen innerhalb jeder Gruppe raeumt gruppeOrdnen() danach auf,
+   sobald die Gruppen-Divs im DOM stehen (siehe etappe2() unten). */
+function _loesungStandE2(){
+  const karten = {}, gruppen = [];
+  D.loesung_e2.gruppen.forEach(g=>{
+    const gi = gruppen.length;
+    gruppen.push({name: g.name, karten: []});
+    g.modelle.forEach(m => { karten[m] = {ort:'g'+gi, x:0, y:0, rot:0}; });
+  });
+  return {karten, gruppen};
+}
+
 function etappe2(){
   const a = D.etappen[1];
+  loesungAnwenden(_loesungStandE2);
   // NEU (2026-08-21, Rikes Entscheidung): Die Situationsleiste ueber der
   // Flaeche entfaellt ersatzlos, und der Knopf «Zu welcher Situation
   // gehoert das?» mit ihr - es gibt nichts mehr ein- und auszublenden.
@@ -357,8 +400,11 @@ function etappe2(){
   // freigeschaltet wurden - sonst tauchen hier Strategiekarten zu
   // Situationen auf, die eine Gruppe nie gesehen hat, weil sie mit der
   // ersten oder zweiten Welle in Etappe 1 aufgehoert hat.
+  // Die Loesung zeigt den ganzen Einstiegssatz, unabhaengig davon, wie
+  // weit die Wellen in Etappe 1 tatsaechlich aufgezogen wurden - sonst
+  // fehlten Modelle aus spaeteren Wellen im fertig sortierten Brett.
   const modelle = D.karten.filter(k=>k.typ==='U'
-    && (D.stufe[k.id] ?? 0) <= (stand.e1stufe ?? 0)).map(k=>k.id);
+    && (stand.loesungOffen || (D.stufe[k.id] ?? 0) <= (stand.e1stufe ?? 0))).map(k=>k.id);
   const els = {};
   modelle.forEach(id=>{
     const n = D.loesung[id];
@@ -417,6 +463,10 @@ function etappe2(){
     const ziel = s.ort.startsWith('tisch') ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
     if(ziel){ ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el); }
   });
+  // Die Loesung setzt nur, WELCHE Gruppe eine Karte traegt - WO sie
+  // innerhalb der Gruppe liegt, richtet dasselbe Raster her, das auch
+  // beim Ablegen von Hand greift.
+  if (stand.loesungOffen) feld.querySelectorAll(':scope > .feld:not(.neu)').forEach(gruppeOrdnen);
 
   /* Welche Situation liegt in mehreren Gruppen? Das ist die
      Moderationsfrage aus dem Skript - «Wenn dieselbe Situation in
@@ -447,7 +497,7 @@ function etappe2(){
   streuungMelden();
 
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
-  loesungsKnopf(() => D.loesung_e2);
+  loesungsKnopf(() => etappe2());
 }
 
 /* ───────── Etappe 3 ───────── */
@@ -559,7 +609,7 @@ function etappe3(){
   // Keine Loesung im engen Sinn: Die Zielgruppen sind die selbst
   // benannten Strategien aus Etappe 2, nicht vorgegeben - was "richtig"
   // ist, haengt davon ab, wie die Gruppe selbst zugeschnitten hat.
-  loesungsKnopf(() => '<h4>Etappe 3 · Übertragen</h4>'
+  loesungsHinweis('<h4>Etappe 3 · Übertragen</h4>'
     + '<div class="zeile matt">Keine hinterlegte Lösung: Die Zielgruppen sind '
     + 'die in Etappe 2 selbst benannten Strategien, nicht vorgegebene. Ob eine '
     + 'Zuordnung trägt, hängt an der Gruppierung, die diese Gruppe gewählt hat.'

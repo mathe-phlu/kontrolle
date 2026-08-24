@@ -324,6 +324,14 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
 .loesungpanel .zeile{padding:2px 0;border-bottom:1px dotted var(--linie)}
 .loesungpanel .zeile:last-child{border-bottom:none}
 .loesungpanel .matt{color:var(--matt)}
+
+/* NEU (2026-08-24, Rikes Rueckmeldung): Statt einer Textliste zeigt
+   «Lösung anzeigen» jetzt das Feld selbst, richtig sortiert - siehe
+   loesungAnwenden() in flaeche.js. Waehrend das laeuft, ist die Fläche
+   nicht mehr die eigene: ein deutlicher Rahmen sagt das auf einen
+   Blick, und die Karten lassen sich nicht mehr ziehen (siehe ziehbar()). */
+body.loesungoffen .buehne{outline:3px solid var(--akzent);outline-offset:-3px}
+body.loesungoffen .k{cursor:default}
 .groesse input{width:92px}
 .groesse .stufe{font:inherit;font-size:15px;line-height:1;width:24px;height:24px;
    border:1px solid var(--linie);background:var(--karte);border-radius:6px;

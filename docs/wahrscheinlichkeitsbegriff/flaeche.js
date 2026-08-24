@@ -148,6 +148,9 @@ function karte(id, marke, art){
 }
 function ziehbar(el){
   el.addEventListener('pointerdown', e=>{
+    // Waehrend die Loesung offen ist, wird nicht gezogen - sonst
+    // verschiebt ein Klick beim Anschauen die gerade gezeigte Loesung.
+    if (document.body.classList.contains('loesungoffen')) return;
     if (e.target.classList.contains('dop')) return;
     if (e.target.closest('.marke')) return;      // die Marke ist ein Knopf
     e.preventDefault();
@@ -632,7 +635,88 @@ function buehneOben(auftrag, obenName, unten, leiste, extra){
    `loesungsKnopf(() => '...')` auf. Etappen ohne Loesung (offene
    Wahlbildschirme) rufen es einfach nicht auf - dann erscheint auch
    kein Knopf, statt eines toten. */
-function loesungsKnopf(liefereHtml){
+/* GEAENDERT (2026-08-24, Rikes Rueckmeldung): Eine Textliste mit
+   Karten-IDs («U1, T1») ist fuer Maurus und Rike nicht lesbar - sie
+   kennen die interne Nummerierung nicht. Statt einer Liste zeigt
+   «Lösung anzeigen» jetzt das FELD SELBST, vollstaendig und richtig
+   sortiert - dieselben Karten, dieselbe Fläche, nur an ihrem richtigen
+   Platz statt an dem, den die pruefende Person gelegt hat.
+
+   Zwei Funktionen, weil die Reihenfolge zaehlt: `loesungAnwenden` muss
+   VOR dem Zeichnen laufen (sie tauscht stand.karten, bevor felder()/
+   reihen() es liest), `loesungsKnopf` NACH dem Zeichnen (sie haengt nur
+   den Knopf an die fertige Leiste). Beide stehen deshalb an
+   verschiedenen Stellen jeder Etappe. */
+
+/* Tauscht den eigenen Stand gegen die Loesung, wenn `stand.loesungOffen`
+   gesetzt ist - und zurueck, wenn nicht. `baueLoesungStand()` liefert ein
+   Objekt {karten:{...}, ...weitere Stand-Felder}; jedes genannte Feld
+   wird gesichert und ersetzt. `_loesungAktiv` verhindert, dass ein
+   Neuzeichnen WAEHREND die Loesung offen ist (Fenstergroesse, «weitere
+   Karten zuschalten») die Sicherung ein zweites Mal ueberschreibt - dann
+   waere die «Sicherung» schon die Loesung, und der eigene Stand waere weg. */
+function loesungAnwenden(baueLoesungStand){
+  if (!window.KASPER_RUECKMELDUNG) return;
+  document.body.classList.toggle('loesungoffen', !!stand.loesungOffen);
+  // FEHLERBEHOBEN (2026-08-24): Ein einzelnes «schon aktiv»-Flag reichte
+  // nicht - beim Wechsel von Etappe 1 zu Etappe 2 blieb es gesetzt, und
+  // Etappe 2s eigene Loesung wurde nie angewendet: ihr Feld blieb leer,
+  // ihr eigener Stand (`stand.gruppen`) stand noch auf der Voreinstellung.
+  // Jede Etappe legt eigene Stand-Felder frisch - `karten` gemeinsam,
+  // `gruppen`/`e1gruppen` je Etappe. Richtig ist: Jeder Aufruf
+  // UEBERSCHREIBT frisch mit dem Patch DIESER Etappe; gesichert wird ein
+  // Feld nur beim ALLERERSTEN Ueberschreiben (`k in _loesungSicherung`
+  // als Wache), egal, welche Etappe das ist - sonst wuerde eine spaetere
+  // Etappe faelschlich die Loesung einer frueheren als "Original" sichern.
+  if (!stand._loesungSicherung) stand._loesungSicherung = {};
+  if (stand.loesungOffen){
+    const patch = baueLoesungStand();
+    Object.keys(patch).forEach(k => {
+      if (!(k in stand._loesungSicherung)) stand._loesungSicherung[k] = stand[k];
+      stand[k] = patch[k];
+    });
+    stand._loesungAktiv = true;
+  } else {
+    _loesungWiederherstellen();
+  }
+}
+
+/* Stellt die gesicherten Felder wieder her, falls ueberhaupt etwas
+   getauscht wurde. Eigene Funktion, weil `loesungsHinweis()` (Etappen
+   ohne feste Loesung, z.B. Kombinatorik Etappe 3) beim Ausschalten
+   dasselbe braucht - dort ruft aber niemand loesungAnwenden() auf, also
+   muss das Aufraeumen von dort erreichbar sein.
+   FEHLERBEHOBEN (2026-08-24): Ohne diesen gemeinsamen Aufruf blieb
+   stand.karten/stand.texte nach «Lösung verbergen» auf EINER Etappe mit
+   loesungsHinweis (keine eigene Loesung, nur Text) im Loesungszustand
+   haengen, bis irgendeine ANDERE Etappe mit eigener Loesung erneut
+   aufgerufen wurde - der Knopf sagte «aus», der Stand war es nicht. */
+function _loesungWiederherstellen(){
+  if (!stand._loesungAktiv) return;
+  Object.keys(stand._loesungSicherung).forEach(k => { stand[k] = stand._loesungSicherung[k]; });
+  stand._loesungSicherung = {};
+  stand._loesungAktiv = false;
+}
+
+/* Der Knopf selbst. `neuZeichnen` baut die ganze Etappe neu auf - meist
+   einfach die Etappenfunktion selbst noch einmal, z.B. `()=>etappe1()` -
+   damit laeuft beim naechsten Aufruf loesungAnwenden() erneut und liest
+   den (jetzt umgeschalteten) stand.loesungOffen. */
+function loesungsKnopf(neuZeichnen){
+  if (!window.KASPER_RUECKMELDUNG) return;
+  const leiste = document.querySelector('.leiste');
+  if (!leiste) return;
+  const kn = document.createElement('button');
+  kn.className = 'knopf leer loesungknopf';
+  kn.textContent = stand.loesungOffen ? 'Lösung verbergen' : 'Lösung anzeigen';
+  kn.onclick = () => { stand.loesungOffen = !stand.loesungOffen; neuZeichnen(); };
+  leiste.appendChild(kn);
+}
+
+/* Fuer Etappen ohne eindeutige Loesung (die Zielgruppen sind selbst
+   benannt, siehe Kombinatorik Etappe 3): ein kurzer Text statt eines
+   Feldes. Kein Umschalten von stand.karten - nichts zum Sichern. */
+function loesungsHinweis(html){
   if (!window.KASPER_RUECKMELDUNG) return;
   const leiste = document.querySelector('.leiste');
   if (!leiste) return;
@@ -646,11 +730,12 @@ function loesungsKnopf(liefereHtml){
         panel.id = 'loesungpanel'; panel.className = 'loesungpanel';
         document.querySelector('.buehne').insertAdjacentElement('afterend', panel);
       }
-      panel.innerHTML = liefereHtml();
+      panel.innerHTML = html;
       kn.textContent = 'Lösung verbergen';
     } else {
       if (panel) panel.remove();
       kn.textContent = 'Lösung anzeigen';
+      _loesungWiederherstellen();      // siehe Vermerk dort
     }
   };
   kn.onclick = () => { stand.loesungOffen = !stand.loesungOffen; zeichnen(); };
