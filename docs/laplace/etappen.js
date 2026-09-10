@@ -535,8 +535,11 @@ function etappe3(){
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Übertragen',
     text:'Verlassen Sie die Eisdiele und nehmen Sie Ihre drei Prüffragen mit. '
        + 'Zu welcher gehört welche Aufgabe? '
-       + '<span class="zart">Passt eine zu mehreren, legen Sie sie mit dem '
-       + '<b>+</b> zweimal.</span>'},
+       + '<span class="zart">Die Karte auf dem Tisch <b>bleibt liegen</b> — '
+       + 'nach rechts wandert eine Kopie. Passt eine Aufgabe zu mehreren '
+       + 'Prüffragen, ziehen Sie sie einfach noch einmal hinüber. Wollen '
+       + 'Sie eine Kopie loswerden, ziehen Sie sie zurück auf den '
+       + 'Tisch.</span>'},
     'Aufgaben von ausserhalb', 'Ihre Prüffragen',
     `<span class="befund">Hier gibt es nichts zu prüfen — Sie wenden Ihr
        eigenes Kriterium an. Sichern Sie den Stand als Bild.</span>`);
@@ -545,23 +548,29 @@ function etappe3(){
   const els = {};
   const grund = id => id.split('#')[0];
 
-  function mitPlus(id, marke){
-    const el = karte(id, marke);
-    const d = document.createElement('div');
-    d.className='dop'; d.textContent='+'; d.title='Karte verdoppeln';
-    d.onclick = ev=>{ ev.stopPropagation();
-      const kid = grund(id)+'#'+(++stand.dupl);
-      const kopie = mitPlus(kid, marke); els[kid]=kopie;
-      el.parentElement.appendChild(kopie);
-      kopie._x = el._x+14; kopie._y = el._y+14; pos(kopie); merken();
-      if (el.parentElement.classList.contains('feld')) gruppeOrdnen(el.parentElement);
-    };
-    el.appendChild(d);
-    return el;
-  }
-  D.transfer.forEach(t=>{ els[t.id] = mitPlus(t.id, {text:t.marke, art:'skript'}); });
+  /* GEAENDERT (2026-09-10, Rikes Rueckmeldung «das ist muehsam»): Das
+     «+» ist weg, die Geste selbst ist die Kopie - dieselbe Regel wie in
+     Kapitel 2, und sie steht gemeinsam in flaeche.js (kopierGeste).
+
+     Hier zaehlt sie besonders: «Passt eine zu mehreren» ist in dieser
+     Etappe der Normalfall, und ob eine Aufgabe auch zur zweiten
+     Pruefrage passt, merkt man erst, wenn sie bei der ersten liegt. */
+  const marken = {};
+  D.transfer.forEach(t=>{ marken[t.id] = {text:t.marke, art:'skript'}; });
+  const aufgabenkarte = id =>
+    karte(id, marken[grund(id)] || {text:'', art:'skript'});
+
+  D.transfer.forEach(t=>{ els[t.id] = aufgabenkarte(t.id); });
   Object.keys(stand.karten).filter(id=>id.includes('#')).forEach(id=>{
-    if (!els[id]) els[id] = mitPlus(id, {text:'', art:'skript'}); });
+    if (!els[id]) els[id] = aufgabenkarte(id); });
+
+  function vorratWahren(){
+    return kopierGeste({
+      tisch, els, bauen: aufgabenkarte,
+      ziele: () => Object.keys(D.stapel).map(
+        nr => feld.querySelector(`[data-ort="p${nr}"]`)),
+    });
+  }
 
   function felder(){
     feld.querySelectorAll('.feld').forEach(d=>d.remove());
@@ -590,7 +599,11 @@ function etappe3(){
     faecherSetzen(feld);
   }
   window._neuzeichnen = felder;
-  window._nachAblegen = ()=>faecherSetzen(feld);
+  window._nachAblegen = ()=>{
+    const geaendert = vorratWahren();
+    faecherSetzen(feld);
+    if (geaendert) merken();
+  };
   felder();
   const neu = D.transfer.filter(t=>!(t.id in stand.karten)).map(t=>els[t.id]);
   if (neu.length){ streuen(neu, tisch); merken(); }

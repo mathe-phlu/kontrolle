@@ -1,4 +1,4 @@
-/* Aufnahme fuer die Reflexionen von «Daten und Zufall».
+/* Aufnahme fuer Sortierflaechen - die schlanke Fassung.
  *
  * ZWISCHENLOESUNG, 2026-08-21. bauen/aufnahme.js kann alles, was hier
  * steht, und mehr - aber es haengt an SORTs Klassenkuerzeln und an der
@@ -6,6 +6,19 @@
  * Aufgabe; sie steht in TODO_A1.md. Bis dahin dieses hier, nach
  * demselben Muster gebaut: Ereignisse mit Zeitstempel, Ton in Brocken,
  * am Ende beides zum Speichern.
+ *
+ * HIERHER GEZOGEN am 2026-09-08. Die Datei lag in
+ * projekte/daten_und_zufall/themen/kombinatorik/ und wurde von den drei
+ * anderen Flaechen jenes Projekts und von «Komplexe Zahlen» dorthin
+ * mitbenutzt. Damit hing ein Projekt an einem anderen. Sie liegt jetzt
+ * neben paket.js und rueckmeldung.js in bauen/, aus demselben Grund,
+ * den Rike fuer die Rueckmeldung genannt hat: «Wir bauen das
+ * themenunabhaengig und koennen es dann immer zuschalten bei Bedarf.»
+ * Der Kern holt sie von hier, ohne dass ein Thema sie nennen muss.
+ *
+ * Der Name ist nicht `aufnahme.js`, weil daneben in bauen/ schon SORTs
+ * grosse Fassung unter diesem Namen liegt. Im Ausgabeordner heisst sie
+ * weiterhin `aufnahme.js` - nur das Original traegt den Zusatz.
  *
  * KEINE Ablageadresse. Es wird nichts hochgeladen; die Gruppe speichert
  * selbst. Erhebungsmaterial gehoert nie ins Repository.

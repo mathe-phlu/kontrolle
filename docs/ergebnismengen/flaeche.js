@@ -27,6 +27,9 @@ let stand = { aufnahme:null, weg:null, etappe:0, karten:{}, gruppen:[], e3gezeig
               // stehen, damit aeltere gesicherte Staende weiter lesbar
               // sind; wird von nichts mehr gelesen.
               geprueft:false, sitzeigen:false, dupl:0,
+              // Wie breit die Flaechen einer Etappe stehen, je
+              // Etappentitel. Siehe _griffeSetzen().
+              teilung:{},
               // Was auf den beschreibbaren Karten steht. Eigener Topf,
               // damit der Text einen Etappenwechsel ueberlebt.
               texte:{} };
@@ -161,6 +164,13 @@ function ziehbar(el){
     // _x und _y auf null gesetzt.
     el._heim = {x: el._x, y: el._y, rot: el._rot};
     el._lupe = 1; el._zieht = true; el.classList.add('zieht');
+    // NEU (2026-09-10): Der Ziehgriff liegt als acht Punkte breiter
+    // Streifen GENAU auf dem Weg zwischen Tisch und Feld - jede Karte
+    // wandert darueber. Ohne diese Marke waere er eine neue tote Zone
+    // und damit dieselbe Rueckmeldung («mehrfach ziehen») ein zweites
+    // Mal, nur an anderer Stelle. Waehrend eine Karte in der Luft ist,
+    // faengt der Griff nichts ab.
+    document.body.classList.add('kartezieht');
     // Zeiger festhalten: sonst reisst die Geste ab, sobald der Zeiger
     // ueber ein anderes Element faehrt, das Ereignisse abfaengt.
     try { el.setPointerCapture(e.pointerId); } catch(_) {}
@@ -179,6 +189,7 @@ function ziehbar(el){
       window.removeEventListener('pointermove', bewegen);
       window.removeEventListener('pointerup', los);
       el._zieht = false; el.classList.remove('zieht');
+      document.body.classList.remove('kartezieht');
       el.style.position = 'absolute'; el.style.left = ''; el.style.top = '';
       ablegen(el, ev.clientX, ev.clientY, heim);
     };
@@ -190,9 +201,31 @@ function unterCursor(x, y, wahl){
   const el = document.elementFromPoint(x, y);
   return el ? el.closest(wahl) : null;
 }
+/* Das Feld, dessen Rechteck dem Punkt am naechsten liegt. Abstand null
+   heisst: der Punkt liegt darin. Winke (.feld.neu) zaehlen nicht mit. */
+function naechstesFeld(behaelter, x, y){
+  let beste = null, kuerzeste = Infinity;
+  behaelter.querySelectorAll('.feld:not(.neu)').forEach(d=>{
+    const r = d.getBoundingClientRect();
+    const dx = Math.max(r.left - x, 0, x - r.right);
+    const dy = Math.max(r.top - y, 0, y - r.bottom);
+    const abstand = Math.hypot(dx, dy);
+    if (abstand < kuerzeste){ kuerzeste = abstand; beste = d; }
+  });
+  return beste;
+}
+
 function zeigeZiel(x, y){
   document.querySelectorAll('.ueber').forEach(d=>d.classList.remove('ueber'));
-  const z = unterCursor(x, y, '.paar,.feld:not(.neu),.feld.neu[data-ort=neuegruppe]');
+  let z = unterCursor(x, y, '.paar,.feld:not(.neu),.feld.neu[data-ort=neuegruppe]');
+  // GEAENDERT (2026-09-10): Die Markierung muss dasselbe zeigen, was
+  // ablegen() dann tut - sonst verspricht sie etwas anderes, als
+  // passiert. Also auch hier das nahe Feld, wenn der Zeiger im
+  // sortierten Blatt zwischen den Gruppen steht.
+  if (!z){
+    const blatt = unterCursor(x, y, '.blatt');
+    if (blatt && blatt.id === 'feld') z = naechstesFeld(blatt, x, y);
+  }
   if (z) z.classList.add('ueber');
 }
 function ablegen(el, x, y, heim){
@@ -245,7 +278,62 @@ function ablegen(el, x, y, heim){
     else { heimkehr(el, heim); return; }      // lieber zurueck als verdecken
   }
 
-  const ziel = paar || feld || blatt || heim;
+  // FEHLERBEHOBEN (2026-08-28, Rikes Auftrag «der Pruefknopf muss immer
+  // den aktuellen Zustand lesen»): Hier stand `blatt || heim` - und das
+  // war die Ursache dafuer, dass Karten verschwanden und die Pruefung
+  // hinterher falsche Zahlen nannte. Zwei Faelle:
+  //
+  //   Losgelassen im LEEREN Teil des sortierten Feldes: `#feld` ist ein
+  //   .blatt, also wurde die Karte dort einfach abgelegt - auf keinem
+  //   Platz, in keiner Gruppe. Die Pruefung sieht nur Karten auf
+  //   Plaetzen; die Karte fiel damit aus der Buchfuehrung heraus
+  //   («12 von 12 richtig», obwohl eine Karte irgendwo herumlag). Und
+  //   merken() schrieb ihr den Ort «tisch» zu, den es hier gar nicht
+  //   gibt - beim naechsten Neuzeichnen landete eine Urnenkarte auf der
+  //   Situationsflaeche und wurde dort von niemandem mehr angeordnet.
+  //   Gemessen am 2026-08-28: U12b, Ort «tisch», Elternteil feldS.
+  //
+  //   Losgelassen auf NICHTS (Leiste, Rand): ziel wurde `heim`, aber der
+  //   else-Zweig unten rechnete die Position aus den LOSLASS-Koordinaten
+  //   gegen `heim` - die Karte sass danach knapp tausend Pixel unter
+  //   ihrem Platz und galt beim Pruefen trotzdem als dort liegend.
+  //
+  // Neu: Ein .blatt ist nur dann ein Ablageort, wenn es nicht das
+  // sortierte Feld ist. Trifft man gar nichts, geht die Karte sauber
+  // heim - mit ihrer gemerkten Position, nicht mit der des Zeigers.
+  const ablage = (blatt && blatt.id !== 'feld') ? blatt : null;
+
+  /* NEU (2026-09-10, Rueckmeldung der Studierenden: «das Einrasten ist
+     manchmal etwas mühsam, man muss mehrfach ziehen»).
+
+     Getroffen wurde bisher nur, was GENAU unter dem Zeiger lag. Zwischen
+     zwei Gruppen liegen zehn Punkte Luft, unter der letzten Zeile und
+     neben der letzten Spalte oft ein halbes Feld - wer dort losliess,
+     bekam nach der Korrektur vom 2026-08-28 kommentarlos `heimkehr()`.
+     Gemessen am 2026-09-10 in Kapitel 1, Etappe 2: Karte in der
+     Zehn-Punkte-Luecke zwischen zwei Gruppen losgelassen, Karte wieder
+     auf dem Tisch. Aus Sicht der Studierenden ist das «nochmal ziehen».
+
+     Dazu kommt, dass der ZEIGER geprueft wird und nicht die Karte: Wer
+     eine Karte am oberen Rand anfasst, hat ihren Koerper laengst im
+     Ziel, waehrend der Zeiger noch darueber steht.
+
+     Neu gilt: Wer im sortierten Blatt loslaesst, will in eine Gruppe -
+     also faellt die Karte in die NAECHSTGELEGENE. Der Rueckweg auf den
+     Tisch bleibt unberuehrt, denn dort ist `blatt` der Tisch und nicht
+     `#feld`. Ausgenommen sind `.feld.neu` (die Winke «Karte hierher
+     ziehen - eröffnet eine neue Gruppe» und «+ noch eine Gruppe»): Sie
+     sind gross und beschriftet und sollen getroffen werden, nicht
+     zufaellig gewonnen werden. Findet sich gar keine Gruppe, geht die
+     Karte weiterhin heim - dann gibt es nichts, wohin sie koennte. */
+  const nah = (!paar && !feld && blatt && blatt.id === 'feld')
+              ? naechstesFeld(blatt, x, y) : null;
+
+  const ziel = paar || feld || nah || ablage;
+  if (!ziel){ heimkehr(el, heim); return; }
+  // Hier gelandet heisst: bewusst hierher gelegt. Eine geliehene Karte
+  // gehoert damit ab jetzt DIESER Etappe (siehe merken()).
+  delete el.dataset.fremdlage;
   ziel.appendChild(el);
   if (paar){
     einrasten(el, paar, x, y);
@@ -300,7 +388,18 @@ function gruppeOrdnen(feldEl){
     pos(k);
   });
   const noetig = oben + Math.ceil(karten.length / spalten) * (kh + 6) + 10;
-  if (noetig > feldEl.offsetHeight) feldEl.style.height = noetig + 'px';
+  // GEAENDERT (2026-09-10, Rueckmeldung der Studierenden zu Etappe 2 in
+  // Kapitel 1): Hier stand `if (noetig > offsetHeight)` - das Feld wuchs
+  // also nur und schrumpfte nie wieder. Wer Karten wieder herausnahm,
+  // behielt einen leeren hohen Kasten, der die Gruppe darunter weiter
+  // wegdrueckte. Neu ist die beim Bauen gesetzte Hoehe die Untergrenze;
+  // gemessen wird sie beim ERSTEN Ordnen, solange sie noch die gebaute
+  // ist. Die Felder werden bei jedem Neuzeichnen frisch angelegt, also
+  // ist die Marke nie veraltet.
+  if (!feldEl.dataset.grundhoehe)
+    feldEl.dataset.grundhoehe = String(feldEl.offsetHeight);
+  const unten = Math.max(parseFloat(feldEl.dataset.grundhoehe) || 0, noetig);
+  feldEl.style.height = unten + 'px';
 }
 
 /* Wie viele Karten fasst ein Platz? Zwei - ausser der Platz sagt selbst
@@ -346,6 +445,47 @@ function faecherSetzen(behaelter, y0, luecke){
   return y;
 }
 
+/* Ein GITTER von Gruppen neu setzen - das Gegenstueck zu
+   faecherSetzen() fuer Kapitel, die ihre Gruppen NEBENEINANDER legen
+   und dabei in mehrere Zeilen umbrechen.
+
+   NEU (2026-09-10, Rueckmeldung der Studierenden): Der Fehler, der bei
+   faecherSetzen() oben beschrieben steht, war nur fuer Faecher
+   UNTEREINANDER behoben. Kapitel 1, Etappe 2 legt seine Gruppen in ein
+   Gitter - dort wuchs eine Gruppe mit der vierten Karte um rund 80
+   Punkte und schob sich ueber die Zeile darunter. Gemessen am
+   2026-09-10: vier Karten in g0, Gruppe 198 -> 282 Punkte hoch, die
+   naechste Zeile stand unveraendert bei 234. 74 Punkte Ueberlappung.
+   Genau das haben die Studierenden gemeldet: «die Gruppen haben sich
+   überschnitten».
+
+   Die Zeilen werden nicht gezaehlt, sondern an der linken Kante
+   ABGELESEN: Ein Feld beginnt eine neue Zeile, sobald sein `left` nicht
+   weiter rechts liegt als das des Vorgaengers. Damit muss diese
+   Funktion nichts ueber die Spaltenzahl des Kapitels wissen - und wenn
+   ein Kapitel seine Spalten anders rechnet (oder der Ziehgriff die
+   Flaeche schmaler macht), stimmt sie weiter.
+
+   Erst ordnen, dann stapeln - wie bei faecherSetzen, sonst wird mit
+   Hoehen gerechnet, die gleich veralten. */
+function gitterSetzen(behaelter, y0, luecke){
+  const oben = (y0 === undefined ? 26 : y0);
+  const abstand = (luecke === undefined ? 10 : luecke);
+  const felder = [...behaelter.querySelectorAll(':scope > .feld')];
+  if (!felder.length) return oben;
+  felder.forEach(d => { if (!d.classList.contains('neu')) gruppeOrdnen(d); });
+  let y = oben, zeilenhoehe = 0, letztesLinks = -Infinity;
+  felder.forEach(d => {
+    const links = parseFloat(d.style.left) || 0;
+    if (links <= letztesLinks){ y += zeilenhoehe + abstand; zeilenhoehe = 0; }
+    d.style.top = y + 'px';
+    zeilenhoehe = Math.max(zeilenhoehe, d.offsetHeight);
+    letztesLinks = links;
+  });
+  behaelter.style.minHeight = (y + zeilenhoehe + 20) + 'px';
+  return y + zeilenhoehe;
+}
+
 /* ───────── Reihen ─────────
    Eine REIHE ist ein Feld mit einem festen Kopf links und den Karten
    rechts daneben. Kapitel 2 baut damit seine sechs Mengenreihen,
@@ -360,7 +500,6 @@ function faecherSetzen(behaelter, y0, luecke){
 function reiheOrdnen(d, kopfAnteil){
   const kb = parseFloat(getComputedStyle(document.documentElement)
               .getPropertyValue('--kb'));
-  const klein = kb * 0.60, kh = klein * 0.845;
   const links = kb * (kopfAnteil || 0.72) + 18;
   // NEU (2026-08-21): Eine Reihe kann ihren Kopf als KARTE tragen, nicht
   // nur als festes Bild. Kapitel 3 braucht das seit heute - dort wird
@@ -371,14 +510,42 @@ function reiheOrdnen(d, kopfAnteil){
   if (kopf){ kopf._rot = 0; kopf._x = 8; kopf._y = 8; pos(kopf); }
   const karten = alle.filter(k => k !== kopf);
   const platz = d.clientWidth - links - 10;
-  const spalten = Math.max(1, Math.floor(platz / (klein + 6)));
+
+  /* GEAENDERT (2026-09-10, Maurus' Rueckmeldung «Im Vergleich zur
+     vorherigen Aktivität ist die Lesbarkeit weniger gut, Schriftgrösse
+     zu klein»): Hier stand eine feste Verkleinerung auf 60 Prozent.
+     Ihre Begruendung steht im CSS und gilt seit heute nicht mehr - «die
+     Spalte ist schmal, verbreitern ginge nur auf Kosten des Tisches».
+     Genau das kann der Ziehgriff jetzt.
+
+     Neu wird die Kartenbreite aus dem vorhandenen Platz GERECHNET: die
+     groesste, bei der die Karten in hoechstens drei Zeilen passen,
+     hoechstens die volle Kartengroesse, nie kleiner als die alten 60
+     Prozent. Wer verbreitert, bekommt sofort groessere Karten; wer eine
+     Reihe mit zehn Ereignissen fuellt, bekommt zwei Zeilen statt einer
+     Zeile Kleinstschrift. Dass die Reihe dabei hoeher wird, traegt
+     reihenSetzen() seit heute. */
+  const LUFT = 6, ZEILEN = 3;
+  const gross = kb, mindest = kb * 0.60;
+  let breite = mindest, spalten = Math.max(1,
+    Math.floor((platz + LUFT) / (mindest + LUFT)));
+  for (let z = 1; z <= ZEILEN; z++){
+    const sp = Math.max(1, Math.ceil(karten.length / z));
+    const b = (platz + LUFT) / sp - LUFT;
+    if (b >= mindest){ breite = Math.min(gross, b); spalten = sp; break; }
+  }
+  const kh = breite * 0.845;
+
   karten.forEach((k, i)=>{
     k._rot = 0;
-    k._x = links + (i % spalten) * (klein + 6);
-    k._y = 8 + Math.floor(i / spalten) * (kh + 6);
+    // Die Breite steht jetzt am Element, nicht mehr im Stylesheet -
+    // sie haengt von der Reihe ab und nicht von der Kartensorte.
+    k.style.width = breite + 'px';
+    k._x = links + (i % spalten) * (breite + LUFT);
+    k._y = 8 + Math.floor(i / spalten) * (kh + LUFT);
     pos(k);
   });
-  const noetig = 16 + Math.max(1, Math.ceil(karten.length / spalten)) * (kh + 6);
+  const noetig = 16 + Math.max(1, Math.ceil(karten.length / spalten)) * (kh + LUFT);
   d.style.height = Math.max(kb * 1.05, noetig) + 'px';
 }
 
@@ -465,14 +632,88 @@ function naechsterPlatz(feldEl, x, y, gesucht){
   return nah || plaetze.find(p=>hatLuft(p)) || null;
 }
 
+/* FEHLERBEHOBEN (2026-09-10, Rikes Bericht aus dem ersten Einsatz):
+   «Zwei Studierende haben in Reflexion 1 alles sortiert und sind dann zu
+   Etappe 2 gegangen. Da war irgendwie keine Urnenkarte zu sehen, und
+   dann sind sie wieder zu Etappe 1 - und alle Sortierungen waren weg.»
+
+   Hier stand `stand.karten = {}` und danach eine Schleife ueber alle
+   Karten IM DOM. Etappe 2 zeigt aber nur die Modellkarten; Situations-
+   und Termkarten sind dort gar nicht im DOM. Beim ERSTEN Ablegen in
+   Etappe 2 fielen sie damit aus dem Stand - und mit ihnen die ganze
+   Sortierung von Etappe 1. Gemessen am 2026-09-10: 17 Karten im Stand,
+   drei davon in einer Gruppe; nach einem einzigen Ablegen in Etappe 2
+   noch drei, die Gruppe weg.
+
+   Der Fehler war unsichtbar, solange man nicht zurueckging. Und er
+   traf ausgerechnet die, die gruendlich gearbeitet hatten.
+
+   Neu wird gestrichen nur, was BEIDES erfuellt:
+
+     1. Der Ort der Karte gibt es in DIESER Buehne ueberhaupt. Eine
+        Termkarte auf «tischT» oder eine Situationskarte auf «g0/sit»
+        kann in Etappe 2 gar nicht liegen - dort gibt es diese Orte
+        nicht. Also gehoert sie einer anderen Etappe und wird nicht
+        angefasst. Das ist die Hauptregel, und sie braucht KEINE
+        Mitarbeit der Kapitel: Sie liest die Buehne, die ohnehin dasteht.
+
+     2. Die Etappe erklaert sich, falls sie es tut, fuer die Karte
+        zustaendig (`window._zustaendig`, gesetzt nach buehne()). Das
+        ist die schaerfere Angabe fuer den einen Ort, den alle Etappen
+        teilen - «tisch». Wo eine Etappe schweigt, genuegt Regel 1.
+
+   Was weiterhin verschwindet: eine weggelegte Kopie. Sie lag an einem
+   Ort dieser Buehne und ist nicht mehr im DOM - beide Regeln treffen zu. */
 function merken(){
-  stand.karten = {};
+  const zustaendig = window._zustaendig;
+  const gesehen = new Set();
   document.querySelectorAll('.k').forEach(k=>{
     const p = k.parentElement;
+    gesehen.add(k.dataset.id);
+    /* Eine GELIEHENE Karte: Sie liegt in einer anderen Etappe an einem
+       Platz, den es hier nicht gibt, und wird hier nur zum Aufnehmen
+       hingelegt (siehe `fremdlage`, gesetzt beim Ortsrueckfall).
+       Solange sie hier niemand anfasst, behaelt sie ihren Platz drueben -
+       sonst zerlegte ein blosser BESUCH von Etappe 2 die Gruppen, die in
+       Etappe 1 gebaut wurden. Wer sie hier bewegt, hat sie bewusst
+       umsortiert; ablegen() streicht die Marke dann. */
+    if (k.dataset.fremdlage){
+      try { stand.karten[k.dataset.id] = JSON.parse(k.dataset.fremdlage); return; }
+      catch(_) { delete k.dataset.fremdlage; }
+    }
     stand.karten[k.dataset.id] = {
       ort: p.dataset.ort || 'tisch', x: k._x, y: k._y, rot: k._rot };
   });
+  const hierDa = ort => ort === 'tisch'
+    || !!document.querySelector(`.buehne [data-ort="${CSS.escape(ort)}"]`);
+  Object.keys(stand.karten).forEach(id=>{
+    if (gesehen.has(id)) return;
+    if (!hierDa(stand.karten[id].ort)) return;
+    if (zustaendig && !zustaendig(id)) return;
+    delete stand.karten[id];
+  });
   stand.geprueft = false;
+  sichern();
+  // NEU (2026-08-28, Rikes Auftrag): Sobald sich etwas bewegt, ist das
+  // alte Urteil hinfaellig. Vorher blieben die gruenen und roten Rahmen
+  // stehen, bis jemand erneut auf «Pruefen» drueckte - eine Karte, die
+  // laengst zurueck auf dem Tisch lag, trug dort weiter ihr Rot. Genau
+  // das sah aus, als pruefe der Knopf nicht mehr richtig: Er tat es,
+  // aber daneben stand noch die Anzeige von vorhin.
+  markenLoeschen();
+}
+/* Raeumt alles weg, was eine Pruefung hinterlaesst - die Rahmen an den
+   Karten, die Urteile an den Plaetzen und den Befundsatz in der Leiste.
+   Steht hier und nicht in der Etappe, weil merken() aus der gemeinsamen
+   Flaeche heraus aufgerufen wird. */
+function markenLoeschen(){
+  document.querySelectorAll('.k.ok,.k.falsch,.k.fastok,.k.halb,.k.sitok,.k.sitfalsch')
+    .forEach(k => k.classList.remove('ok','falsch','fastok','halb','sitok','sitfalsch'));
+  document.querySelectorAll('.paar.sit-ok,.paar.sit-falsch,.paar.sit-offen,.paar.sit-warte')
+    .forEach(p => p.classList.remove('sit-ok','sit-falsch','sit-offen','sit-warte'));
+  document.querySelectorAll('.sitmarke').forEach(m => m.remove());
+  const b = document.getElementById('befund');
+  if (b) b.textContent = '';
 }
 /* Streuung wie in SORT: versetztes Raster mit Zufallsversatz und leichter
    Drehung - durcheinander, aber jede Karte bleibt lesbar und im Bild. */
@@ -567,11 +808,112 @@ function _leisteChrome(b){
   }
 }
 
+/* ───────── Der Ziehgriff zwischen den Flaechen ─────────
+   NEU (2026-09-10, Rueckmeldung der Studierenden zum ersten Einsatz):
+   «Manchmal waere es cool, wenn man den unsortierten und den sortierten
+   Bereich etwas anpassen kann - das eine Feld kleiner und das andere
+   groesser. Besonders aufgefallen ist das bei Etappe 2, wo irgendwann
+   das unsortierte Feld deutlich leerer war.»
+
+   Genau so ist es: Karten wandern nach rechts, links wird leer, rechts
+   wird eng - und das Verhaeltnis stand bisher als feste Zahl im Markup
+   (flex:1.15 gegen flex:1.25). Der Griff verstellt diese Zahlen; er
+   sitzt in buehne() und buehneOben() und wirkt damit in JEDER Etappe
+   JEDES Kapitels, ohne dass ein Kapitel etwas davon wissen muss.
+
+   Rikes Entscheidung zur Haltbarkeit: NICHT ueber Etappen hinweg. «Der
+   Etappenwechsel ist glaub irrelevant, weil wir ja bei einer neuen
+   Etappe ggf. einen neuen Sortiertisch mit anderer Aufteilung haben.»
+   Der Stand haengt deshalb am Etappen-TITEL - er unterscheidet auch die
+   beiden Wege von Etappe 3, die sonst denselben Schluessel traegen.
+   Innerhalb einer Etappe haelt die Einstellung dagegen alles aus:
+   Neuzeichnen, Groessenregler, «weitere Karten zuschalten».
+
+   Nach dem Verstellen wird neu gezeichnet - die Felder rechnen ihre
+   Spalten aus der Breite, und die stimmt sonst nicht mehr. */
+function _teilungSchluessel(auftrag){
+  return String(auftrag && auftrag.titel || '');
+}
+
+function _griffeSetzen(b, schluessel){
+  const flaeche = b.querySelector('.buehne');
+  if (!flaeche) return;
+  const stapel = flaeche.classList.contains('stapel');
+  // Im gestapelten Brett wird OBEN gegen UNTEN verstellt (waagrechter
+  // Griff), sonst die Haelften nebeneinander (senkrechte Griffe).
+  const teile = stapel
+    ? [...flaeche.children].filter(d => d.classList.contains('haelfte')
+                                     || d.classList.contains('unten'))
+    : [...flaeche.querySelectorAll(':scope > .haelfte')];
+  if (teile.length < 2) return;
+
+  const anteil = d => parseFloat(getComputedStyle(d).flexGrow) || 1;
+  // Die Voreinstellung DIESER Etappe merken, bevor etwas ueberschrieben
+  // wird - sonst gibt es keinen Weg zurueck.
+  const voreinstellung = teile.map(anteil);
+
+  const gemerkt = (stand.teilung || {})[schluessel];
+  if (gemerkt && gemerkt.length === teile.length)
+    teile.forEach((d, i) => { d.style.flex = gemerkt[i] + ' 1 0'; });
+
+  teile.slice(0, -1).forEach((links, i)=>{
+    const rechts = teile[i+1];
+    const griff = document.createElement('div');
+    griff.className = 'teiler' + (stapel ? ' quer' : '');
+    griff.title = 'Ziehen: die beiden Flächen anders aufteilen';
+    // Ein Doppelklick stellt die Voreinstellung dieser Etappe wieder
+    // her - ohne ihn muesste man sich das Ausgangsverhaeltnis merken.
+    griff.ondblclick = ()=>{
+      if (stand.teilung) delete stand.teilung[schluessel];
+      teile.forEach((d, j) => { d.style.flex = voreinstellung[j] + ' 1 0'; });
+      if (window._neuzeichnen) window._neuzeichnen();
+    };
+    griff.addEventListener('pointerdown', e=>{
+      e.preventDefault();
+      const waagrecht = !stapel;
+      const r0 = links.getBoundingClientRect(), r1 = rechts.getBoundingClientRect();
+      const spanne = waagrecht ? (r0.width + r1.width) : (r0.height + r1.height);
+      const summe = anteil(links) + anteil(rechts);
+      const start = waagrecht ? e.clientX : e.clientY;
+      const a0 = waagrecht ? r0.width : r0.height;
+      griff.classList.add('zieht');
+      try { griff.setPointerCapture(e.pointerId); } catch(_) {}
+      const bewegen = ev=>{
+        const jetzt = waagrecht ? ev.clientX : ev.clientY;
+        // Mindestens 12 Prozent je Seite: Eine Flaeche, die man auf null
+        // zieht, bekommt man ohne den Doppelklick nicht mehr zurueck -
+        // und Karten, die darin liegen, waeren unerreichbar.
+        const neu = Math.min(Math.max(a0 + (jetzt - start), spanne*0.12),
+                             spanne*0.88);
+        const wLinks = summe * neu / spanne;
+        links.style.flex  = wLinks.toFixed(3) + ' 1 0';
+        rechts.style.flex = (summe - wLinks).toFixed(3) + ' 1 0';
+      };
+      const los = ()=>{
+        window.removeEventListener('pointermove', bewegen);
+        window.removeEventListener('pointerup', los);
+        griff.classList.remove('zieht');
+        stand.teilung = stand.teilung || {};
+        stand.teilung[schluessel] = teile.map(anteil);
+        // Die Felder rechnen ihre Spalten aus der Breite - ohne
+        // Neuzeichnen stehen sie nach dem Verstellen falsch.
+        if (window._neuzeichnen) window._neuzeichnen();
+      };
+      window.addEventListener('pointermove', bewegen);
+      window.addEventListener('pointerup', los);
+    });
+    (stapel ? flaeche : flaeche).insertBefore(griff, rechts);
+  });
+}
+
 function buehne(auftrag, links, rechts, leiste, extra, drittens){
   const b = document.getElementById('buehne');
   // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
-  // weiter und sucht Felder, die es dort nicht mehr gibt.
+  // weiter und sucht Felder, die es dort nicht mehr gibt. Dasselbe gilt
+  // fuer die Zustaendigkeit: Wer nichts sagt, bekommt das alte
+  // Verhalten - richtig fuer Etappen, die ALLE Karten zeigen.
   window._nachAblegen = null;
+  window._zustaendig = null;
   // Die Farbe steht am body und aendert sich innerhalb eines Kapitels
   // nicht mehr. auftrag.rolle traegt weiterhin die Phase des Skripts -
   // sie steht im Rang links, faerbt aber nichts.
@@ -590,6 +932,7 @@ function buehne(auftrag, links, rechts, leiste, extra, drittens){
         <div class="blatt" id="ablage"></div></div>` : ''}
     </div>
     <div class="leiste">${leiste}</div>`;
+  _griffeSetzen(b, _teilungSchluessel(auftrag));
   _leisteChrome(b);
 }
 
@@ -605,6 +948,7 @@ function buehne(auftrag, links, rechts, leiste, extra, drittens){
 function buehneOben(auftrag, obenName, unten, leiste, extra){
   const b = document.getElementById('buehne');
   window._nachAblegen = null;
+  window._zustaendig = null;
   b.innerHTML = `
     <div class="auftrag"><span class="rang">${auftrag.rang}</span>
       <span class="titel">${auftrag.titel}</span>
@@ -619,6 +963,7 @@ function buehneOben(auftrag, obenName, unten, leiste, extra){
       </div>
     </div>
     <div class="leiste">${leiste}</div>`;
+  _griffeSetzen(b, _teilungSchluessel(auftrag));
   _leisteChrome(b);
 }
 /* ───────── Loesung (nur Kontrollfassung) ─────────
@@ -751,8 +1096,86 @@ function loesungsHinweis(html, container){
   zeichnen();
 }
 
-function alsBild(){
+/* GETRENNT (2026-09-08): Bis heute baute alsBild() die Leinwand und lud
+   sie in einem Zug herunter. Fuer die Bilder zum Mitnehmen wird die
+   Leinwand aber gebraucht, OHNE dass etwas heruntergeladen wird - beim
+   Verlassen einer Etappe, still im Hintergrund.
+
+   Die Rechtecke werden alle SYNCHRON gelesen; nur das Nachzeichnen der
+   Kartenbilder ist asynchron, und es haengt an einer eigenen Image()
+   mit derselben Adresse, nicht am Element auf der Buehne. Deshalb darf
+   die Buehne unmittelbar danach ausgetauscht werden - das Versprechen
+   loest trotzdem richtig auf. Genau darauf beruht bildSammeln(). */
+/* FEHLERBEHOBEN (2026-09-08, Rikes Fund): «Wir haben ein Problem beim
+   Mitnehmen. Es wird nur das gespeichert, was direkt gesehen wird.
+   Alle Sachen, die man erst durch Scrollen sieht, werden nicht mit
+   aufgenommen.»
+
+   Stimmt, und die Ursache ist getBoundingClientRect: Es misst gegen das
+   FENSTER, nicht gegen den Inhalt. Was aus einer rollenden Haelfte
+   herausgerollt ist, bekommt Koordinaten ausserhalb der Leinwand und
+   faellt beim Zeichnen weg - lautlos. Wer scrollen musste, nahm ein
+   halbes Bild mit und sah es nicht.
+
+   Behoben, indem vor dem Messen alles aufgeklappt wird, was rollt:
+   `overflow` sichtbar, feste Hoehen weg. Dann stimmen die Rechtecke,
+   weil nichts mehr abgeschnitten ist. Aufgeklappt wird nur fuer die
+   Dauer des Messens - das laeuft synchron in einem Zug, bevor der
+   Browser neu zeichnet, und ist deshalb nicht zu sehen. */
+function _aufklappen(wurzel){
+  /* FEHLERBEHOBEN (2026-09-10, Rueckmeldung der Studierenden: «Wenn man
+     die Etappe speichert, wird nur der Bildschirm aufgenommen - je
+     nachdem sieht man dann nur einen Teil»).
+
+     Die Auswahl unten nimmt nur, was SELBST rollt. Die Buehne rollt
+     nicht - ihre Haelften tun es. Sie bekam deshalb kein `height:auto`,
+     behielt ihre Hoehe aus dem Flex-Layout, und das Bild wurde genau so
+     hoch wie der Bildschirm. Gemessen am 2026-09-10 in Kapitel 2,
+     Etappe 2: Bild 1400x645, waehrend das sortierte Feld 940 Punkte
+     Inhalt hatte - ein knappes Drittel der Mengenreihen fehlte, und
+     zwar stumm.
+
+     Die Wurzel wird jetzt mit aufgeklappt - sie ist das, was gemessen
+     wird, und muss so gross werden wie ihr Inhalt. Sie braucht dabei
+     auch `flex:none`: Mit `flex:1 1 auto` schrumpft sie sonst wieder auf
+     die Fensterhoehe zurueck, und das Bild ist so kurz wie vorher
+     (nachgemessen am 2026-09-10: 1024x356 statt 1024x994). */
+  /* Zwei Sorten muessen mit, und die zweite ist der Grund, warum die
+     erste Fassung dieses Fixes die Buehne auf 28x20 Punkte zusammenfallen
+     liess (gemessen am 2026-09-10): Sobald die Wurzel `height:auto`
+     bekommt, haben ihre Haelften mit `flex:1 1 0` keinen Raum mehr zu
+     verteilen und fallen auf null. Sie muessen deshalb IMMER auf
+     `flex:none; height:auto` gesetzt werden, ob sie selbst rollen oder
+     nicht - nicht nur die, bei denen gerade etwas ueberhaengt. */
+  const struktur = [...wurzel.querySelectorAll(
+    ':scope > .haelfte, :scope > .unten, :scope > .unten > .haelfte, .blatt')];
+  const rollende = [...wurzel.querySelectorAll('*')].filter(e =>
+    e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1);
+  const innen = [...new Set([...struktur, ...rollende])];
+  const gerollt = [wurzel, ...innen];
+  const sicherung = gerollt.map(e => ({
+    e, overflow: e.style.overflow, height: e.style.height,
+    maxHeight: e.style.maxHeight, width: e.style.width,
+    maxWidth: e.style.maxWidth, flex: e.style.flex }));
+  gerollt.forEach(e => {
+    e.style.overflow = 'visible';
+    e.style.height = 'auto'; e.style.maxHeight = 'none';
+    e.style.width = 'auto';  e.style.maxWidth = 'none';
+    e.style.flex = 'none';
+  });
+  return () => sicherung.forEach(k => {
+    k.e.style.overflow = k.overflow; k.e.style.height = k.height;
+    k.e.style.maxHeight = k.maxHeight; k.e.style.width = k.width;
+    k.e.style.maxWidth = k.maxWidth; k.e.style.flex = k.flex;
+  });
+}
+
+function standAlsLeinwand(){
   const flaeche = document.querySelector('.buehne');
+  if (!flaeche) return Promise.resolve(null);
+  // Erst aufklappen, dann messen. Zugeklappt wird ganz am Ende der
+  // synchronen Messung, vor dem Warten auf die Bilder.
+  const zuklappen = _aufklappen(flaeche);
   const r = flaeche.getBoundingClientRect(), s = 2;
   const c = document.createElement('canvas');
   c.width = r.width*s; c.height = r.height*s;
@@ -770,6 +1193,53 @@ function alsBild(){
       g.fillText((t.value||t.textContent||'').slice(0,44),
                  q.left-r.left+8, q.top-r.top+18); }
   });
+  /* FEHLERBEHOBEN (2026-09-08): Bilder, die zur ZONE gehoeren und nicht
+     zu einer Karte, fehlten im gesicherten Stand. Bei «Komplexe Zahlen»
+     ist das der Zeiger, der jede Rechnung ueberhaupt erst kenntlich
+     macht (`<img class="reihenkopf" src="karten/R1.svg">` als direktes
+     Kind der Reihe). Ohne ihn zeigte das Bild leere Reihen mit Karten
+     darin - und niemand konnte mehr sehen, zu welcher Rechnung sie
+     gehoerten.
+
+     Ursache: Die Schleife unten sucht nur `.k`. Alles, was kein
+     Kaertchen ist, kam nie vor. Der Fehler war stumm - das Bild
+     entstand, es fehlte nur etwas darin. */
+  document.querySelectorAll('.buehne img').forEach(im=>{
+    if (im.closest('.k')) return;          // Karten kommen unten dran
+    const q = im.getBoundingClientRect();
+    if (!q.width || !q.height) return;
+    warte.push(new Promise(fertig=>{
+      const b3 = new Image();
+      b3.onload = ()=>{ g.drawImage(b3, q.left-r.left, q.top-r.top,
+                                    q.width, q.height); fertig(); };
+      b3.onerror = fertig; b3.src = im.src;
+    }));
+  });
+
+  /* FEHLERBEHOBEN (2026-09-08, zweiter Fall derselben Sorte): Text,
+     der zur FLAECHE gehoert und nicht auf einer Karte steht, fehlte im
+     Bild. Bei Meilenstein 1 sind das die Rechenzeichen zwischen den
+     Plaetzen - ohne sie liest sich die gesicherte Zeile als vier
+     Kaestchen, und ob dort mal oder plus stand, ist nicht mehr zu
+     sehen. Wer das Bild als Notiz mitnimmt, nimmt eine Notiz ohne
+     Rechnung mit.
+
+     Wer solchen Text mitgezeichnet haben will, markiert ihn mit
+     `data-alsbild`. Ohne die Marke aendert sich nichts - keine
+     bestehende Flaeche traegt sie. */
+  document.querySelectorAll('.buehne [data-alsbild]').forEach(t=>{
+    const q = t.getBoundingClientRect();
+    if (!q.width || !q.height) return;
+    const st = getComputedStyle(t);
+    g.save();
+    g.fillStyle = st.color;
+    g.font = `${st.fontWeight} ${parseFloat(st.fontSize)}px ${st.fontFamily}`;
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(t.textContent, q.left - r.left + q.width / 2,
+                              q.top - r.top + q.height / 2);
+    g.restore();
+  });
+
   document.querySelectorAll('.k').forEach(k=>{
     const q = k.getBoundingClientRect();
     const im = k.querySelector('img');
@@ -803,7 +1273,13 @@ function alsBild(){
       bild2.onerror = fertig; bild2.src = im.src;
     }));
   });
-  Promise.all(warte).then(()=>{
+  zuklappen();
+  return Promise.all(warte).then(()=> c);
+}
+
+function alsBild(){
+  standAlsLeinwand().then(c=>{
+    if (!c) return;
     const a = document.createElement('a');
     a.download = `kapitel${D.kapitel}_etappe${stand.etappe+1}.png`;
     a.href = c.toDataURL('image/png'); a.click();
@@ -834,28 +1310,73 @@ const ETAPPEN = [];        // fuellt die Kapiteldatei
    Ihre Formulierung deckt sich mit dem, was hier steht: fuenf, und der
    Ort ist frei.
 */
+/* Die Nachweisregel steht nicht mehr fest im Startfeld.
+   NEU (2026-09-08, Rikes Auftrag): «Komplexe Zahlen» hat eine ANDERE
+   Regelung als «Daten und Zufall» - vier Meilensteine, drei davon mit
+   ihr besucht. Ein Thema setzt `D.nachweis`; sagt es nichts, gilt die
+   Regel von «Daten und Zufall» woertlich wie bisher weiter. */
+const NACHWEIS_DZ = '<b>Fünf Nachweise im Semester.</b> Ein Nachweis ist entweder'
+  + '\n    eine Anwesenheit vor Ort oder eine Aufnahme — beides zählt gleich, und Sie'
+  + '\n    dürfen mischen. Mehr als fünf ist möglich, aufnehmen dürfen Sie immer:'
+  + '\n    vor Ort ebenso wie zu Hause.';
+
+/* Fragt das Startfeld nach der Aufnahme?
+
+   NEU (2026-09-08, Rikes Entscheidung): Bei «Komplexe Zahlen» steckt
+   die Wahl nicht mehr in einem Knopf, sondern in der Adresse - zwei
+   Fassungen derselben Flaeche. Fassung A laeuft im Meilensteinblock in
+   ihrem Beisein und nimmt NIE auf; Fassung B laeuft allein und nimmt
+   IMMER auf. Begruendung im Entscheidungslog: Wo an der Aufnahme der
+   Nachweis haengt, ist ein Knopf keine echte Wahl.
+
+   «Daten und Zufall» bleibt bei der Frage - dort ist die Aufnahme
+   tatsaechlich freiwillig, weil eine Anwesenheit vor Ort sie ersetzt.
+   Deshalb entscheidet das THEMA, nicht diese Datei, und die Vorgabe ist
+   das bisherige Verhalten: Sagt ein Thema nichts, wird gefragt. */
+const AUFNAHMEWEISE = D.aufnahme || 'wahl';   // 'wahl' | 'nie' | 'immer'
+
 function startfeld(){
   // Der Einstieg kommt aus den Kapiteldaten. Das Bild ist freiwillig -
   // Kapitel ohne eigenes Einstiegsbild lassen es einfach weg.
   const S = D.start || {};
-  document.getElementById('buehne').innerHTML=`<div class="start">
-    <h2>${S.titel || ''}</h2>
+
+  /* Der Einstieg ist in allen drei Weisen derselbe. Er faellt auch bei
+     'nie' nicht weg: Titel, Lage, Frage und Nachsatz sind der Rahmen
+     der Aufgabe, nicht Beiwerk der Aufnahmefrage. */
+  const einstieg = `<h2>${S.titel || ''}</h2>
     <div class="einstieg">
       ${S.bild ? `<img src="${S.bild}" alt="">` : ''}
       <div><p class="lage">${S.lage || ''}</p>
       <p class="frage">${S.frage || ''}</p>
       ${S.nachsatz ? `<p class="lage" style="font-size:14px">${S.nachsatz}</p>` : ''}</div>
-    </div>
-    <p style="color:var(--matt);margin-bottom:14px">Möchten Sie aufnehmen?</p>
+    </div>`;
+
+  const mitte = {
+    wahl: `<p style="color:var(--matt);margin-bottom:14px">Möchten Sie aufnehmen?</p>
     <div class="wahl" data-a="1"><b>Ja, mit Aufnahme</b>
       <span>Ihr Gespräch und Ihre Kartenzüge werden aufgezeichnet. Die Aufnahme
       zählt als Nachweis — und hilft uns, die Aufgaben weiterzuentwickeln.</span></div>
     <div class="wahl" data-a="0"><b>Nein, ohne Aufnahme</b>
-      <span>Die Aufgabe läuft genau gleich. Es wird nichts aufgezeichnet.</span></div>
-    <p class="hinweis"><b>Fünf Nachweise im Semester.</b> Ein Nachweis ist entweder
-    eine Anwesenheit vor Ort oder eine Aufnahme — beides zählt gleich, und Sie
-    dürfen mischen. Mehr als fünf ist möglich, aufnehmen dürfen Sie immer:
-    vor Ort ebenso wie zu Hause.</p></div>`;
+      <span>Die Aufgabe läuft genau gleich. Es wird nichts aufgezeichnet.</span></div>`,
+
+    nie: `<div class="wahl" data-a="0"><b>Los geht's</b>
+      <span>Es wird nichts aufgezeichnet.</span></div>`,
+
+    /* PRUEFEN: Der Satz zur Nachweisregel fehlt hier bewusst. Er kommt
+       aus dem Thema ueber `D.nachweis` - und fuer Fassung B ist er noch
+       nicht entschieden: «Vier Meilensteine, drei davon mit mir» geht
+       nicht auf, wenn jemand drei allein nachholt. Siehe thema.md. */
+    immer: `<div class="wahl" data-a="1"><b>Los geht's — mit Aufnahme</b>
+      <span>Ihr Gespräch und Ihre Kartenzüge werden aufgezeichnet. Am Ende
+      speichern Sie beides und geben es ab. So sehe ich, worüber Sie
+      gesprochen haben, bevor wir uns treffen.</span></div>`
+  }[AUFNAHMEWEISE] || '';
+
+  document.getElementById('buehne').innerHTML=`<div class="start">
+    ${einstieg}
+    ${mitte}
+    <p class="hinweis">${D.nachweis || NACHWEIS_DZ}</p></div>`;
+
   document.querySelectorAll('.wahl').forEach(w=>w.onclick=()=>{
     stand.aufnahme = w.dataset.a==='1'; stand.etappe=0;
     if (stand.aufnahme) mikrofonprobe(); else los(); });
@@ -975,26 +1496,506 @@ document.addEventListener('click', blasenSchliessen);
 window.addEventListener('resize', blasenSchliessen);
 document.addEventListener('scroll', blasenSchliessen, true);
 
+/* ───────── Die Bilder zum Mitnehmen ─────────
+
+   NEU (2026-09-08, Rikes Auftrag): «Es waere schon wichtig, dass die
+   Studierenden am Ende ein Bild von der fertigen Sortierflaeche fuer
+   alle drei Etappen bekommen, damit sie ihre Ablage dieser Sortierung
+   noch mal mitnehmen koennen als Erkenntnis.»
+
+   Anlass ist Fassung A: Dort wird nicht aufgenommen, es entsteht also
+   kein Paket, in dem die Bilder ohnehin laegen. «Stand als Bild
+   sichern» gibt es zwar in der Leiste - aber als Knopf, an den jemand
+   denken muss, und beim Wechsel in die naechste Etappe ist die vorige
+   Buehne fort.
+
+   Deshalb: beim Verlassen einer Etappe still sammeln, am Ende in einem
+   Zug anbieten. Am gemeinsamen Brett nimmt so JEDE Person ihre eigene
+   Kopie mit, ohne dass jemand sie herumschicken muss.
+
+   Ein Thema bestellt es ueber `D.mitnehmen`. Sagt es nichts, wird nichts
+   gesammelt und die Steuerleiste bleibt, wie sie war - «Daten und
+   Zufall» merkt von alldem nichts. */
+const MITNEHMEN = !!D.mitnehmen;
+const mitbringsel = {};      // Etappennummer -> Versprechen auf eine Leinwand
+let _gezeigt = null;         // welche Etappe steht gerade auf der Buehne
+
+function bildSammeln(){
+  if (!MITNEHMEN || _gezeigt === null) return;
+  // Eine Buehne ohne Karten ist nichts wert - etwa wenn jemand eine
+  // Etappe nur kurz aufschlaegt und gleich weiterklickt.
+  if (!document.querySelector('.buehne .k')) return;
+  mitbringsel[_gezeigt + 1] = standAlsLeinwand();
+}
+
+const _dateiname = (D.stueck || 'sortierung')
+  .replace(/[^0-9A-Za-zÄÖÜäöü]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
+
+function mitnehmen(){
+  const nummern = Object.keys(mitbringsel).map(Number).sort((a,b)=>a-b);
+  const b = document.getElementById('buehne');
+
+  if (!nummern.length){
+    b.innerHTML = `<div class="start">
+      <h2>Noch nichts zum Mitnehmen</h2>
+      <p class="lage">Sobald Sie eine Etappe bearbeitet haben, entsteht hier
+         ein Bild Ihrer Sortierung. Gehen Sie oben auf eine Etappe zurück.</p></div>`;
+    return;
+  }
+
+  /* GEAENDERT (2026-09-10, Rikes Auftrag): Hier stand nur eine Zeile mit
+     den Etappennamen - «Etappe 1 · Etappe 2 · Etappe 3». Rike: «Es
+     reicht keine Liste, denn sie haben das Bild in jeder Etappe im Kopf,
+     und wir sollten dafuer sorgen, dass es einen Wiedererkennungswert
+     gibt.» Also stehen die Bilder selbst hier, untereinander und in
+     voller Breite - dasselbe Bild, das auch gespeichert wird. Man sieht
+     vor dem Speichern, was man bekommt, und erkennt die eigene Arbeit
+     wieder. */
+  b.innerHTML = `<div class="start mitnehmen">
+    <h2>Nehmen Sie Ihre Sortierung mit</h2>
+    <p class="lage">Von ${nummern.length === 1 ? 'Ihrer Etappe' :
+      'jeder der ' + nummern.length + ' Etappen'} ist ein Bild entstanden —
+      so, wie Sie die Karten am Ende gelegt haben, vollständig und nicht
+      nur der Bildschirmausschnitt. Für Ihre Notizen — ${nummern.length > 1
+        ? 'als ein PDF mit einer Seite je Etappe' : 'als PDF'}.</p>
+    <div style="display:flex;gap:10px;margin:18px 0 4px">
+      <button class="knopf" id="holen">${nummern.length > 1
+        ? 'Alles mitnehmen' : 'Bild speichern'}</button></div>
+    <p class="hinweis">Die Bilder bleiben auf Ihrem Rechner. Es wird nichts
+       hochgeladen und nichts an uns gesendet.</p>
+    <div class="schau" id="schau">${nummern.map(n=>
+      `<figure data-nr="${n}"><figcaption>Etappe ${n}</figcaption>
+         <div class="platz">wird gezeichnet …</div></figure>`).join('')}</div>
+  </div>`;
+
+  /* Die Bilder nachtragen, sobald sie fertig sind. Sie entstehen als
+     Zusagen beim Verlassen jeder Etappe (bildSammeln); hier wird nur
+     gewartet und eingehaengt - der Text steht schon, damit die Seite
+     nicht leer beginnt. */
+  nummern.forEach(async n=>{
+    const c = await mitbringsel[n];
+    const platz = b.querySelector(`figure[data-nr="${n}"] .platz`);
+    if (!platz) return;
+    if (!c){ platz.textContent = 'Für diese Etappe ist kein Bild entstanden.'; return; }
+    const im = new Image();
+    im.src = c.toDataURL('image/png');
+    im.alt = 'Ihre Sortierung in Etappe ' + n;
+    platz.replaceWith(im);
+  });
+
+  const knopf = document.getElementById('holen');
+  knopf.onclick = async ()=>{
+    knopf.disabled = true; knopf.textContent = 'Wird vorbereitet …';
+    const leinwaende = await Promise.all(nummern.map(n=>mitbringsel[n]));
+    const bilder = [];
+    for (let i = 0; i < nummern.length; i++){
+      if (!leinwaende[i]) continue;
+      bilder.push({nr: nummern[i], blob: await new Promise(f=>
+        leinwaende[i].toBlob(f, 'image/png'))});
+    }
+    /* GEAENDERT (2026-09-10, Rikes Frage nach dem mehrseitigen PDF):
+       Erst das PDF, dann die alten Wege. Die Reihenfolge ist die
+       Rangfolge - eine Datei, die sich ueberall mit einem Tipp oeffnet,
+       schlaegt eine ZIP, und die schlaegt drei Einzeldownloads.
+
+       Der Rueckfall bleibt vollstaendig stehen: Wo der Browser kein
+       CompressionStream hat, gibt es weiter das, was es gestern gab.
+       Ein Knopf, der auf einem alten Geraet gar nichts tut, waere
+       schlimmer als eine ZIP. */
+    let fertig = false;
+    try {
+      const pdf = await _pdfBauen(
+        nummern.map((n, i) => ({nr: n, leinwand: leinwaende[i]}))
+               .filter(x => x.leinwand),
+        document.title);
+      if (pdf){ _herunterladen(pdf, _dateiname + '.pdf'); fertig = true; }
+    } catch (e){
+      // Nicht still scheitern: Wer das hier liest, soll sehen, warum
+      // der alte Weg genommen wurde.
+      console.warn('PDF nicht gebaut, es gilt der Rueckfall:', e);
+    }
+
+    // Ein Paket, wenn paket.js dabei ist - sonst die Bilder einzeln.
+    // Drei Downloads hintereinander bremsen manche Browser aus; eine
+    // ZIP ist die eine Datei, die die Gruppe wirklich behaelt.
+    const P = window.SORT_PAKET;
+    if (fertig){
+      /* nichts weiter - das PDF ist unterwegs */
+    } else if (P && bilder.length > 1){
+      const dateien = [];
+      for (const bi of bilder)
+        dateien.push({name: 'etappe-' + bi.nr + '.png',
+                      daten: await P.zuBytes(bi.blob)});
+      _herunterladen(P.zip(dateien), _dateiname + '_bilder.zip');
+    } else {
+      for (const bi of bilder)
+        _herunterladen(bi.blob, _dateiname + '_etappe-' + bi.nr + '.png');
+    }
+    knopf.disabled = false;
+    knopf.textContent = 'Gespeichert ✓ — nochmals speichern';
+  };
+}
+
+/* ───────── Die Kopier-Geste ─────────
+
+   NEU (2026-09-10, Rikes Rueckmeldung): «Im Moment haben wir so ein +
+   und koennen die Karten kuenstlich verdoppeln. Das ist muehsam.»
+
+   Statt vorher zu verdoppeln, ist die GESTE die Kopie: Wer eine Karte
+   nach rechts zieht, legt dort eine Kopie ab; die Vorratskarte bleibt
+   liegen. Wer eine Kopie zurueck auf den Tisch zieht, legt sie weg.
+
+   Es war nicht nur muehsam, es war die falsche Reihenfolge: Ob eine
+   Karte auch in eine ZWEITE Gruppe gehoert, merkt man erst, wenn sie in
+   der ersten liegt. Wer sich vorher entscheiden muss, entscheidet blind.
+
+   Durchgesetzt wird EINE Regel:
+
+     Karten OHNE «#» sind Vorratskarten und liegen immer auf dem Tisch.
+     Karten MIT «#» sind Kopien und liegen immer in einem Zielfeld.
+
+   Daraus folgt beides von selbst - auch der Rueckweg, den es vorher gar
+   nicht gab (eine Kopie auf dem Tisch war ein Doppelgaenger, den niemand
+   mehr von der Vorratskarte unterscheiden konnte).
+
+   Zweimal in DASSELBE Feld geht nicht: Die Vorratskarte kehrt
+   kommentarlos zurueck. Sonst laege dieselbe Karte doppelt in einer
+   Gruppe - und «Pruefen» zaehlte sie beide als richtig und meldete mehr
+   Treffer, als es Karten gibt.
+
+   STEHT HIER UND NICHT IM KAPITEL, weil vier Kapitel sie brauchen. Die
+   erste Fassung stand zweimal in ergebnismengen/etappen.js; ein drittes
+   und viertes Abschreiben waere der Fehler von «Faktorisieren 2»
+   gewesen. Was je Kapitel verschieden ist, kommt als Beipack:
+
+     tisch, feld   die beiden Blaetter
+     els           {id: Element} des Kapitels - wird mitgepflegt
+     bauen(id)     baut eine Karte samt allem, was das Kapitel anhaengt
+     ziele()       die Elemente, die als «sortiert» gelten
+     mit(alt,neu)  optional: was beim Umtaufen mitwandern muss
+                   (in Kapitel 2 der geschriebene Teilmengentext)
+
+   Liefert true, wenn sich etwas geaendert hat - dann muss der Stand neu
+   gemerkt werden. */
+function kopierGeste({tisch, els, bauen, ziele, mit}){
+  const grund = id => id.split('#')[0];
+  let geaendert = false;
+
+  // Eine Kopie auf dem Tisch heisst: weggelegt.
+  [...tisch.querySelectorAll(':scope > .k')].forEach(el=>{
+    const id = el.dataset.id;
+    if (!id.includes('#')) return;
+    if (mit) mit(id, null);
+    delete els[id];
+    el.remove();
+    geaendert = true;
+  });
+
+  // Eine Vorratskarte in einem Zielfeld heisst: hier soll eine Kopie
+  // liegen. Die gezogene Karte BLEIBT liegen und wird zur Kopie
+  // umgetauft - so bleibt sie, wo die Hand sie hingelegt hat -, und der
+  // Vorrat wird an ihrem alten Platz neu aufgelegt.
+  ziele().forEach(kasten=>{
+    if (!kasten) return;
+    [...kasten.querySelectorAll(':scope > .k')].forEach(el=>{
+      const id = el.dataset.id;
+      if (id.includes('#')) return;
+      // _heim merkt sich ziehbar() beim Anfassen: der Platz, von dem
+      // die Karte kam.
+      const h = el._heim || {x:0, y:0, rot:0};
+      const doppelt = [...kasten.querySelectorAll(':scope > .k')]
+        .some(k => k !== el && grund(k.dataset.id) === id);
+      if (!doppelt){
+        const kid = id + '#' + (++stand.dupl);
+        el.dataset.id = kid;
+        els[kid] = el; delete els[id];
+        if (mit) mit(id, kid);
+        const vorrat = bauen(id);
+        els[id] = vorrat;
+        tisch.appendChild(vorrat);
+        vorrat._x = h.x; vorrat._y = h.y; vorrat._rot = h.rot; pos(vorrat);
+      } else {
+        tisch.appendChild(el);
+        el._x = h.x; el._y = h.y; el._rot = h.rot; pos(el);
+      }
+      geaendert = true;
+    });
+  });
+  return geaendert;
+}
+
+/* ───────── Ein mehrseitiges PDF statt einer ZIP ─────────
+
+   NEU (2026-09-10, Rikes Frage «mehrseitiges PDF ... was meinst du,
+   besser als ZIP mit PNGs?»). Ja, aus drei Gruenden, und keiner davon
+   ist Geschmack:
+
+     Eine ZIP muss man ENTPACKEN. Auf iPad und Handy ist das eine echte
+     Huerde, und darauf arbeiten viele.
+
+     «Fuer Ihre Notizen» heisst ablegen, wiederfinden, ausdrucken, in
+     OneNote ziehen. Das kann ein PDF, ein Ordner mit etappe-1.png
+     nicht.
+
+     In der STUDIERENDENFASSUNG gibt es die ZIP ohnehin nicht:
+     `paket.js` wird nur in die Rueckmeldungsfassung eingebunden. Dort
+     fielen bisher drei einzelne Downloads an - und der Vermerk unten
+     sagt selbst, dass manche Browser das ausbremsen. Deshalb steht der
+     PDF-Bau HIER und nicht in paket.js.
+
+   Verlustfrei, nicht als JPEG: Die Bilddaten gehen als /FlateDecode
+   hinein, also mit demselben Verfahren wie in einer PNG-Datei. Den
+   Packer stellt der Browser (CompressionStream); eine Bibliothek waere
+   dafuer nicht noetig und ist deshalb auch nicht dabei. Wo es ihn nicht
+   gibt, faellt der Knopf auf den alten Weg zurueck - lieber eine ZIP als
+   gar nichts.
+
+   Kein eingebettetes Schriftbild: Die Kopfzeile nutzt Helvetica, eine
+   der vierzehn Schriften, die jedes PDF-Programm mitbringt. Deshalb
+   WinAnsi und Latin-1-Bytes - «Etappe» und Umlaute kommen damit aus,
+   und das PDF bleibt bei wenigen hundert Kilobyte. */
+async function _flate(bytes){
+  const strom = new Blob([bytes]).stream()
+    .pipeThrough(new CompressionStream('deflate'));
+  return new Uint8Array(await new Response(strom).arrayBuffer());
+}
+
+/* Die Leinwand auf WEISS legen, bevor die Bytes gelesen werden. Ohne
+   das wuerde jede durchsichtige Stelle schwarz: Wir werfen den
+   Alphakanal weg, und RGB(0,0,0) ist genau das, was unter einem
+   unbemalten Pixel steht. */
+function _rgbBytes(leinwand){
+  const c = document.createElement('canvas');
+  c.width = leinwand.width; c.height = leinwand.height;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.fillRect(0, 0, c.width, c.height);
+  g.drawImage(leinwand, 0, 0);
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  const rgb = new Uint8Array(c.width * c.height * 3);
+  for (let i = 0, j = 0; i < d.length; i += 4){
+    rgb[j++] = d[i]; rgb[j++] = d[i+1]; rgb[j++] = d[i+2];
+  }
+  return rgb;
+}
+
+async function _pdfBauen(bilder, titel){
+  if (typeof CompressionStream === 'undefined') return null;
+
+  const LANG = 841.89, KURZ = 595.28;     // A4 in Punkten
+  const RAND = 30, KOPF = 18;
+  const teile = [];
+  const platz = [];                        // Byteposition je Objektnummer
+  let laenge = 0;
+
+  // Latin-1: ein Zeichen, ein Byte. Genau das erwartet WinAnsiEncoding.
+  const roh = t => { const u = new Uint8Array(t.length);
+                     for (let i = 0; i < t.length; i++) u[i] = t.charCodeAt(i) & 0xFF;
+                     return u; };
+  const schreib = x => { const u = (typeof x === 'string') ? roh(x) : x;
+                         teile.push(u); laenge += u.length; };
+  const objekt = (nr, kopf, strom) => {
+    platz[nr] = laenge;
+    schreib(nr + ' 0 obj\n' + kopf + '\n');
+    if (strom){ schreib('stream\n'); schreib(strom); schreib('\nendstream\n'); }
+    schreib('endobj\n');
+  };
+  /* FEHLERBEHOBEN (2026-09-10, beim Nachmessen aufgefallen): Hier stand
+     nur das Maskieren der Klammern. Der Seitentitel traegt aber einen
+     GEDANKENSTRICH - «Reflexion — Kapitel 2» -, und `charCodeAt & 0xFF`
+     machte daraus Byte 0x14, ein Steuerzeichen. Im PDF stand dann
+     «Etappe 1 ? Reflexion ? Kapitel 2».
+     Latin-1 und WinAnsi sind eben nur von 0xA0 aufwaerts gleich: Was
+     Unicode oberhalb von 0xFF fuehrt, legt WinAnsi in die Luecke von
+     0x80 bis 0x9F. Diese Tabelle bildet genau die Zeichen ab, die in
+     unseren Titeln vorkommen koennen; alles Uebrige wird zum
+     Bindestrich, statt als Steuerzeichen durchzurutschen. */
+  const WINANSI = {
+    '€':0x80, '‚':0x82, 'ƒ':0x83, '„':0x84, '…':0x85,
+    '†':0x86, '‡':0x87, 'ˆ':0x88, '‰':0x89, 'Š':0x8A,
+    '‹':0x8B, 'Œ':0x8C, 'Ž':0x8E, '‘':0x91, '’':0x92,
+    '“':0x93, '”':0x94, '•':0x95, '–':0x96, '—':0x97,
+    '˜':0x98, '™':0x99, 'š':0x9A, '›':0x9B, 'œ':0x9C,
+    'ž':0x9E, 'Ÿ':0x9F};
+  const klar = t => String(t).split('').map(z => {
+    if (z.charCodeAt(0) > 0xFF)
+      z = (z in WINANSI) ? String.fromCharCode(WINANSI[z]) : '-';
+    return /[\\()]/.test(z) ? '\\' + z : z;
+  }).join('');
+
+  schreib('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+
+  // Erst die Seiten vorbereiten - die Objektnummern stehen damit fest,
+  // bevor das Seitenverzeichnis geschrieben wird.
+  const vor = [];
+  for (const bi of bilder){
+    const rgb = _rgbBytes(bi.leinwand);
+    vor.push({nr: bi.nr, b: bi.leinwand.width, h: bi.leinwand.height,
+              daten: await _flate(rgb)});
+  }
+  const seiteNr = i => 4 + i * 3;
+  const kinder = vor.map((_, i) => seiteNr(i) + ' 0 R').join(' ');
+
+  objekt(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  objekt(2, `<< /Type /Pages /Kids [${kinder}] /Count ${vor.length} >>`);
+  objekt(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica'
+          + ' /Encoding /WinAnsiEncoding >>');
+
+  vor.forEach((v, i) => {
+    const quer = v.b > v.h;
+    const pb = quer ? LANG : KURZ, ph = quer ? KURZ : LANG;
+    const skala = Math.min((pb - 2 * RAND) / v.b,
+                           (ph - 2 * RAND - KOPF) / v.h);
+    const bb = v.b * skala, bh = v.h * skala;
+    const bx = (pb - bb) / 2, by = (ph - RAND - KOPF - bh + RAND) / 2;
+    const kopfzeile = `Etappe ${v.nr}${titel ? ' — ' + titel : ''}`;
+    const inhalt =
+      `BT /F1 9 Tf 0.42 0.40 0.38 rg ${RAND} ${(ph - RAND).toFixed(2)} Td `
+      + `(${klar(kopfzeile)}) Tj ET\n`
+      + `q ${bb.toFixed(2)} 0 0 ${bh.toFixed(2)} ${bx.toFixed(2)} `
+      + `${by.toFixed(2)} cm /Im0 Do Q\n`;
+    const nr = seiteNr(i);
+    objekt(nr,
+      `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pb.toFixed(2)} ${ph.toFixed(2)}]`
+      + ` /Resources << /XObject << /Im0 ${nr + 2} 0 R >> /Font << /F1 3 0 R >> >>`
+      + ` /Contents ${nr + 1} 0 R >>`);
+    objekt(nr + 1, `<< /Length ${inhalt.length} >>`, inhalt);
+    objekt(nr + 2,
+      `<< /Type /XObject /Subtype /Image /Width ${v.b} /Height ${v.h}`
+      + ` /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode`
+      + ` /Length ${v.daten.length} >>`, v.daten);
+  });
+
+  // Die Querverweistabelle. Jeder Eintrag ist auf das Byte genau
+  // zwanzig Zeichen lang - deshalb wurde oben mitgezaehlt.
+  const anzahl = 3 + vor.length * 3;
+  const xref = laenge;
+  let t = `xref\n0 ${anzahl + 1}\n0000000000 65535 f \n`;
+  for (let n = 1; n <= anzahl; n++)
+    t += String(platz[n]).padStart(10, '0') + ' 00000 n \n';
+  schreib(t);
+  schreib(`trailer\n<< /Size ${anzahl + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+
+  return new Blob(teile, {type: 'application/pdf'});
+}
+
+function _herunterladen(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 6000);
+}
+
+
 /* ───────── Steuerung ───────── */
 function nav(){
   const n=document.getElementById('nav'); n.innerHTML='';
   // Die Zahl der Etappen sagt das Kapitel, nicht diese Datei.
   const namen = ['Start', ...ETAPPEN.map((_,i)=>'Etappe '+(i+1))];
+  // Der Schlussbildschirm haengt hinten dran, nicht in der Flaeche
+  // drin: Er ist kein Arbeitsschritt, sondern der Ausgang.
+  if (MITNEHMEN) namen.push('Mitnehmen');
   namen.forEach((t,i)=>{
     const b=document.createElement('button'); b.textContent=t;
     b.setAttribute('aria-current', stand.aufnahme===null ? i===0 : i===stand.etappe+1);
-    b.onclick=()=>{ if(i===0){stand.aufnahme=null;startfeld();}
+    b.onclick=()=>{ if(i===0){ bildSammeln(); _gezeigt=null;
+                              stand.aufnahme=null; startfeld(); }
                     else {stand.etappe=i-1;los();} nav(); };
     n.appendChild(b);
   });
 }
+/* ───────── Was ein Neuladen überlebt ─────────
+   NEU (2026-09-10, Rikes Auftrag nach dem ersten Einsatz): «Etlichen
+   ist passiert, dass sie die Seite refreshed haben und alles von vorher
+   war weg.» Der Stand lag nur im Arbeitsspeicher; ein Neuladen, ein
+   versehentlich geschlossener Tab, ein Absturz - und die Sortierung
+   einer ganzen Doppelstunde war fort.
+
+   PIA hat fuer dasselbe Problem `Speicher` in
+   `pruefungen/gemeinsam/aufnahme.js`: IndexedDB, laufendes
+   Zwischensichern, beim naechsten Oeffnen ein Angebot fortzufahren. Der
+   AUFBAU ist von dort uebernommen, die Technik nicht - PIA begruendet
+   IndexedDB in der Datei selbst mit der Groesse der Tonaufnahmen («ein
+   zweistuendiges Paket hat 180 MB»). Kaspers Stand ist Text und wenige
+   Kilobyte gross; localStorage genuegt, ist synchron und hat keinen
+   Fehlerpfad, den man verwalten muss.
+
+   Rikes Entscheidung zum Verhalten: STUMM weitermachen, kein Dialog.
+   «Wenn jemand wirklich aufräumen will, haben wir ja den ↺-Knopf - aber
+   dann mit Absicht.» Wer versehentlich neu geladen hat, soll vom Unfall
+   gar nichts merken.
+
+   Drei Dinge kommen bewusst NICHT zurueck:
+
+     Die AUFNAHME, wenn sie lief. Der Ton ist mit dem Neuladen ohnehin
+     abgebrochen; wuerde `stand.aufnahme = true` wiederhergestellt,
+     liefe die Flaeche weiter, als werde aufgenommen, und niemand
+     merkte, dass nichts mehr mitlaeuft - und am Nachweis haengt etwas.
+     Deshalb wird in diesem einen Fall das Startfeld gezeigt: Die
+     Sortierung ist da, ueber die Aufnahme wird neu entschieden. Wer
+     ohne Aufnahme arbeitet, kommt vollstaendig stumm zurueck.
+
+     Die LOESUNG. Sie gehoert der Kontrollfassung und ist ein
+     Anzeigezustand, kein Arbeitsstand; zurueckzukommen und die Loesung
+     offen vorzufinden, waere ein Schreck.
+
+     Ein Stand, der aelter als zwoelf Stunden ist. Er deckt eine
+     Sitzung ab. Am selben Rechner arbeitet naechste Woche eine andere
+     Gruppe, und die soll nicht die Sortierung der vorigen erben. */
+const _SPEICHER = 'kasper:' + (D.stueck || D.kapitel || location.pathname);
+const _HALTBAR = 12 * 3600 * 1000;
+
+function sichern(){
+  try {
+    const kopie = Object.assign({}, stand);
+    delete kopie.loesungOffen;
+    delete kopie._loesungSicherung;
+    delete kopie._loesungAktiv;
+    localStorage.setItem(_SPEICHER,
+      JSON.stringify({zeit: Date.now(), stand: kopie}));
+  } catch(_) { /* privates Fenster, voller Speicher - dann eben nicht */ }
+}
+
+function _wiederaufnehmen(){
+  let paket = null;
+  try { paket = JSON.parse(localStorage.getItem(_SPEICHER) || 'null'); }
+  catch(_) { paket = null; }
+  if (!paket || !paket.stand || typeof paket.stand !== 'object') return;
+  if (!paket.zeit || Date.now() - paket.zeit > _HALTBAR){
+    try { localStorage.removeItem(_SPEICHER); } catch(_) {}
+    return;
+  }
+  Object.assign(stand, paket.stand);
+  stand.loesungOffen = false;
+  stand._loesungSicherung = {};
+  stand._loesungAktiv = false;
+  // Lief eine Aufnahme, wird neu gefragt - siehe oben.
+  if (stand.aufnahme === true) stand.aufnahme = null;
+}
+
+let _wiederaufgenommen = false;
+
+/* Getipptes laeuft NICHT ueber merken(): Gruppennamen, Teilmengen und
+   beschreibbare Karten schreiben direkt in den Stand. Deshalb sichert
+   die Uhr zusaetzlich mit - und beim Verlassen der Seite ein letztes
+   Mal. `pagehide` neben `beforeunload`, weil Mobilbrowser das eine
+   auslassen und das andere nicht. */
+setInterval(sichern, 4000);
+window.addEventListener('beforeunload', sichern);
+window.addEventListener('pagehide', sichern);
+
 function los(){
+  if (!_wiederaufgenommen){ _wiederaufgenommen = true; _wiederaufnehmen(); }
   // Kapitelfarbe einmal setzen. Faellt sie aus, bleibt der Grundwert
   // aus dem CSS stehen, statt dass die Flaeche farblos wird.
   document.body.dataset.farbe = D.farbe || 'aktion';
-  if (window.Aufnahme && Aufnahme.laeuft && stand.aufnahme!==null)
+  // Das Bild der Etappe, die gerade verlassen wird - VOR dem Austausch
+  // der Buehne, solange die Karten noch stehen.
+  bildSammeln();
+  const schluss = stand.etappe >= ETAPPEN.length;
+  if (window.Aufnahme && Aufnahme.laeuft && stand.aufnahme!==null && !schluss)
     Aufnahme.merken('etappe', {nr: stand.etappe+1});
-  if (stand.aufnahme===null) startfeld();
-  else ETAPPEN[stand.etappe]();
+  if (stand.aufnahme===null){ _gezeigt = null; startfeld(); }
+  else if (schluss){ _gezeigt = null; mitnehmen(); }
+  else { _gezeigt = stand.etappe; ETAPPEN[stand.etappe](); }
   nav();
+  sichern();
 }

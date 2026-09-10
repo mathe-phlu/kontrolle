@@ -297,7 +297,7 @@ function etappe1einordnen(){
   const els = {};
   const grund = id => id.split('#')[0];
 
-  function mitPlus(id, fehlt){
+  function mitPlus(id){
     // NEU (2026-08-21): Die Karte traegt das Venn als ZEICHNUNG, nicht
     // mehr als Bild - mit den Zahlen, die im ersten Zug eingetragen
     // wurden. Sonst stuenden hier wieder Fragezeichen, obwohl die Werte
@@ -311,25 +311,27 @@ function etappe1einordnen(){
     const bild = el.querySelector('img');
     if (bild && e0){ bild.remove(); el.appendChild(vennBild(e0, false));
                      el.classList.add('vennkarte'); }
-    const d = document.createElement('div');
-    d.className='dop'; d.textContent='+'; d.title='Karte verdoppeln';
-    d.onclick = ev=>{ ev.stopPropagation();
-      const kid = grund(id)+'#'+(++stand.dupl);
-      const kopie = mitPlus(kid, fehlt); els[kid]=kopie;
-      el.parentElement.appendChild(kopie);
-      kopie._x=el._x+14; kopie._y=el._y+14; pos(kopie); merken();
-      if (el.parentElement.classList.contains('feld')) gruppeOrdnen(el.parentElement);
-    };
-    el.appendChild(d);
+    // GEAENDERT (2026-09-10, Rikes Rueckmeldung «das ist muehsam»): Das
+    // «+» ist weg, die Geste selbst ist die Kopie. Dieselbe Regel wie in
+    // den anderen Kapiteln, gemeinsam in flaeche.js (kopierGeste).
+    //
+    // Hier zaehlt sie doppelt: Eine Erhebung kann an MEHREREN Axiomen
+    // scheitern, und ob sie das tut, sieht man erst, wenn sie am ersten
+    // liegt und man die Zahlen im Venn danebenhaelt.
     return el;
   }
-  D.e1.erhebungen.forEach(e=>{ els[e.id] = mitPlus(e.id, e.fehlt); });
+  const erhebungskarte = id => mitPlus(id);
+  D.e1.erhebungen.forEach(e=>{ els[e.id] = erhebungskarte(e.id); });
   Object.keys(stand.karten).filter(id=>id.includes('#')).forEach(id=>{
-    if (!els[id]){
-      const e = D.e1.erhebungen.find(x=>x.id===grund(id));
-      els[id] = mitPlus(id, e && e.fehlt);
-    }
+    if (!els[id]) els[id] = erhebungskarte(id);
   });
+
+  function vorratWahren(){
+    return kopierGeste({
+      tisch, els, bauen: erhebungskarte,
+      ziele: () => FAECHER.map(f => feld.querySelector(`[data-ort="${f.ort}"]`)),
+    });
+  }
 
   // Die drei Axiome sind die Faecher, dazu eines fuer «nichts
   // einzuwenden». Die vier FOLGERUNGEN liegen nur daneben und sind
@@ -362,7 +364,11 @@ function etappe1einordnen(){
     faecherSetzen(feld);
   }
   window._neuzeichnen = felder;
-  window._nachAblegen = ()=>faecherSetzen(feld);
+  window._nachAblegen = ()=>{
+    const geaendert = vorratWahren();
+    faecherSetzen(feld);
+    if (geaendert) merken();
+  };
   felder();
 
   // Die Folgerungen in die dritte Spalte, zum Nachschlagen.

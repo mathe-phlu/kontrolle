@@ -75,7 +75,8 @@ function etappe1(){
        + 'ausliegenden Situationen — aber zueinander: Bilden Sie auch daraus '
        + 'eine Gruppe, nur ohne Situationskarte obendrauf. Es liegen zunächst '
        + 'nicht alle Situationen aus — wer fertig ist oder mehr will, holt '
-       + 'sich weitere.</span>'},
+       + 'sich weitere. Auf jeder Rechnung steht ein <b>=</b>; wer darauf '
+       + 'zeigt, sieht ihr Ergebnis.</span>'},
     'Ihre Zuordnung',
     [{id:'S', name:'Situationen'}, {id:'U', name:'Urnenmodelle'}, {id:'T', name:'Terme'}],
     `<span class="beschriftung">Auf dem Tisch: ${D.stufen[stand.e1stufe]}</span>
@@ -108,12 +109,30 @@ function etappe1(){
   // NEU (2026-08-21): Die Situationskarten tragen ihre Nummer. Nur so
   // laesst sich in Etappe 2 und 3 auf sie zurueckverweisen - dort steht
   // dieselbe Zahl an den Modellkarten.
+  //
+  // NEU (2026-09-09, Rikes Wunsch): Die Termkarten tragen ein «=», das
+  // beim Darueberfahren das Ergebnis zeigt. Rikes Absicht: «So kann man
+  // schauen, ob der term das gleiche gibt ... und dann ueberlegen warum?»
+  // - also der Vergleich ZWEIER Wege derselben Situation, nicht das
+  // Ausrechnen als Selbstzweck.
+  //
+  // Bewusst DIESELBE Bewegung wie die Situationsblase in Etappe 2 und 3
+  // («eher oben als Hilfe, so wie wir es mit den Situationen ab Etappe 2
+  // machen»): eine Marke oben links, nichts wird von selbst eingeblendet.
+  //
+  // Die Urnenkarten bekommen keine. Was ein Urnenbild behauptet, laesst
+  // sich auch ausrechnen (pruefe_urnen.py tut es), aber dann waere das
+  // Bild nicht mehr zu lesen, sondern nur noch aufzudecken.
+  function marke(k){
+    if (k.typ === 'SS')
+      return {text: String(D.anzeige[parseInt(k.id.slice(2))]), art:'sit'};
+    const wert = D.werte && D.werte[k.id];
+    return wert === undefined
+      ? null
+      : {text:'=', art:'sit', titel:'Diese Rechnung ergibt <b>' + wert + '</b>.'};
+  }
   const els = {};
-  D.karten.forEach(k=>{
-    els[k.id] = k.typ === 'SS'
-      ? karte(k.id, {text: String(D.anzeige[parseInt(k.id.slice(2))]), art:'sit'})
-      : karte(k.id);
-  });
+  D.karten.forEach(k=>{ els[k.id] = karte(k.id, marke(k)); });
 
   function kbw(){ return parseFloat(getComputedStyle(document.documentElement)
                     .getPropertyValue('--kb')); }
@@ -130,11 +149,20 @@ function etappe1(){
     const fw = kb*2 + 44;
     let x = 8, hoechste = 58;      // 58 = Hoehe des Winks, Referenzwert
 
+    // GEAENDERT (2026-08-28): 20 statt 8 Pixel Abstand zwischen den
+    // Plaetzen. Seit die Pruefung zwei Kanaele hat, haengt unter jedem
+    // Platz ein Wort zur Situationszuordnung - das braucht einen eigenen
+    // Streifen, sonst liegt es auf der naechsten Karte.
+    // 22 Pixel: gerade so viel, dass die Anzeige (rund 17 Pixel hoch)
+    // vollstaendig in den Spalt passt und nicht auf die naechste Karte
+    // rutscht. Der Kopf braucht dieselbe Luft, deshalb kopfH unten mit
+    // seinem eigenen Rand von 7 gerechnet.
+    const LUFT = 22;
     const paarplaetze = (d, id, zahl, oben, plus) => {
       for (let i=0;i<zahl;i++){
         const pz = document.createElement('div');
         pz.className='paar'; pz.dataset.ort = id+'/p'+i;
-        pz.style.left='7px'; pz.style.top=(oben+i*(kh+8))+'px';
+        pz.style.left='7px'; pz.style.top=(oben+i*(kh+LUFT))+'px';
         pz.style.width=(fw-14)+'px'; pz.style.height=kh+'px';
         if (i===0) pz.innerHTML='<span class="hint">Urnenmodell</span>'
           + '<span class="hint" style="left:auto;right:6px">Term</span>';
@@ -142,7 +170,7 @@ function etappe1(){
       }
       const p = document.createElement('div');
       p.className='feld neu'; p.style.position='absolute';
-      p.style.left='7px'; p.style.top=(oben+zahl*(kh+8))+'px';
+      p.style.left='7px'; p.style.top=(oben+zahl*(kh+LUFT))+'px';
       p.style.width=(fw-14)+'px'; p.style.height='26px';
       p.innerHTML='<span>+ weiteres Paar</span>';
       p.onclick=()=>{ plus(); felder(); };
@@ -153,8 +181,8 @@ function etappe1(){
       const d = document.createElement('div');
       d.className='feld'; d.dataset.ort='g'+gi;
       d.style.left=x+'px'; d.style.top='26px'; d.style.width=fw+'px';
-      const kopfH = kh + 12;
-      const h = kopfH + g.paare*(kh+8) + 32;
+      const kopfH = kh + 7 + LUFT;
+      const h = kopfH + g.paare*(kh+LUFT) + 32;
       d.style.height = h+'px';
       hoechste = Math.max(hoechste, h);
       const kopf = document.createElement('div');
@@ -195,10 +223,28 @@ function etappe1(){
     feld.style.minWidth = (x + fw + 20)+'px';
     feld.style.minHeight = (hoechste + 46)+'px';
 
-    // Karten an ihre Plaetze
+    // Karten an ihre Plaetze.
+    //
+    // FEHLERBEHOBEN (2026-08-28): Der Rueckfall hiess `|| feldS`. Eine
+    // Karte, deren gemerkter Ort es nicht mehr gab, landete damit auf
+    // der Situationsflaeche - auch wenn sie eine Urne oder ein Term war.
+    // Dort raeumt tischOrdnen() sie nie auf, denn es holt sich je
+    // Flaeche nur die Karten der PASSENDEN Sorte. Die Karte lag
+    // unsichtbar irgendwo und war fuer Studierende verschwunden.
+    // Neu geht sie auf ihre EIGENE Quellflaeche zurueck, und der Stand
+    // wird gleich mitkorrigiert - sonst liefe er beim naechsten Mal
+    // wieder auseinander.
+    const sorte = {};
+    D.karten.forEach(k => { sorte[k.id] = k.typ; });
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el = els[id]; if (!el) return;
-      const ziel = document.querySelector(`[data-ort="${s.ort}"]`) || feldS;
+      let ziel = document.querySelector(`[data-ort="${s.ort}"]`);
+      if (!ziel){
+        const heim = ortFuerTyp(sorte[id]);
+        stand.karten[id] = {ort: heim, x:0, y:0, rot:0};
+        s = stand.karten[id];
+        ziel = document.querySelector(`[data-ort="${heim}"]`);
+      }
       ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el);
     });
   }
@@ -248,107 +294,241 @@ function etappe1(){
   tischOrdnen();            // die freigeschalteten Wellen sofort zeigen,
                              // kein Knopf mehr noetig fuer die erste Welle
 
+  // NEU (2026-08-26, Rikes Auftrag): Zuschalten prueft zuerst.
+  //
+  // Begruendung von Rike: Wer mit wenigen Karten anfaengt, soll sehen
+  // koennen, ob das Gelegte traegt, BEVOR er sich mehr auf den Tisch
+  // holt - «wir haben nicht die Zeit, jedes Mal zu schauen, stimmt es,
+  // stimmt es, stimmt es». Weil die Zuordnung Situation-Urne-Term
+  // eindeutig ist, kann die Flaeche das selbst beantworten.
+  //
+  // Kein hartes Sperren: Der erste Klick prueft und haelt an, wenn etwas
+  // fehlt oder falsch liegt; der zweite schaltet trotzdem zu. Wer
+  // absichtlich weitergehen will, wird nicht aufgehalten - er hat den
+  // Befund nur einmal gesehen.
   const mehrstufe = document.getElementById('mehrstufe');
   if (mehrstufe) mehrstufe.onclick = ()=>{
-    stand.e1stufe++;
-    freischalten(stand.e1stufe);
-    merken();
-    etappe1();               // Buehne neu aufbauen: neuer Stufenname, ggf. Knopf weg
+    const zuschalten = ()=>{
+      stand.e1stufe++;
+      freischalten(stand.e1stufe);
+      merken();
+      etappe1();             // Buehne neu aufbauen: neuer Stufenname, ggf. Knopf weg
+    };
+    if (mehrstufe.dataset.trotzdem === 'ja'){ zuschalten(); return; }
+    const p = pruefen();
+    if (p.fertigeWelle){ zuschalten(); return; }
+    mehrstufe.dataset.trotzdem = 'ja';
+    mehrstufe.textContent = 'Trotzdem zuschalten';
+    document.getElementById('befund').textContent +=
+      ' — schauen Sie das noch einmal an, bevor Sie weitere Karten dazunehmen.';
   };
   document.getElementById('zurueckalles').onclick = ()=>{
     stand.karten={}; stand.e1gruppen=[];
     freischalten(stand.e1stufe);
     felder(); tischOrdnen(); merken();
     document.getElementById('befund').textContent='';
+    const m = document.getElementById('mehrstufe');
+    if (m){ delete m.dataset.trotzdem; m.textContent='Weitere Situationen zuschalten'; }
   };
 
-  /* Pruefung, platzweise statt kartenweise.
+  /* Pruefung, platzweise - und in ZWEI getrennten Kanaelen.
 
-     NEU (2026-08-21, Rikes Entscheidung): Ein falsch angelegter
-     Situationskopf machte bisher ALLE Paare darunter falsch, auch wenn
-     das Paar selbst stimmte - das bestraft richtige Arbeit fuer einen
-     Fehler eine Zeile hoeher. Zwei Dinge werden unterschieden:
+     NEU (2026-08-28, Rikes Auftrag). Die Vorgeschichte: Bis hierher
+     trugen die Karten EINEN Rahmen, in dem zwei verschiedene Fragen
+     zusammengefasst waren. Wer Rot sah, wusste nicht, ob Urne und Term
+     nicht zueinander passen oder ob das Paar unter der falschen
+     Situation liegt. Rike: «Was man leicht ueberpruefen kann, ist
+     immer: passt Urne zu Term? Das sind Paerchen, die passen oder
+     passen nicht. Und dann gibt es die zweite Frage, passen diese
+     Paerchen zu der Situation, zu der man sie gelegt hat? Das muesste
+     man anders markieren.»
 
-       haelt das Paar zusammen?   Urne und Term derselben Situation
-       steht es am richtigen Ort? unter dem passenden Kopf
+     Also zwei Kanaele:
 
-     GEAENDERT (2026-08-24, Rikes Umbau der Ablage): Es gibt keine
-     eigene Ablage-Spalte mehr, also auch keinen separaten «fastAblage»-
-     Fall. Der Kopf einer Gruppe wird nicht mehr aus einem gespeicherten
-     `g.sit` gelesen (das lief auseinander, sobald jemand eine
-     Situationskarte nachtraeglich in einen leeren Kopf zog), sondern
-     live aus dem, was tatsaechlich im Kopf liegt.
+       1) DAS PAAR - an den Karten selbst.
+          gruen   Urne und Term gehoeren zusammen (auch: zwei
+                  zusammengehoerige Distraktoren)
+          rot     sie gehoeren nicht zusammen
+          gepunktet  erst eine Karte, noch kein Paar
 
-     Drei Zustaende, nicht mehr vier:
-       richtig (gruen)   Paar stimmt, UND die Situation stimmt (oder es
-                          ist ein Distraktorpaar OHNE Situationskopf -
-                          das ist sein richtiger, endgueltiger Platz)
-       auf dem Weg (ocker) Paar stimmt, aber die Situation fehlt noch
-                          oder ist falsch - oder ein Distraktorpaar liegt
-                          faelschlich UNTER einer Situation
-       falsch (rot)       Karten, die nicht zueinander gehoeren, oder ein
-                          Distraktor mit einer echten Karte gemischt */
-  document.getElementById('fertig').onclick = ()=>{
-    document.querySelectorAll('.k').forEach(k=>
-      k.classList.remove('ok','falsch','fastok'));
+       2) DIE SITUATION - am Platz, mit Rand UND Wort. Sie wird nur
+          beurteilt, wenn das Paar stimmt; ueber ein zerrissenes Paar
+          laesst sich nicht sagen, wohin es gehoert.
+          gruen   passt zu der Situation, unter der es liegt - oder ist
+                  ein Distraktorpaar OHNE Situation, sein richtiger Platz
+          rot     passt nicht zu dieser Situation - oder ein
+                  Distraktorpaar liegt faelschlich unter einer
+          gestrichelt  Situation fehlt noch (kein Fehler, ein Zwischenstand)
 
-    let richtig=0, fast=0, falsch=0, gelegt=0;
-    const setz = (karten, zustand) => {
-      karten.forEach(k=>k.classList.add(zustand==='fast' ? 'fastok' : zustand));
-      gelegt += karten.length;
-      if (zustand==='ok') richtig += karten.length;
-      else if (zustand==='fast') fast += karten.length;
-      else falsch += karten.length;
+     Die Situationskarte im Kopf bekommt ihr eigenes Urteil aus dem, was
+     unter ihr liegt: Zeigen die richtigen Paare der Gruppe alle auf sie,
+     ist sie gruen; zeigt eines woanders hin, ist sie rot.
+
+     WICHTIG fuer die Verlaesslichkeit (das war der eigentliche Fehler,
+     ueber den Rike und Maurus gestolpert sind): Diese Funktion liest
+     NUR den DOM - welche Karte liegt in welchem Platz, welche Karte
+     liegt im Kopf. Kein gespeicherter Zustand, kein Ergebnis von
+     vorhin. Und markenLoeschen() in flaeche.js raeumt bei JEDER
+     Kartenbewegung die alte Anzeige weg, damit auf dem Feld nie ein
+     Urteil steht, das nicht zum aktuellen Bild gehoert. Egal wann
+     jemand drueckt: gezeigt wird der Stand von jetzt.
+
+     Gezaehlt wird ausserdem, was noch nicht beurteilt werden KANN:
+     Karten auf den Quellflaechen (`offen`) und - als Sicherheitsnetz -
+     Karten, die im sortierten Feld liegen, ohne auf einem Platz zu
+     sein (`verirrt`). Ohne diese beiden Zahlen sagte «alles richtig»
+     nichts darueber, ob ueberhaupt schon alles gelegt ist. */
+  function pruefen(){
+    markenLoeschen();
+
+    const sitmarke = (platz, wort, art) => {
+      const m = document.createElement('span');
+      m.className = 'sitmarke ' + art;
+      m.textContent = wort;
+      m.title = wort;            // falls die Platzbreite den Text kuerzt
+      platz.appendChild(m);
     };
+    // Die laufende Nummer einer Karte, ohne Sortenvorsatz: U12a -> 12a,
+    // UD3 -> 3. Damit laesst sich pruefen, ob UD3 und TD3 dasselbe
+    // Distraktorpaar sind - der Generator bildet sie ausdruecklich so.
+    const nummer = k => k.dataset.id.replace(/^(SS|UD|TD|U|T)/, '');
+    const sorte  = k => (k.dataset.id[0] === 'U' ? 'U' : 'T');
+    const kopfVon = gi => {
+      const k = document.querySelector(`[data-ort="g${gi}/sit"] > .k`);
+      return k ? parseInt(k.dataset.id.slice(2)) : null;
+    };
+
+    let paarOk=0, paarFalsch=0, paarHalb=0;
+    let sitOk=0, sitFalsch=0, sitOffen=0;
+    const zeigtAuf = {};        // je Gruppe: worauf ihre richtigen Paare zeigen
 
     document.querySelectorAll('.paar').forEach(platz=>{
       const ort = platz.dataset.ort || '';
-      if (ort.endsWith('/sit')) return;             // der Kopf wird nicht benotet
+      if (ort.endsWith('/sit')) return;          // der Kopf wird unten beurteilt
       const karten = [...platz.querySelectorAll(':scope > .k')];
       if (!karten.length) return;
-      const soll = karten.map(k=>D.loesung[k.dataset.id]);
-
       const gi = parseInt(ort.slice(1));
-      // Live aus dem Kopf lesen, nicht aus einem gespeicherten Feld -
-      // siehe Vermerk oben und bei _e1ablage.
-      const kopfKarte = document.querySelector(`[data-ort="g${gi}/sit"] > .k`);
-      const kopf = kopfKarte ? parseInt(kopfKarte.dataset.id.slice(2)) : null;
 
-      const alleDistraktoren = soll.every(s=>s===0);
-      if (alleDistraktoren){
-        if (karten.length < 2){ setz(karten, 'fast'); return; }
-        // Nicht nur «beides Distraktoren», sondern das ZUSAMMENGEHOERIGE
-        // Paar - der Generator sagt ausdruecklich «Distraktor-Paare:
-        // Urne UDk + Term TDk».
-        const nr = karten.map(k=>k.dataset.id.replace(/^[UT]D/, ''));
-        const passtZusammen = nr[0] === nr[1];
-        // Ein Distraktorpaar gehoert NIE unter eine Situation - das ist
-        // sein richtiger Platz, keine Zwischenstation.
-        setz(karten, (passtZusammen && kopf===null) ? 'ok' : 'fast');
+      // ── Kanal 1: haelt das Paar zusammen?
+      if (karten.length === 1){
+        karten[0].classList.add('halb'); paarHalb++;
+        platz.classList.add('sit-warte');
+        sitmarke(platz, 'Paar unvollständig', '');
         return;
       }
-      if (soll.some(s=>s===0)){ setz(karten, 'falsch'); return; }  // Distraktor mit echter Karte gemischt
+      const soll = karten.map(k => D.loesung[k.dataset.id]);
+      const beideD = soll.every(s => s === 0);
+      let paarStimmt;
+      if (sorte(karten[0]) === sorte(karten[1])) paarStimmt = false;  // zwei Urnen, zwei Terme
+      else if (beideD)          paarStimmt = nummer(karten[0]) === nummer(karten[1]);
+      else if (soll.some(s=>s===0)) paarStimmt = false;               // Distraktor mit echter Karte
+      else                      paarStimmt = soll[0] === soll[1];
+      karten.forEach(k => k.classList.add(paarStimmt ? 'ok' : 'falsch'));
+      if (paarStimmt) paarOk++; else paarFalsch++;
 
-      if (karten.length===1){
-        if (kopf!==null && soll[0]===kopf) setz(karten,'ok');
-        else if (kopf!==null) setz(karten,'falsch');       // unter der falschen Situation
-        else setz(karten,'fast');                            // richtig, aber noch ohne Partner/Situation
+      // ── Kanal 2: passt das Paar zu der Situation, unter der es liegt?
+      if (!paarStimmt){
+        platz.classList.add('sit-warte');
+        sitmarke(platz, 'erst das Paar klären', '');
         return;
       }
-      const haeltZusammen = soll[0]===soll[1];
-      if (!haeltZusammen){ setz(karten,'falsch'); return; }
-      if (kopf===null){ setz(karten,'fast'); return; }        // Paar stimmt, Situation fehlt noch
-      setz(karten, soll[0]===kopf ? 'ok' : 'fast');
+      const kopf = kopfVon(gi);
+      if (beideD){
+        if (kopf === null){
+          platz.classList.add('sit-ok'); sitOk++;
+          sitmarke(platz, 'ohne Situation — richtig so', 'ok');
+        } else {
+          platz.classList.add('sit-falsch'); sitFalsch++;
+          sitmarke(platz, 'gehört unter keine Situation', 'falsch');
+        }
+        return;
+      }
+      (zeigtAuf[gi] = zeigtAuf[gi] || []).push(soll[0]);
+      if (kopf === null){
+        platz.classList.add('sit-offen'); sitOffen++;
+        sitmarke(platz, 'Situation fehlt noch', 'offen');
+      } else if (soll[0] === kopf){
+        platz.classList.add('sit-ok'); sitOk++;
+        sitmarke(platz, 'passt zu dieser Situation', 'ok');
+      } else {
+        platz.classList.add('sit-falsch'); sitFalsch++;
+        sitmarke(platz, 'passt nicht zu dieser Situation', 'falsch');
+      }
+    });
+
+    // Die Situationskarte im Kopf: Urteil aus dem, was unter ihr liegt.
+    // Nur die RICHTIGEN Paare zaehlen - ein zerrissenes Paar sagt nichts
+    // ueber die Situation aus, und die Karte dafuer rot zu faerben
+    // bestrafte einen Fehler eine Zeile tiefer.
+    document.querySelectorAll('[data-ort$="/sit"]').forEach(kopfPlatz=>{
+      const k = kopfPlatz.querySelector(':scope > .k');
+      if (!k) return;
+      const gi = parseInt((kopfPlatz.dataset.ort || '').slice(1));
+      const ziele = zeigtAuf[gi] || [];
+      if (!ziele.length) return;                 // nichts Beurteilbares darunter
+      const nr = parseInt(k.dataset.id.slice(2));
+      const stimmt = ziele.every(z => z === nr);
+      k.classList.add(stimmt ? 'sitok' : 'sitfalsch');
+      kopfPlatz.classList.add(stimmt ? 'sit-ok' : 'sit-falsch');
+      sitmarke(kopfPlatz, stimmt ? 'passt zu den Paaren darunter'
+                                 : 'passt NICHT zu den Paaren darunter',
+                          stimmt ? 'ok' : 'falsch');
     });
 
     stand.geprueft = true;
-    const b = document.getElementById('befund');
-    if (!gelegt){ b.textContent = 'Es liegt noch nichts in den Feldern.'; return; }
-    const satz = [`${richtig} von ${gelegt} richtig.`];
-    if (fast) satz.push(`${fast} auf einem guten Weg — Paar oder Situation `
-      + `noch nicht vollständig.`);
-    b.textContent = satz.join(' ');
-  };
+
+    // Was von der laufenden Welle liegt noch auf einer Quellflaeche?
+    const QUELLORTE = ['tischS','tischU','tischT'];
+    const offen = D.karten.filter(k =>
+      (D.stufe[k.id] ?? 0) <= stand.e1stufe
+      && QUELLORTE.includes((stand.karten[k.id]||{}).ort)).length;
+    // Sicherheitsnetz: Karten, die im sortierten Feld liegen, ohne auf
+    // einem Platz zu sein. Seit der Reparatur in flaeche.js/ablegen()
+    // sollte das nicht mehr vorkommen; wenn doch, wird es gesagt statt
+    // verschwiegen - vorher fielen solche Karten stillschweigend aus
+    // der Zaehlung, und «alles richtig» war schlicht falsch.
+    const verirrt = feld.querySelectorAll(':scope > .k').length;
+
+    const satz = [];
+    const paare = paarOk + paarFalsch;
+    if (!paare && !paarHalb) satz.push('Es liegt noch nichts in den Feldern.');
+    else {
+      satz.push(`Paare: ${paarOk} von ${paare} passen zusammen.`);
+      if (paarHalb) satz.push(paarHalb === 1
+        ? 'Eine Karte liegt noch allein auf einem Platz.'
+        : `${paarHalb} Karten liegen noch allein auf einem Platz.`);
+      if (sitOk || sitFalsch || sitOffen){
+        const t = [`Zuordnung: ${sitOk} richtig`];
+        if (sitFalsch) t.push(`${sitFalsch} unter der falschen Situation`);
+        if (sitOffen)  t.push(`${sitOffen} noch ohne Situation`);
+        satz.push(t.join(', ') + '.');
+      }
+    }
+    if (offen) satz.push(`Noch auf dem Tisch: ${offen} `
+      + (offen === 1 ? 'Karte.' : 'Karten.'));
+    if (verirrt) satz.push((verirrt === 1
+        ? 'Eine Karte liegt lose im Feld'
+        : `${verirrt} Karten liegen lose im Feld`)
+      + ', auf keinem Platz — bitte auf einen Platz ziehen.');
+
+    const fertigeWelle = paare > 0 && !offen && !verirrt && !paarHalb
+                         && !paarFalsch && !sitFalsch && !sitOffen;
+    if (fertigeWelle){
+      satz.push('Alles, was ausliegt, ist richtig zugeordnet.');
+      // Der Knopf faellt aus dem «Trotzdem»-Zustand zurueck, sobald der
+      // Stand stimmt - sonst bliebe die Warnung stehen, nachdem sie
+      // erledigt ist.
+      const m = document.getElementById('mehrstufe');
+      if (m && m.dataset.trotzdem === 'ja'){
+        delete m.dataset.trotzdem;
+        m.textContent = 'Weitere Situationen zuschalten';
+      }
+    }
+    document.getElementById('befund').textContent = satz.join(' ');
+    return {paarOk, paarFalsch, paarHalb, sitOk, sitFalsch, sitOffen,
+            offen, verirrt, fertigeWelle};
+  }
+  document.getElementById('fertig').onclick = pruefen;
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=1; los(); };
   loesungsKnopf(() => etappe1());
 }
@@ -406,6 +586,13 @@ function etappe2(){
   const modelle = D.karten.filter(k=>k.typ==='U'
     && (stand.loesungOffen || (D.stufe[k.id] ?? 0) <= (stand.e1stufe ?? 0))).map(k=>k.id);
   const els = {};
+  /* NEU (2026-09-10, siehe merken() in der Flaeche): Diese Etappe zeigt
+     nur die Modellkarten. Ohne diese Angabe strich merken() beim ersten
+     Ablegen alle Situations- und Termkarten aus dem Stand - und damit
+     die Sortierung von Etappe 1. Gemeldet wird die GRUNDkennung, damit
+     Kopien (id#N) mitzaehlen und beim Weglegen weiterhin verschwinden. */
+  const _meine = new Set(modelle);
+  window._zustaendig = id => _meine.has(id.split('#')[0]);
   modelle.forEach(id=>{
     const n = D.loesung[id];
     // Von Anfang an, nicht mehr auf Knopfdruck.
@@ -441,6 +628,10 @@ function etappe2(){
     p.onclick=()=>{ stand.gruppen.push({name:'',karten:[]}); gruppen(); };
     feld.appendChild(p);
     feld.style.minHeight=(26+Math.ceil((i+1)/sp)*(fh+10)+20)+'px';
+    const heimatlos = [];
+    // Die Hoehen oben sind VORgerechnet, fuer leere Gruppen. Wie hoch
+    // eine Gruppe wirklich wird, weiss erst gitterSetzen() - nach dem
+    // Einsetzen der Karten unten wird deshalb noch einmal gestapelt.
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el=els[id]; if(!el) return;
       // FEHLERBEHOBEN (2026-08-24): Etappe 1 legt frisch freigeschaltete
@@ -452,7 +643,21 @@ function etappe2(){
       // Direkt zu Etappe 2 gesprungen, «Modellkarten» komplett leer.
       const ziel = s.ort.startsWith('tisch') ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
       if(ziel){ ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el); }
+      /* FEHLERBEHOBEN (2026-09-10, zweite Haelfte von Rikes Bericht:
+         «da war dann irgendwie keine Urnenkarte zu sehen»): Ein Modell,
+         das in Etappe 1 in einer Gruppe liegt, traegt den Ort «g0/p0».
+         Etappe 2 kennt nur «g0» - der querySelector fand nichts, `ziel`
+         blieb null, und die Karte erschien NIRGENDS. Wer in Etappe 1
+         gruendlich sortiert hatte, fand hier einen leeren Tisch.
+         Der Ort gehoert einer anderen Etappe; hier kommt die Karte
+         zurueck auf den Tisch, wo der Auftrag sie erwartet («Nehmen Sie
+         die Modellkarten wieder auf»). */
+      else { el.dataset.fremdlage = JSON.stringify(s); heimatlos.push(el); }
     });
+    // Sie liegen hier auf dem Tisch, aber ihr Platz drueben bleibt
+    // stehen, solange sie hier niemand anfasst - siehe merken().
+    if (heimatlos.length) streuen(heimatlos, tisch);
+    gitterSetzen(feld);
   }
   window._neuzeichnen = gruppen;      // sonst zeichnet Etappe 1 hier hinein
   gruppen();
@@ -463,6 +668,9 @@ function etappe2(){
     const ziel = s.ort.startsWith('tisch') ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
     if(ziel){ ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el); }
   });
+  // Nach dem Ausstreuen und Einsetzen steht der Stand - erst jetzt
+  // merken, sonst faellt gerade Korrigiertes wieder heraus.
+  merken();
   // Die Loesung setzt nur, WELCHE Gruppe eine Karte traegt - WO sie
   // innerhalb der Gruppe liegt, richtet dasselbe Raster her, das auch
   // beim Ablegen von Hand greift.
@@ -493,7 +701,14 @@ function etappe2(){
         + `Wovon ist die Strategie dann eine Eigenschaft?`
       : 'Sie benennen die Gruppen selbst. Es gibt keine richtige Zahl.';
   }
-  window._nachAblegen = streuungMelden;
+  /* NEU (2026-09-10, Rueckmeldung der Studierenden): gitterSetzen() muss
+     mit. gruppeOrdnen() machte beim Ablegen die eine Gruppe hoeher, und
+     die Zeile darunter blieb stehen, wo sie war - «die Gruppen haben
+     sich überschnitten». Der Haken traegt nur EINE Funktion, und
+     streuungMelden() stand schon darin; deshalb beides hier zusammen
+     und nicht zweimal gesetzt (das zweite gewinnt sonst stillschweigend
+     - genau der Fehler, der beim Bauen dieser Zeile passiert ist). */
+  window._nachAblegen = ()=>{ gitterSetzen(feld); streuungMelden(); };
   streuungMelden();
 
   document.getElementById('weiter').onclick = ()=>{ stand.etappe=2; los(); };
@@ -583,6 +798,10 @@ function etappe3(){
         : 'Später können Sie die übrigen dazunehmen.'}</span>`);
 
   const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
+  // NEU (2026-09-10): els fuehrt die Karten dieser Etappe. Vorher gab
+  // es hier keine Buchfuehrung - deshalb konnten die «+»-Kopien beim
+  // Neuzeichnen verschwinden. kopierGeste() braucht sie ohnehin.
+  const els = {};
   const kb = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb'));
   const bb = feld.clientWidth||520, fw=Math.min(bb-16,kb*2+30), fh=kb*1.5;
   const sp = Math.max(1, Math.floor((bb-8)/(fw+10)));
@@ -614,20 +833,46 @@ function etappe3(){
     ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el);
   });
   feld.style.minHeight=(26+Math.ceil(stand.gruppen.length/sp)*(fh+10)+20)+'px';
+  // Wie in Etappe 2: die Hoehen oben sind fuer LEERE Gruppen gerechnet.
+  // Hier liegen die Karten aus Etappe 2 schon drin, also muss gleich
+  // beim Aufbau gestapelt werden - und nach jedem Ablegen wieder.
+  window._nachAblegen = ()=>{
+    const geaendert = vorratWahren();
+    gitterSetzen(feld);
+    if (geaendert) merken();
+  };
 
   // FEHLERBEHOBEN: Beim Dazulegen des zweiten Stapels wurden die schon
   // gelegten Karten uebersprungen - und weil die Buehne neu aufgebaut
   // wird, verschwanden sie ganz. Jetzt kommen sie an ihren Platz zurueck.
+  /* GEAENDERT (2026-09-10, Rikes Rueckmeldung «das ist muehsam»): Das
+     «+» ist weg, die Geste selbst ist die Kopie - dieselbe Regel wie in
+     den anderen Kapiteln, gemeinsam in flaeche.js (kopierGeste).
+
+     Der alte Knopf hatte hier zusaetzlich einen stillen Fehler: Die
+     Kopie wurde zwar gebaut und abgelegt, aber NIE in els eingetragen.
+     Beim naechsten Neuzeichnen (Fenstergroesse, Loesung, Etappenwechsel)
+     fand felder() kein Element zu ihrer Kennung - die Kopie war weg,
+     ihr Eintrag im Stand blieb. Das Zaehlwerk stimmte danach nicht mehr.
+     Mit der gemeinsamen Geste kann das nicht mehr passieren: Sie fuehrt
+     els selbst. */
+  const marken = {};
+  liste.forEach(x=>{ marken[x.id] = {text:x.marke, art:x.art}; });
+  const grund3 = id => id.split('#')[0];
+  const aufgabenkarte = id =>
+    karte(id, marken[grund3(id)] || {text:'', art:'skript'});
+
+  function vorratWahren(){
+    return kopierGeste({
+      tisch, els, bauen: aufgabenkarte,
+      ziele: () => [...feld.querySelectorAll(':scope > .feld')],
+    });
+  }
+
   const neue = [];
   liste.forEach(x=>{
-    const el = karte(x.id, {text:x.marke, art:x.art});
-    const d = document.createElement('div');
-    d.className='dop'; d.textContent='+'; d.title='Karte verdoppeln';
-    d.onclick = ev=>{ ev.stopPropagation();
-      const kopie = karte(x.id+'#'+(++stand.dupl), {text:x.marke, art:x.art});
-      el.parentElement.appendChild(kopie);
-      kopie._x = el._x + 16; kopie._y = el._y + 16; pos(kopie); merken(); };
-    el.appendChild(d);
+    const el = aufgabenkarte(x.id);
+    els[x.id] = el;
     const s = stand.karten[x.id];
     if (s){
       const ziel = s.ort==='tisch' ? tisch : feld.querySelector(`[data-ort="${s.ort}"]`);
@@ -636,6 +881,7 @@ function etappe3(){
     } else neue.push(el);
   });
   if (neue.length) streuen([...tisch.querySelectorAll('.k'), ...neue], tisch);
+  gitterSetzen(feld);
   merken();
   const w = document.getElementById('wechsel');
   if (w) w.onclick=()=>{

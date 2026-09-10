@@ -173,17 +173,21 @@ function etappe1(){
    nebeneinanderliegen - deshalb alle sechs, nicht eine Auswahl.
    M2 traegt alle zehn Ereignisse, M10k genau eines. */
 /* Fertig sortiertes Brett fuer loesungsKnopf() - jedes Ereignis in
-   jede Menge, die es traegt (D.e2.traegt). Traegt ein Ereignis mehrere
-   Mengen, braucht es dieselben Kartenkopien wie beim Legen von Hand -
-   der Suffix ist frei waehlbar, grund() in etappe2() liest nur, was vor
-   dem ersten «#» steht. */
+   jede Menge, die es traegt (D.e2.traegt).
+
+   GEAENDERT (2026-09-10, Rikes Auftrag «das Original bleibt liegen»):
+   In den Reihen liegen ausschliesslich KOPIEN (id#…), nie die
+   Vorratskarte selbst - genau so, wie ein von Hand gelegtes Brett jetzt
+   aussieht. Die zehn Vorratskarten stehen absichtlich NICHT in diesem
+   Stand; sie zaehlen dadurch beim Zeichnen als «neu» und werden auf den
+   Tisch gestreut, wo sie hingehoeren. Der Suffix ist frei waehlbar,
+   grund() liest nur, was vor dem ersten «#» steht. */
 function _loesungStandE2(){
   const karten = {};
   let n = 0;
   D.e2.ereignisse.forEach(r=>{
-    (D.e2.traegt[r] || []).forEach((m, i)=>{
-      const id = i === 0 ? r : (r + '#loesung' + (++n));
-      karten[id] = {ort:m, x:0, y:0, rot:0};
+    (D.e2.traegt[r] || []).forEach(m=>{
+      karten[r + '#loesung' + (++n)] = {ort:m, x:0, y:0, rot:0};
     });
   });
   return {karten};
@@ -199,9 +203,12 @@ function etappe2(){
        + 'in der es sich hinschreiben lässt — und <b>schreiben Sie es dort '
        + 'auch hin</b>, als Teilmenge dieser Ergebnismenge. '
        + '<span class="zart">Das Feld dafür erscheint, sobald die Karte in '
-       + 'einer Menge liegt. Passt das Ereignis in mehrere, legen Sie mit '
-       + 'dem <b>+</b> eine zweite Kopie an — und schreiben Sie es dort '
-       + 'anders hin. Passt es in keine, lassen Sie es liegen. Es liegen '
+       + 'einer Menge liegt. Die Karte auf dem Tisch <b>bleibt liegen</b> — '
+       + 'nach rechts wandert eine Kopie. Dasselbe Ereignis passt oft in '
+       + 'mehrere Mengen; ziehen Sie es einfach noch einmal hinüber und '
+       + 'schreiben Sie es dort anders hin. Wollen Sie eine Kopie wieder '
+       + 'loswerden, ziehen Sie sie zurück auf den Tisch. Passt ein '
+       + 'Ereignis in keine Menge, lassen Sie es liegen. Es liegen '
        + 'zunächst nicht alle Ereignisse aus — wer fertig ist oder mehr '
        + 'will, holt sich weitere.</span>'},
     'Ereignisse', 'Die sechs Mengen, die passen',
@@ -262,12 +269,21 @@ function etappe2(){
   const reihenSetzen2 = () => { reihenSetzen(feld, 0.72); teilmengenZeigen(); };
 
   window._neuzeichnen = reihen;
-  window._nachAblegen = reihenSetzen2;
+  // Nach jedem Ablegen zuerst den Vorrat wahren (siehe vorratWahren),
+  // dann die Reihen setzen - die frisch entstandene Kopie soll gleich
+  // mit ins Raster. merken() zuletzt, damit die Kopie und die
+  // zurueckgelegte Vorratskarte mit ihren endgueltigen Plaetzen im
+  // Stand stehen.
+  window._nachAblegen = () => {
+    const geaendert = vorratWahren();
+    reihenSetzen2();
+    if (geaendert) merken();
+  };
 
-  D.e2.ereignisse.forEach(id=>{ els[id] = mitPlus(id); });
+  D.e2.ereignisse.forEach(id=>{ els[id] = ereigniskarte(id); });
   // Kopien aus einem frueheren Besuch wiederherstellen
   Object.keys(stand.karten).filter(id=>id.includes('#')).forEach(id=>{
-    if (!els[id]) els[id] = mitPlus(id);
+    if (!els[id]) els[id] = ereigniskarte(id);
   });
 
   /* Das Ereignis als TEILMENGE hinschreiben - Rikes Idee vom
@@ -287,9 +303,14 @@ function etappe2(){
     feld.value = (stand.teilmenge || {})[id] || '';
     feld.addEventListener('pointerdown', e => e.stopPropagation());
     feld.addEventListener('click', e => e.stopPropagation());
+    // GEAENDERT (2026-09-10): Geschrieben wird unter el.dataset.id, nicht
+    // unter der Kennung von damals. vorratWahren() TAUFT eine Karte um -
+    // aus der herübergezogenen Vorratskarte wird die Kopie -, und ein
+    // fest eingeschlossenes `id` haette den Text danach weiter unter der
+    // alten Kennung abgelegt.
     feld.addEventListener('input', () => {
       stand.teilmenge = stand.teilmenge || {};
-      stand.teilmenge[id] = feld.value;
+      stand.teilmenge[el.dataset.id] = feld.value;
     });
     kasten.appendChild(feld);
     el.appendChild(kasten);
@@ -306,20 +327,27 @@ function etappe2(){
     });
   }
 
-  function mitPlus(id){
+  function ereigniskarte(id){
     const el = karte(id);
     teilmengenfeld(el, id);
-    const d = document.createElement('div');
-    d.className = 'dop'; d.textContent = '+'; d.title = 'Karte verdoppeln';
-    d.onclick = ev => { ev.stopPropagation();
-      const kid = grund(id) + '#' + (++stand.dupl);
-      const kopie = mitPlus(kid); els[kid] = kopie;
-      el.parentElement.appendChild(kopie);
-      kopie._x = el._x + 14; kopie._y = el._y + 14; pos(kopie); merken();
-      if (el.parentElement.classList.contains('feld')) reihenSetzen2();
-    };
-    el.appendChild(d);
     return el;
+  }
+
+  /* Die Regel steht jetzt in der gemeinsamen Flaeche (kopierGeste),
+     weil vier Kapitel sie brauchen. Hier bleibt nur, was an DIESER
+     Etappe besonders ist: die Reihen sind die Ziele, und der
+     geschriebene Teilmengentext muss beim Umtaufen mitwandern. */
+  function vorratWahren(){
+    return kopierGeste({
+      tisch, els, bauen: ereigniskarte,
+      ziele: () => D.e2.mengen.map(m => feld.querySelector(`[data-ort="${m}"]`)),
+      // alt -> neu; neu === null heisst: die Kopie wurde weggelegt.
+      mit: (alt, neu) => {
+        if (!stand.teilmenge || !(alt in stand.teilmenge)) return;
+        if (neu) stand.teilmenge[neu] = stand.teilmenge[alt];
+        delete stand.teilmenge[alt];
+      },
+    });
   }
 
   reihen();
@@ -337,6 +365,11 @@ function etappe2(){
 
   document.getElementById('zurueck').onclick = ()=>{
     stand.karten = {}; stand.dupl = 0;
+    // NEU (2026-09-10): Auch die geschriebenen Teilmengen gehen mit.
+    // Sie standen auf den Kopien, und die sind jetzt weg - stehen
+    // bliebe sonst Text ohne Karte, der bei der naechsten Kopie mit
+    // derselben Kennung wieder auftauchte.
+    stand.teilmenge = {};
     document.getElementById('befund').textContent = '';
     etappe2();
   };
@@ -406,9 +439,17 @@ function etappe3(){
     const b = document.getElementById('buehne');
     b.innerHTML = `<div class="start">
       <h2>Etappe 3 · Übertragen</h2>
-      <p style="color:var(--matt)">Sie wissen jetzt, woran eine Ergebnismenge
-         taugt — und dass eine gültige noch lange nicht für jede Frage
-         brauchbar ist. Woran wollen Sie das erproben?</p>
+      <!-- GEAENDERT (2026-09-10, Maurus' Rueckmeldung «sprachlich
+           komisch»): Hier stand «woran eine Ergebnismenge taugt». Man
+           sagt «wozu etwas taugt» oder «woran man ERKENNT, ob es taugt» -
+           «woran es taugt» ist beides zugleich und deshalb keins von
+           beidem. Gemeint war das Erkennen: Etappe 1 hat die drei
+           Proben geliefert. Und «Woran wollen Sie das erproben?» stand
+           unmittelbar danach; zweimal «woran» in zwei Saetzen, in
+           verschiedener Bedeutung. -->
+      <p style="color:var(--matt)">Sie wissen jetzt, woran man erkennt, ob
+         eine Ergebnismenge taugt — und dass eine gültige noch lange nicht
+         für jede Frage brauchbar ist. Wo wollen Sie das erproben?</p>
       <div class="wahl" data-w="a"><b>In der Eisdiele bleiben</b>
         <span>Zwei weitere Bestellungen, dieselbe Maschinerie. Eine kleine
         Änderung an der Situation — und plötzlich passen andere Karten.
@@ -436,15 +477,19 @@ function etappe3(){
 
 /* Weg A — in der Eisdiele bleiben. Situationen B und C. */
 /* Fertig sortiertes Brett fuer loesungsKnopf() - welche Mengen passen
-   zu Situation B und C (D.e3.wegA.gueltig). Eine Menge, die zu beiden
-   passt, braucht eine Kartenkopie fuer die zweite Situation. */
+   zu Situation B und C (D.e3.wegA.gueltig).
+
+   GEAENDERT (2026-09-10, wie in Etappe 2): In den Situationsfeldern
+   liegen ausschliesslich KOPIEN (id#…). Die Mengenkarten selbst stehen
+   absichtlich NICHT in diesem Stand - sie zaehlen dadurch beim Zeichnen
+   als «neu» und werden auf den Tisch gestreut. So sieht die gezeigte
+   Loesung genau so aus wie ein von Hand richtig gelegtes Brett. */
 function _loesungStandE3a(){
   const karten = {};
   let n = 0;
   D.e3.wegA.situationen.forEach(s=>{
     (D.e3.wegA.gueltig[s] || []).forEach(m=>{
-      const id = (m in karten) ? (m + '#loesung' + (++n)) : m;
-      karten[id] = {ort:s, x:0, y:0, rot:0};
+      karten[m + '#loesung' + (++n)] = {ort:s, x:0, y:0, rot:0};
     });
   });
   return {karten};
@@ -457,8 +502,11 @@ function etappe3a(){
   const mehrDa = stand.e3astufe < D.e3.wegA.stufen.length - 1;
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Zwei weitere Bestellungen',
     text:'Dieselbe Eisdiele, zwei andere Bestellungen. Welche Mengenkarten '
-       + 'passen jetzt? <span class="zart">Achtung: Eine Karte kann zu '
-       + 'beiden passen — legen Sie sie dann mit dem <b>+</b> zweimal. '
+       + 'passen jetzt? <span class="zart">Die Karte auf dem Tisch '
+       + '<b>bleibt liegen</b> — nach rechts wandert eine Kopie. Eine '
+       + 'Karte kann zu <b>beiden</b> Situationen passen; ziehen Sie sie '
+       + 'dann einfach zweimal hinüber. Wollen Sie eine Kopie wieder '
+       + 'loswerden, ziehen Sie sie zurück auf den Tisch. '
        + 'Situation C liegt noch nicht aus — wer mit B fertig ist, holt '
        + 'sie sich.</span>'},
     'Alle Mengenkarten', 'Situation B und C',
@@ -483,23 +531,30 @@ function etappe3a(){
   const els = {};
   const grund = id => id.split('#')[0];
 
-  function mitPlus(id){
-    const el = karte(id);
-    const d = document.createElement('div');
-    d.className='dop'; d.textContent='+'; d.title='Karte verdoppeln';
-    d.onclick = ev=>{ ev.stopPropagation();
-      const kid = grund(id)+'#'+(++stand.dupl);
-      const kopie = mitPlus(kid); els[kid]=kopie;
-      el.parentElement.appendChild(kopie);
-      kopie._x=el._x+14; kopie._y=el._y+14; pos(kopie); merken();
-      if (el.parentElement.classList.contains('feld')) gruppeOrdnen(el.parentElement);
-    };
-    el.appendChild(d);
-    return el;
+  /* Dieselbe Regel wie in Etappe 2 (siehe vorratWahren() dort, wo sie
+     ausfuehrlich begruendet steht): Karten OHNE «#» sind Vorratskarten
+     und liegen immer auf dem Tisch, Karten MIT «#» sind Kopien und
+     liegen immer in einem Situationsfeld.
+
+     GEAENDERT (2026-09-10): Auch hier ist das «+» weg. Eine Mengenkarte,
+     die zu B UND C passt, ist in dieser Etappe der Normalfall und nicht
+     die Ausnahme - erst recht mühsam war es also, sie vorher von Hand
+     verdoppeln zu muessen. Und was hier zusaetzlich zaehlt: Ob eine
+     Karte auch zur zweiten Situation passt, entscheidet sich beim
+     Vergleichen der beiden - also erst, wenn sie in der ersten liegt. */
+  function mengenkarte(id){ return karte(id); }
+
+  function vorratWahren(){
+    return kopierGeste({
+      tisch, els, bauen: mengenkarte,
+      ziele: () => D.e3.wegA.situationen.map(
+        sit => feld.querySelector(`[data-ort="${sit}"]`)),
+    });
   }
-  alle.forEach(id=>{ els[id]=mitPlus(id); });
+
+  alle.forEach(id=>{ els[id]=mengenkarte(id); });
   Object.keys(stand.karten).filter(id=>id.includes('#')).forEach(id=>{
-    if (!els[id]) els[id]=mitPlus(id); });
+    if (!els[id]) els[id]=mengenkarte(id); });
 
   function felder(){
     feld.querySelectorAll('.feld').forEach(d=>d.remove());
@@ -524,7 +579,15 @@ function etappe3a(){
     faecherSetzen(feld);
   }
   window._neuzeichnen = felder;
-  window._nachAblegen = ()=>faecherSetzen(feld);
+  // Erst den Vorrat wahren, dann die Faecher setzen - die frisch
+  // entstandene Kopie soll gleich mit ins Raster. merken() zuletzt,
+  // damit Kopie und zurueckgelegte Vorratskarte mit ihren endgueltigen
+  // Plaetzen im Stand stehen.
+  window._nachAblegen = ()=>{
+    const geaendert = vorratWahren();
+    faecherSetzen(feld);
+    if (geaendert) merken();
+  };
   felder();
   const neu = sichtbar.filter(id=>!(id in stand.karten)).map(id=>els[id]);
   if (neu.length){ streuen(neu, tisch); merken(); }
