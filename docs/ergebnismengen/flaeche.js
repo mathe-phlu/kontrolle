@@ -508,6 +508,26 @@ function reiheOrdnen(d, kopfAnteil){
   const alle = [...d.querySelectorAll(':scope > .k')];
   const kopf = alle.find(k => k.classList.contains('kopfkarte'));
   if (kopf){ kopf._rot = 0; kopf._x = 8; kopf._y = 8; pos(kopf); }
+
+  /* FEHLERBEHOBEN (2026-09-14, Maurus' Rueckmeldung zu Kapitel 2,
+     Etappe 2: «Die blauen Kaertchen werden nicht groesser beim
+     Rollover»).
+
+     Sie wurden groesser - nur zu wenig, um es zu bemerken. Der
+     Reihenkopf liegt auf kopfAnteil der Kartenbreite (in Kapitel 2:
+     0,72), und die Lupe im Stylesheet stand auf festen 1,5. Gemessen
+     bei --kb 132: eine bewegliche Karte wuchs unter der Lupe von 132
+     auf 198 Punkte, die Mengenkarte nur von 95 auf 143 - also KLEINER
+     als eine ungelupte Karte daneben, obwohl sie die dichteste auf der
+     Flaeche ist (Vorschrift und ausgeschriebenes Omega).
+
+     Der feste Faktor war der Fehler: Er muss die Verkleinerung des
+     Kopfes ausgleichen, sonst haengt die Lesbarkeit an einer Zahl, die
+     das Kapitel gar nicht kennt. LUPE/kopfAnteil bringt den Kopf auf
+     genau dieselbe Endgroesse wie jede andere gelupte Karte. */
+  const kopfBild = d.querySelector(':scope > .reihenkopf');
+  if (kopfBild) kopfBild.style.setProperty('--kopflupe',
+                                           LUPE / (kopfAnteil || 0.72));
   const karten = alle.filter(k => k !== kopf);
   const platz = d.clientWidth - links - 10;
 

@@ -56,12 +56,41 @@ function etappe1(){
   if (stand.e1stufe === undefined) stand.e1stufe = 0;
   const mehrDa = stand.e1stufe < D.e1.stufen.length - 1;
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 1 · Ordnen',
+    /* GEAENDERT (2026-09-16, Rikes Entscheidung zu Maurus' Punkt 5).
+       Zwei Aenderungen, und die zweite ist die wichtigere.
+
+       1 · «kaputt» ist weg. Maurus' Einwand ist keine Stilfrage: KEINE
+       dieser Karten ist kaputt. Jede ist eine wohlgeformte Menge mit
+       einem nachvollziehbaren Gedanken auf der Rueckseite («Ich schreibe
+       auf, was mich interessiert»), und X4 ist sogar eine tadellose
+       Ergebnismenge - von einem ANDEREN Zufallsexperiment, wie der
+       Generator selbst vermerkt. «Kaputt» behauptet einen Defekt, wo es
+       um PASSUNG geht.
+
+       2 · Die zwei Fragen sind weg. Hier stand «Prüfen Sie jede Karte an
+       zwei Fragen: Kommt jeder mögliche Ausgang darin vor? Und kommt
+       jeder nur einmal vor?» - damit schenkte der Auftrag beide
+       Bedingungen her, bevor jemand eine Karte anfasste. Genau das
+       sollten die Studierenden selbst finden. Rike: «Sie sollen sich
+       eigentlich selber überlegen, wann eine Ergebnismenge richtig ist
+       und wann nicht … diese Frage, warum stimmt es nicht, die soll
+       diskutiert werden.»
+
+       Nebenbei war der Satz auch unvollstaendig: Er nannte zwei
+       Bedingungen, der Kartensatz traegt VIER Fehlerarten
+       (unvollstaendig, ueberlappend, nicht wohldefiniert, enthaelt
+       Unmoegliches). Wer genau die zwei gestellten Fragen anwandte,
+       nahm X4 durch.
+
+       Die Aufloesung bleibt, wo sie war: hinter dem Pruefknopf, auf
+       Verlangen, Karte fuer Karte. */
     text:'Diese Karten behaupten alle dasselbe: Sie schreiben auf, was bei '
-       + 'Tims Bestellung herauskommen kann. <b>Manche davon sind kaputt.</b> '
-       + '<span class="zart">Prüfen Sie jede Karte an zwei Fragen: Kommt '
-       + '<b>jeder</b> mögliche Ausgang darin vor? Und kommt jeder nur '
-       + '<b>einmal</b> vor? Es liegen zunächst nicht alle Karten aus — wer '
-       + 'fertig ist oder mehr will, holt sich weitere.</span>'},
+       + 'Tims Bestellung herauskommen kann. <b>Bei welchen stimmt das — und '
+       + 'bei welchen nicht?</b> '
+       + '<span class="zart">Und vor allem: <b>warum</b> stimmt es bei den '
+       + 'anderen nicht? Besprechen Sie das, bevor Sie prüfen. Es liegen '
+       + 'zunächst nicht alle Karten aus — wer fertig ist oder mehr will, '
+       + 'holt sich weitere.</span>'},
     'Tisch — ungeordnet', 'Ihre Sortierung',
     `<span class="beschriftung">Auf dem Tisch: ${D.e1.stufen[stand.e1stufe]}</span>
      ${mehrDa
@@ -83,9 +112,30 @@ function etappe1(){
   const els = {};
   alle.forEach(id => { els[id] = karte(id); });
 
+  /* GEAENDERT (2026-09-16, Rikes Entscheidung zu Maurus' Punkt 5):
+     «Ergebnismenge» gegen «keine Ergebnismenge».
+
+     Warum kein EIGENSCHAFTSWORT: Jedes Wort fuer «woran es scheitert»
+     ist schon die Antwort auf den Auftrag - «unvollstaendig»,
+     «ueberlappend», «nicht eindeutig» stehen alle auf der Liste, die die
+     Gruppe erst aufstellen soll. «Kaputt» und «taugt nicht» vermeiden
+     das, sind aber keine Mathematik.
+
+     Der Ausweg ist, den NAMEN zu verneinen statt eine Eigenschaft zu
+     behaupten. Das ist exakt, weil «Ergebnismenge» keine Art von Objekt
+     ist, sondern eine ROLLE: Eine Menge ist Ergebnismenge EINES
+     Experiments. X4 ist deshalb keine falsche Menge, sondern die
+     richtige von etwas anderem - genau das sagt der Zusatzauftrag auf
+     ihrer Rueckseite. Und die Verneinung verraet keine Bedingung; sie
+     stellt die Frage des Kapitels: Wann darf ich das so nennen?
+
+     Ohne Zusatz «fuer Tims Bestellung», obwohl er die Sache noch
+     genauer machen wuerde: Das Situationsband mit Tims Bestellung steht
+     dauernd darueber (praemisse('A')), der Bezug ist also gesetzt. Die
+     Faecher tragen die Namen, nicht die Voraussetzung. */
   const FAECHER = [
-    {ort:'gut',   name:'Passt zu Tims Bestellung'},
-    {ort:'kaputt', name:'Ist kaputt'},
+    {ort:'gut',    name:'Ergebnismenge'},
+    {ort:'kaputt', name:'keine Ergebnismenge'},
   ];
 
   function felder(){
@@ -151,8 +201,10 @@ function etappe1(){
     if (!gelegt){ b.textContent = 'Es liegt noch nichts in den Fächern.'; return; }
     b.textContent = `${richtig} von ${gelegt} richtig.`
       + (offen ? ` ${offen} liegen noch auf dem Tisch.` : '')
+      // GEAENDERT (2026-09-16): «kaputte Karte» -> die Karte, die nicht
+      // als Ergebnismenge durchgeht. Siehe FAECHER.
       + (richtig === sichtbar.length
-         ? ' — Klicken Sie eine kaputte Karte an, um zu sehen, woran sie scheitert.'
+         ? ' — Klicken Sie eine abgelehnte Karte an, um zu sehen, woran sie scheitert.'
          : '');
     // Die Aufloesung erst NACH dem Pruefen, und nur auf Verlangen: Der
     // Grund ist die Antwort auf den Auftrag, nicht seine Hilfestellung.
@@ -484,12 +536,26 @@ function etappe3(){
    absichtlich NICHT in diesem Stand - sie zaehlen dadurch beim Zeichnen
    als «neu» und werden auf den Tisch gestreut. So sieht die gezeigte
    Loesung genau so aus wie ein von Hand richtig gelegtes Brett. */
+/* Die drei Faecher von Weg A, in der Reihenfolge, in der sie liegen.
+   Das dritte traegt keine Situation - NEU (2026-09-16, Rikes Entscheidung
+   zu Maurus' Punkt 7): «Dann wird jedes Mal eine Entscheidung
+   eingefordert.» Welche Karten hineingehoeren, rechnet flaeche.py aus. */
+function _faecherE3a(){
+  return D.e3.wegA.situationen.map(s=>({
+    ort: s,
+    kopf: `<span class="nr">${s}</span>${D.situationen[s]}`,
+  })).concat([{
+    ort: D.e3.wegA.keines,
+    kopf: `<span class="nr">–</span>${D.e3.wegA.keines_kopf}`,
+  }]);
+}
+
 function _loesungStandE3a(){
   const karten = {};
   let n = 0;
-  D.e3.wegA.situationen.forEach(s=>{
-    (D.e3.wegA.gueltig[s] || []).forEach(m=>{
-      karten[m + '#loesung' + (++n)] = {ort:s, x:0, y:0, rot:0};
+  _faecherE3a().forEach(f=>{
+    (D.e3.wegA.gueltig[f.ort] || []).forEach(m=>{
+      karten[m + '#loesung' + (++n)] = {ort:f.ort, x:0, y:0, rot:0};
     });
   });
   return {karten};
@@ -507,8 +573,18 @@ function etappe3a(){
        + 'Karte kann zu <b>beiden</b> Situationen passen; ziehen Sie sie '
        + 'dann einfach zweimal hinüber. Wollen Sie eine Kopie wieder '
        + 'loswerden, ziehen Sie sie zurück auf den Tisch. '
-       + 'Situation C liegt noch nicht aus — wer mit B fertig ist, holt '
-       + 'sie sich.</span>'},
+       // GEAENDERT (2026-09-14, Maurus' Rueckmeldung): Hier stand
+       // «Situation C liegt noch nicht aus». Situation C liegt sehr wohl
+       // aus - ihr Feld steht von Anfang an rechts. Gemeint waren die
+       // KARTEN zu Situation C (M1, M4, M7, M9), die erst die zweite
+       // Stufe mitbringt. Maurus: «das bezieht sich auf die Kaertchen,
+       // die zu Situation C gehoeren, oder? evtl. praezisieren.»
+       + 'Die Karten zu Situation C liegen noch nicht aus — wer mit B '
+       // NEU (2026-09-16, Rikes Entscheidung zu Maurus' Punkt 7): Das
+       // dritte Fach muss angesagt werden, sonst ist es ein Raetsel.
+       + 'fertig ist, holt sie sich. <b>Jede</b> Karte gehört am Ende '
+       + 'irgendwohin: Passt eine zu keiner der beiden Bestellungen, '
+       + 'ziehen Sie sie ins untere Fach.</span>'},
     'Alle Mengenkarten', 'Situation B und C',
     `<span class="beschriftung">Ausliegend: ${D.e3.wegA.stufen[stand.e3astufe]}</span>
      ${mehrDa
@@ -547,8 +623,8 @@ function etappe3a(){
   function vorratWahren(){
     return kopierGeste({
       tisch, els, bauen: mengenkarte,
-      ziele: () => D.e3.wegA.situationen.map(
-        sit => feld.querySelector(`[data-ort="${sit}"]`)),
+      ziele: () => _faecherE3a().map(
+        f => feld.querySelector(`[data-ort="${f.ort}"]`)),
     });
   }
 
@@ -560,16 +636,37 @@ function etappe3a(){
     feld.querySelectorAll('.feld').forEach(d=>d.remove());
     const kb = parseFloat(getComputedStyle(document.documentElement)
                 .getPropertyValue('--kb'));
-    const bb = feld.clientWidth||520, fh = Math.max(kb*1.9, 170);
-    D.e3.wegA.situationen.forEach((s,i)=>{
+    const bb = feld.clientWidth||520;
+    const faecher = _faecherE3a();
+    /* FEHLERBEHOBEN (2026-09-16, gemessen nach dem Einbau des dritten
+       Fachs): Die Feldhoehe stand fest auf `max(kb*1.9, 170)` - bei zwei
+       Feldern ging das knapp auf, bei DREI nicht mehr. Gemessen auf der
+       Zielgroesse 1180 x 820: sichtbare Hoehe der rechten Haelfte 527
+       Punkte, das dritte Fach begann bei 548. Es lag also VOLLSTAENDIG
+       unter der Kante, 272 Punkte fehlten - und ein Fach, das man erst
+       durch Scrollen findet, fordert keine Entscheidung ein, sondern
+       verbirgt sie. Genau das war Rikes Grund fuer das Fach.
+       (Auch bei zwei Feldern waren die letzten 33 Punkte schon
+       abgeschnitten; das fiel nur niemandem auf.)
+       Jetzt wird die Hoehe aus dem vorhandenen Platz GERECHNET, mit
+       einer Untergrenze, die Kopf und eine Kartenzeile sicher traegt,
+       und der alten Hoehe als Obergrenze. Dass die Faecher beim Belegen
+       wachsen und dann unter die Kante reichen, ist richtig und bleibt -
+       gesucht war, dass man sie von Anfang an SIEHT. */
+    const platz = (feld.closest('.haelfte') || feld).clientHeight || 520;
+    const fh = Math.min(Math.max(kb*1.9, 170),
+                        Math.max(kb*1.2,
+                                 (platz - 26 - 20 - 12*(faecher.length-1))
+                                 / faecher.length));
+    faecher.forEach((f,i)=>{
       const d=document.createElement('div');
-      d.className='feld'; d.dataset.ort=s;
+      d.className='feld'; d.dataset.ort=f.ort;
       d.style.left='8px'; d.style.top=(26+i*(fh+12))+'px';
       d.style.width=(bb-16)+'px'; d.style.height=fh+'px';
-      d.innerHTML = `<div class="kopf"><span class="nr">${s}</span>${D.situationen[s]}</div>`;
+      d.innerHTML = `<div class="kopf">${f.kopf}</div>`;
       feld.appendChild(d);
     });
-    feld.style.minHeight=(26+D.e3.wegA.situationen.length*(fh+12)+20)+'px';
+    feld.style.minHeight=(26+faecher.length*(fh+12)+20)+'px';
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el=els[id]; if(!el) return;
       const ziel = s.ort==='tisch' ? tisch
@@ -610,10 +707,16 @@ function etappe3a(){
     // GEAENDERT (2026-08-24): "fehlt" nur gegen ausliegende Karten zaehlen -
     // sonst meldet Situation C staendig vier fehlende Karten, bevor sie
     // ueberhaupt zugeschaltet ist.
-    D.e3.wegA.situationen.forEach(s=>{
-      (D.e3.wegA.gueltig[s]||[]).forEach(m=>{
+    //
+    // GEAENDERT (2026-09-16): Das dritte Fach zaehlt hier MIT. Rikes
+    // Begruendung fuer das Fach war «dann wird jedes Mal eine Entscheidung
+    // eingefordert» - dann muss die Pruefung die beiden Karten, die
+    // nirgends passen, auch als fehlend melden, solange sie auf dem Tisch
+    // liegen. Sonst ist das Fach ein Angebot und keine Anforderung.
+    _faecherE3a().forEach(f=>{
+      (D.e3.wegA.gueltig[f.ort]||[]).forEach(m=>{
         if (!sichtbar.includes(m)) return;
-        if (!(gelegt[s]&&gelegt[s].has(m))) fehlt++; });
+        if (!(gelegt[f.ort]&&gelegt[f.ort].has(m))) fehlt++; });
     });
     stand.geprueft=true;
     const satz=[`${stimmt} richtig.`];

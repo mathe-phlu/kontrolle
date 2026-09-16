@@ -295,7 +295,11 @@ nav button[aria-current=true]{background:var(--akzent);color:#fff;border-color:v
    border:1px solid var(--linie);background:var(--karte);
    box-shadow:0 1px 2px rgba(0,0,0,.10);
    transform-origin:left top;transition:transform .12s;z-index:2}
-.feld > .reihenkopf:hover{transform:scale(1.5);z-index:99998;
+/* Der Massstab steht NICHT mehr fest: reiheOrdnen() setzt --kopflupe so,
+   dass der verkleinerte Kopf unter der Lupe dieselbe Endgroesse erreicht
+   wie jede andere Karte. Siehe die Begruendung dort (2026-09-14). Der
+   Ausweichwert 1.5 gilt nur, falls reiheOrdnen() noch nicht gelaufen ist. */
+.feld > .reihenkopf:hover{transform:scale(var(--kopflupe,1.5));z-index:99998;
    box-shadow:0 6px 20px rgba(45,41,36,.28)}
 .feld .kopf .nr{display:inline-block;background:var(--akzent);color:#fff;border-radius:5px;
                 padding:1px 7px;font-size:11px;margin-right:6px;font-weight:600}
