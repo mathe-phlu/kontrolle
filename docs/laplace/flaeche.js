@@ -191,7 +191,29 @@ function ziehbar(el){
       el._zieht = false; el.classList.remove('zieht');
       document.body.classList.remove('kartezieht');
       el.style.position = 'absolute'; el.style.left = ''; el.style.top = '';
-      ablegen(el, ev.clientX, ev.clientY, heim);
+      /* FEHLERBEHOBEN (2026-09-18, gemessen - zweite und eigentliche
+         Ursache derselben Meldung «schwierig, Karten zurueckzulegen»):
+
+         Beim Loslassen faellt die Karte von `fixed` auf `absolute`
+         zurueck, und ihre _x/_y sind waehrend des Ziehens auf 0 gesetzt
+         worden. Sie parkt damit fuer die Dauer der Auswertung am
+         URSPRUNG DER BUEHNE - oben links, also genau ueber dem oberen
+         Band der linken Haelfte.
+
+         `ablegen()` sucht sein Ziel mit `elementFromPoint`, und das fand
+         dort die gezogene Karte selbst. Eine Karte haengt waehrend des
+         Ziehens an der Buehne, hat also weder ein `.blatt` noch eine
+         `.haelfte` ueber sich - das Ziel war damit null und die Karte
+         flog heim. Wer oben auf dem Tisch losliess, hatte also nicht
+         danebengegriffen; er hatte auf die eigene Karte gegriffen.
+
+         Waehrend der Auswertung ist die Karte deshalb fuer die
+         Trefferpruefung durchsichtig. Synchron und eng gefasst: Nach
+         `ablegen()` gilt wieder das Normale, auch wenn dabei neu
+         gezeichnet wurde. */
+      el.style.pointerEvents = 'none';
+      try { ablegen(el, ev.clientX, ev.clientY, heim); }
+      finally { el.style.pointerEvents = ''; }
     };
     window.addEventListener('pointermove', bewegen);
     window.addEventListener('pointerup', los);
@@ -223,7 +245,16 @@ function zeigeZiel(x, y){
   // passiert. Also auch hier das nahe Feld, wenn der Zeiger im
   // sortierten Blatt zwischen den Gruppen steht.
   if (!z){
-    const blatt = unterCursor(x, y, '.blatt');
+    // GEAENDERT (2026-09-18): Dieselbe Haelften-Ruecknahme wie in
+    // ablegen(). Ohne sie hielte die Markierung ihr Versprechen nicht
+    // mehr: Wer ueber dem oberen Band der rechten Haelfte steht, bekommt
+    // beim Loslassen die naechstgelegene Gruppe - vorher gezeigt wurde
+    // ihm nichts.
+    let blatt = unterCursor(x, y, '.blatt');
+    if (!blatt){
+      const halb = unterCursor(x, y, '.haelfte');
+      if (halb) blatt = halb.querySelector(':scope > .blatt');
+    }
     if (blatt && blatt.id === 'feld') z = naechstesFeld(blatt, x, y);
   }
   if (z) z.classList.add('ueber');
@@ -252,7 +283,41 @@ function ablegen(el, x, y, heim){
   }
   let paar = unterCursor(x, y, '.paar');
   const feld = unterCursor(x, y, '.feld:not(.neu)');
-  const blatt = unterCursor(x, y, '.blatt');
+  /* NEU (2026-09-18, Rikes Freigabe zu Maurus' und der Studierenden
+     Meldung «es ist manchmal schwierig, falsche Karten wieder
+     zurueckzulegen»).
+
+     DER BEFUND, gemessen bei 1024 x 768 in Kapitel 2, Etappe 2: Von den
+     388 Punkten Hoehe der linken Haelfte sind 141 TOT - 34 oben, 107
+     unten. Wer dort loslaesst, sieht die Karte wortlos dorthin
+     zurueckfliegen, wo sie herkam.
+
+     DIE URSACHE ist der Bauplan, nicht ein Rechenfehler: Das
+     Ueberschriftenband («Ereignisse», «Tisch — ungeordnet») ist ein
+     GESCHWISTER des Blattes, kein Kind davon - und unter dem Blatt geht
+     die Haelfte weiter, das Blatt aber nicht. In beiden Streifen findet
+     `closest('.blatt')` nichts, und ohne Blatt gibt es kein Ziel.
+
+     Aus Sicht der Gruppe am Tisch ist der Streifen nicht «neben dem
+     Tisch» - er ist der Tisch, es steht sogar sein Name darauf.
+
+     NEU gilt deshalb: Wer INNERHALB einer Haelfte loslaesst, meint diese
+     Haelfte. Gibt es unter dem Zeiger kein Blatt, nimmt die Karte das
+     Blatt dieser Haelfte.
+
+     Das ist dieselbe Entscheidung wie am 2026-09-10 («wer im sortierten
+     Blatt loslaesst, will in eine Gruppe»), eine Ebene hoeher - und sie
+     greift der bestehenden Logik NICHT vor: Ist das gefundene Blatt das
+     sortierte Feld, laeuft unveraendert die Regel von damals und sucht
+     die naechstgelegene Gruppe. Nur wer WIRKLICH daneben laesst - in der
+     Luecke zwischen den Haelften, auf der Leiste, ausserhalb der Buehne
+     - kommt weiterhin heim. Dort gibt es keine Haelfte, also auch keine
+     Absicht, die man lesen koennte. */
+  let blatt = unterCursor(x, y, '.blatt');
+  if (!blatt){
+    const halb = unterCursor(x, y, '.haelfte');
+    if (halb) blatt = halb.querySelector(':scope > .blatt');
+  }
 
   // FEHLERBEHOBEN (2026-08-24): Ein Platz kann sich mit `data-nur` auf
   // ein Karten-Praefix beschraenken - Kombinatoriks Situationskopf traegt
@@ -508,6 +573,26 @@ function reiheOrdnen(d, kopfAnteil){
   const alle = [...d.querySelectorAll(':scope > .k')];
   const kopf = alle.find(k => k.classList.contains('kopfkarte'));
   if (kopf){ kopf._rot = 0; kopf._x = 8; kopf._y = 8; pos(kopf); }
+
+  /* FEHLERBEHOBEN (2026-09-14, Maurus' Rueckmeldung zu Kapitel 2,
+     Etappe 2: «Die blauen Kaertchen werden nicht groesser beim
+     Rollover»).
+
+     Sie wurden groesser - nur zu wenig, um es zu bemerken. Der
+     Reihenkopf liegt auf kopfAnteil der Kartenbreite (in Kapitel 2:
+     0,72), und die Lupe im Stylesheet stand auf festen 1,5. Gemessen
+     bei --kb 132: eine bewegliche Karte wuchs unter der Lupe von 132
+     auf 198 Punkte, die Mengenkarte nur von 95 auf 143 - also KLEINER
+     als eine ungelupte Karte daneben, obwohl sie die dichteste auf der
+     Flaeche ist (Vorschrift und ausgeschriebenes Omega).
+
+     Der feste Faktor war der Fehler: Er muss die Verkleinerung des
+     Kopfes ausgleichen, sonst haengt die Lesbarkeit an einer Zahl, die
+     das Kapitel gar nicht kennt. LUPE/kopfAnteil bringt den Kopf auf
+     genau dieselbe Endgroesse wie jede andere gelupte Karte. */
+  const kopfBild = d.querySelector(':scope > .reihenkopf');
+  if (kopfBild) kopfBild.style.setProperty('--kopflupe',
+                                           LUPE / (kopfAnteil || 0.72));
   const karten = alle.filter(k => k !== kopf);
   const platz = d.clientWidth - links - 10;
 

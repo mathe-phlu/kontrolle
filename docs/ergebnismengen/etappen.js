@@ -30,11 +30,32 @@ function praemisse(buchstabe){
    wird. Hier ist A der VERGLEICHSPUNKT, gegen den man liest. Darum
    dieselbe Form mit einer Beschriftung davor - blass gesetzt, damit sie
    die beiden Situationen im Feld nicht ueberstimmt. */
-function vergleichspunkt(buchstabe){
+/* NEU (2026-09-18, Maurus' Einwand «das mit den Neuheiten und den alten
+   hat nicht funktioniert»): Das SORTIMENT ist in allen drei Situationen
+   dasselbe; nur die BESTELLUNG wechselt. In Etappe 3 stand beides
+   zusammen im Vergleichspunkt - also unter «Von hier kommen Sie», was
+   fuer das Sortiment schlicht falsch ist. Ohne die 4:4 ist M8k in
+   Situation B nicht entscheidbar. Ausfuehrlich begruendet in flaeche.py
+   bei `sortiment`.
+
+   Nicht blass und OHNE Kennung: Es gehoert zu keiner der Situationen,
+   sondern steht ueber ihnen. */
+function sortiment(){
+  return `<div class="praemisse">`
+       + `<span class="woher">Das gilt in beiden Bestellungen:</span>`
+       + `<span>${D.sortiment}</span></div>`;
+}
+
+/* GEAENDERT (2026-09-18): Der Text ist jetzt uebergebbar. In Etappe 3
+   steht das Sortiment in seiner eigenen Zeile darueber (siehe
+   sortiment()); der Vergleichspunkt traegt dort nur noch A's BESTELLUNG.
+   Sonst stuende dieselbe Angabe zweimal wortgleich untereinander - und
+   der Vergleichspunkt soll gerade das zeigen, was sich GEAENDERT hat. */
+function vergleichspunkt(buchstabe, text){
   return `<div class="praemisse vergleich">`
        + `<span class="woher">Von hier kommen Sie:</span>`
        + `<span><span class="wer">${buchstabe}</span>`
-       + `${D.situationen[buchstabe]}</span></div>`;
+       + `${text || D.situationen[buchstabe]}</span></div>`;
 }
 
 /* ───────── Etappe 1 · Ordnen ─────────
@@ -279,6 +300,9 @@ function etappe2(){
   const grund = id => id.split('#')[0];       // Kopien tragen «#1» hinten
 
   function reihen(){
+    // Die Blase haengt an einem Platz, nicht an der Karte - wird neu
+    // gezeichnet, stimmt der Platz nicht mehr.
+    blaseZu();
     feld.querySelectorAll('.feld').forEach(d=>d.remove());
     const kb = parseFloat(getComputedStyle(document.documentElement)
                 .getPropertyValue('--kb'));
@@ -327,6 +351,7 @@ function etappe2(){
   // zurueckgelegte Vorratskarte mit ihren endgueltigen Plaetzen im
   // Stand stehen.
   window._nachAblegen = () => {
+    blaseZu();                       // die Karte liegt jetzt woanders
     const geaendert = vorratWahren();
     reihenSetzen2();
     if (geaendert) merken();
@@ -365,6 +390,24 @@ function etappe2(){
       stand.teilmenge[el.dataset.id] = feld.value;
     });
     kasten.appendChild(feld);
+    /* NEU (2026-09-18): Der kleine Knopf daneben blendet ein Beispiel
+       ein, das zu der Menge passt, in der die Karte gerade liegt. Er
+       sitzt IM Teilmengenkasten und erscheint deshalb mit ihm zusammen -
+       also erst, wenn die Karte in einer Menge liegt. Vorher gaebe es
+       nichts, wovon ein Beispiel zu zeigen waere.
+
+       Beide Ereignisse werden abgefangen: Ohne das stopPropagation am
+       pointerdown beginnt das Ziehen der Karte, und der Klick kommt nie
+       an. */
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = 'beispielknopf';
+    knopf.textContent = '?';
+    knopf.title = 'Ein Beispiel für diese Menge einblenden';
+    knopf.addEventListener('pointerdown', e => e.stopPropagation());
+    knopf.addEventListener('click', e => {
+      e.stopPropagation(); blaseZeigen(el); });
+    kasten.appendChild(knopf);
     el.appendChild(kasten);
     return kasten;
   }
@@ -412,6 +455,86 @@ function etappe2(){
   if (neu.length){ streuen(neu, tisch); merken(); }
   teilmengenZeigen();
 
+  /* Das Beispiel AN DER KARTE - NEU (2026-09-18, Rikes Auftrag).
+
+     Die Gruppen wollten wissen, ob ihre hingeschriebenen Teilmengen
+     stimmen. Pruefen koennen wir das nicht: Der Text im Feld ist frei
+     und reicht von Prosa bis formal; eine falsche Bestaetigung waere
+     schlimmer als gar keine.
+
+     GEAENDERT noch am selben Tag: Zuerst stand hier eine Tafel unter der
+     Buehne mit drei festen Beispielen. Rike meinte etwas anderes und
+     Besseres - das Beispiel gehoert an die KARTE und richtet sich nach
+     der Menge, in der sie gerade liegt: «dass sie sich ein Beispiel dort
+     auf der Karte selber einblenden lassen koennen. Welches immer zu der
+     Ergebnismenge, in der die Karte liegt, passt.» Dieselbe Karte in
+     einer anderen Menge zeigt deshalb etwas anderes - und genau das ist
+     der Ertrag der Etappe.
+
+     Was die Blase zeigt, rechnet _teilmengen() in flaeche.py; dort steht
+     auch, warum eine Karte in einer Menge, die sie NICHT traegt, kein
+     «geht nicht» bekommt, sondern den Zeugen.
+
+     NICHT an KASPER_RUECKMELDUNG gehaengt, anders als «Lösung anzeigen»:
+     Das ist keine Loesung, sondern Handwerkszeug - die
+     Studierendenfassungen brauchen es am meisten. */
+  // Bewusst eine Funktionsdeklaration und keine const: reihen() ruft sie
+  // auf und laeuft frueher als diese Stelle. Als const waere sie dort
+  // noch nicht da.
+  function blaseZu(){
+    const b = feld.querySelector('.beispielblase');
+    if (b) b.remove();
+  }
+  function blaseZeigen(el){
+    const ort = (el.parentElement || {}).dataset;
+    if (!ort || !D.e2.mengen.includes(ort.ort)) return;
+    const war = feld.querySelector('.beispielblase');
+    const schon = war && war.dataset.fuer === el.dataset.id;
+    blaseZu();
+    if (schon) return;                    // derselbe Knopf schliesst wieder
+    const b = (D.e2.beispiel[grund(el.dataset.id)] || {})[ort.ort];
+    if (!b) return;
+    // Jedes Element bleibt zusammen - sonst bricht der Browser mitten in
+    // ein Tupel, und «(Erdbeer, Erdbeer,» / «Schoko)» liest sich wie zwei
+    // Ergebnisse. Getrennt wird an «;», dem Trennzeichen aus
+    // mengenschrift.fuegen().
+    const stueckeln = z => z.split(';')
+      .map(t => `<span class="stueck">${t.trim()}</span>`).join('; ');
+    const blase = document.createElement('div');
+    blase.className = 'beispielblase';
+    blase.dataset.fuer = el.dataset.id;
+    blase.innerHTML = b.art === 'teilmenge'
+      ? `<span class="kopf">So <b>kann</b> man es hier schreiben</span>`
+        + `<div class="menge">${stueckeln(b.text)}</div>`
+        + `<span class="fuss">Ein Beispiel, keine Vorschrift — und nicht `
+        + `die einzige richtige Schreibweise.</span>`
+      : `<span class="kopf">Sehen Sie sich dieses Ergebnis der Menge an</span>`
+        + `<div class="menge"><span class="stueck">${b.text}</span></div>`
+        + `<span class="fuss">Welche Bestellungen werden so notiert — und `
+        + `trifft das Ereignis auf alle davon zu?</span>`;
+    // Das Ziehen darf nicht losgehen, wenn jemand die Blase anfasst.
+    ['pointerdown','click'].forEach(e =>
+      blase.addEventListener(e, ev => ev.stopPropagation()));
+    feld.appendChild(blase);
+    // Erst im Baum messen, dann setzen: Die Breite steht im CSS, die
+    // Hoehe ergibt sich aus dem Text. Geklemmt wird an der Flaeche, damit
+    // eine Karte am rechten Rand ihre Blase nicht hinausschiebt.
+    const fr = feld.getBoundingClientRect(), kr = el.getBoundingClientRect();
+    const bb = blase.getBoundingClientRect();
+    const links = Math.max(8, Math.min(kr.left - fr.left,
+                                       feld.clientWidth - bb.width - 8));
+    blase.style.left = links + 'px';
+    // Unter die Karte, wenn dort Platz ist - sonst darueber. Die rechte
+    // Haelfte scrollt; eine Blase unter einer Karte in der letzten Zeile
+    // laege sonst unter der Kante, und man saehe nur ihren Rand.
+    const sicht = (feld.closest('.haelfte') || feld).getBoundingClientRect();
+    const passtUnten = kr.bottom + 6 + bb.height <= sicht.bottom;
+    const passtOben  = kr.top - 6 - bb.height >= sicht.top;
+    blase.style.top = (passtUnten || !passtOben
+        ? kr.bottom - fr.top + 6
+        : kr.top - fr.top - bb.height - 6) + 'px';
+  }
+
   const mehrstufe2 = document.getElementById('mehrstufe');
   if (mehrstufe2) mehrstufe2.onclick = ()=>{ stand.e2stufe++; etappe2(); };
 
@@ -438,14 +561,32 @@ function etappe2(){
       (gelegt[grund(id)] = gelegt[grund(id)] || new Set()).add(s.ort);
     });
     let stimmt=0, zuviel=0, fehlt=0;
+    // NEU (2026-09-18, Rikes Auftrag nach dem Einsatz in Maurus' Uebung):
+    // WELCHE Ereignisse noch irgendwo hingehoeren, nicht nur wie viele.
+    // «Zwei fehlen noch» half niemandem, solange alle zehn Ereignisse
+    // unverdaechtig auf dem Tisch lagen - man wusste, dass zwei davon
+    // gemeint sind, und hatte zehn zur Auswahl.
+    //
+    // Gesagt wird nur, WELCHE Karte man noch einmal ansehen soll, nicht
+    // WOHIN sie gehoert. Die Zuordnung ist der Lerngegenstand und bleibt
+    // beim Gegenueberstellen der Mengen - eingegrenzt wird die Suche,
+    // abgenommen wird sie nicht (agent/13).
+    const offen = [];
     // GEAENDERT (2026-08-24): Nur gegen die freigeschaltete Welle pruefen -
     // sonst meldet "fehlt" Karten, die noch gar nicht ausliegen.
     sichtbarE.forEach(r=>{
       const soll = new Set(D.e2.traegt[r] || []);
       const ist = gelegt[r] || new Set();
       ist.forEach(m=>{ if (!soll.has(m)) zuviel++; });
-      soll.forEach(m=>{ if (!ist.has(m)) fehlt++; });
+      let offenHier = 0;
+      soll.forEach(m=>{ if (!ist.has(m)) { fehlt++; offenHier++; } });
+      if (offenHier) offen.push(r);
     });
+    // Die Vorratskarte liegt IMMER auf dem Tisch (kopierGeste haelt das
+    // so) - sie ist deshalb der verlaessliche Ort fuer die Marke. Der
+    // gestrichelte Rahmen ist bewusst nicht gruen und nicht rot: Es ist
+    // kein Urteil ueber das Gelegte, sondern ein Fingerzeig.
+    offen.forEach(r => { if (els[r]) els[r].classList.add('fastok'); });
     Object.entries(stand.karten).forEach(([id,s])=>{
       const el = els[id]; if (!el || s.ort==='tisch') return;
       const soll = (D.e2.traegt[grund(id)] || []).includes(s.ort);
@@ -456,7 +597,18 @@ function etappe2(){
     const satz = [`${stimmt} richtig gelegt.`];
     if (zuviel) satz.push(`${zuviel} liegen in einer Menge, in der sich das `
       + `Ereignis nicht ausdrücken lässt.`);
-    if (fehlt) satz.push(`${fehlt} Möglichkeiten fehlen noch.`);
+    // GEAENDERT (2026-09-18): Die Zahl allein stand vorher da. Jetzt sagt
+    // der Satz, WO man suchen soll - auf dem Tisch, an den gestrichelt
+    // umrandeten Karten. Ein-/Mehrzahl wird gebeugt, weil «1 Ereignisse»
+    // an der Stelle auffaellt, an der man genau hinsieht.
+    if (fehlt) satz.push(`${fehlt} ${fehlt===1?'Möglichkeit fehlt':'Möglichkeiten fehlen'} noch. `
+      + `Sehen Sie sich ${offen.length===1?'das gestrichelt umrandete Ereignis'
+                                          :`die ${offen.length} gestrichelt umrandeten Ereignisse`} `
+      // «weitere Menge» waere falsch, wenn das Ereignis noch NIRGENDS
+      // liegt - dann gibt es keine erste, zu der eine weitere kaeme.
+      // «in der es noch nicht liegt» stimmt in beiden Faellen.
+      + `auf dem Tisch noch einmal an: ${offen.length===1?'Es lässt':'Jedes davon lässt'} sich `
+      + `in mindestens einer Menge hinschreiben, in der es noch nicht liegt.`);
     // GEAENDERT (2026-08-24): Die Pointe («Vollstaendig») erst aussprechen,
     // wenn wirklich alle Wellen ausliegen - sonst faellt die Schlussfolgerung,
     // waehrend noch Ereignisse fehlen, die einfach noch nicht ausliegen.
@@ -569,9 +721,27 @@ function etappe3a(){
   buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Zwei weitere Bestellungen',
     text:'Dieselbe Eisdiele, zwei andere Bestellungen. Welche Mengenkarten '
        + 'passen jetzt? <span class="zart">Die Karte auf dem Tisch '
-       + '<b>bleibt liegen</b> — nach rechts wandert eine Kopie. Eine '
-       + 'Karte kann zu <b>beiden</b> Situationen passen; ziehen Sie sie '
-       + 'dann einfach zweimal hinüber. Wollen Sie eine Kopie wieder '
+       + '<b>bleibt liegen</b> — nach rechts wandert eine Kopie. '
+       // FEHLERBEHOBEN (2026-09-18): Hier stand «Eine Karte kann zu
+       // BEIDEN Situationen passen; ziehen Sie sie dann einfach zweimal
+       // hinueber.» Das ist falsch, und zwar nachgerechnet: Die
+       // Loesungsspalten von B und C sind DISJUNKT - B traegt M3, M6,
+       // M8, M10, M8k, M10k, C traegt M1, M4, M7, M9. Keine einzige
+       // Karte passt zu beiden. Wer dem Satz folgte, legte eine Karte
+       // in beide Faecher und bekam dort eine rote - es sah aus, als
+       // pruefe der Knopf falsch, dabei stimmte er.
+       //
+       // Ursache: Der Satz stammt aus der Zeit vor dem dritten Fach und
+       // meinte A gegen B - dort gibt es die Ueberschneidung wirklich
+       // (M8, M10, M8k, M10k). In Etappe 3 liegen A und B aber nie
+       // nebeneinander. Ungeprueft mitgewandert, wie der falsche Satz
+       // im Potenzen-Auftrag.
+       //
+       // Ersatzlos gestrichen, nicht umgeschrieben: «Jede Karte gehoert
+       // in genau ein Fach» waere schon die halbe Antwort - dass sich
+       // die beiden Bestellungen gegenseitig ausschliessen, ist der
+       // Ertrag der Etappe (agent/13).
+       + 'Wollen Sie eine Kopie wieder '
        + 'loswerden, ziehen Sie sie zurück auf den Tisch. '
        // GEAENDERT (2026-09-14, Maurus' Rueckmeldung): Hier stand
        // «Situation C liegt noch nicht aus». Situation C liegt sehr wohl
@@ -594,7 +764,9 @@ function etappe3a(){
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="andererweg" style="margin-left:auto">Doch der andere Weg</button>`,
-    vergleichspunkt('A'));
+    // Das Sortiment ZUERST - es steht ueber beiden Situationen. Der
+    // Vergleichspunkt darunter sagt dann nur noch, woher man kommt.
+    sortiment() + vergleichspunkt('A', D.situation_a_bestellung));
 
   const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
   // GEAENDERT (2026-08-24): Nur die neuen Mengenkarten (wegA.mengen)

@@ -594,12 +594,38 @@ svg.venn input.vfeld:focus{border-style:solid;background:#fffdf6}
    soll man sie DORT hinschreiben. Das Feld erscheint erst dann -
    vorher gaebe es nichts, wovon eine Teilmenge zu bilden waere. */
 .k .teilmenge{display:none;position:absolute;left:4px;right:4px;bottom:3px}
-.k .teilmenge.aktiv{display:block}
-.k .teilmenge input{width:100%;box-sizing:border-box;font:11px var(--druck);
+/* FEHLERBEHOBEN (2026-09-18): Hier stand das `display:flex` fuer den
+   Beispielknopf in einer EIGENEN Regel darunter - und die hob das
+   `display:none` der Zeile darueber wieder auf. Folge: Eingabefeld und
+   Knopf erschienen auf JEDER Karte, auch auf denen, die noch auf dem
+   Tisch lagen. Genau das sollte teilmengenZeigen() verhindern («zehn
+   Eingabefelder auf dem Tisch waeren nur Laerm»). Die Ausrichtung
+   gehoert an `.aktiv`, weil erst dort etwas sichtbar wird. */
+.k .teilmenge.aktiv{display:flex;gap:3px;align-items:stretch}
+.k .teilmenge input{width:100%;min-width:0;box-sizing:border-box;font:11px var(--druck);
    padding:2px 5px;border:1px dashed var(--akzent);border-radius:4px;
    background:#fff;color:var(--tinte);text-align:center}
 .k .teilmenge input:focus{outline:none;border-style:solid;background:#fffdf6}
 .k .teilmenge input::placeholder{color:var(--akzent);opacity:.55}
+/* NEU (2026-09-18): Der Knopf, der das Beispiel zu DIESER Menge
+   einblendet (Kapitel 2, Etappe 2). Schmal gehalten - auf der Karte sind
+   82 Punkte Breite, und das Eingabefeld ist das Wichtigere. */
+.k .teilmenge .beispielknopf{flex:0 0 auto;width:17px;padding:0;cursor:pointer;
+  font:600 11px var(--druck);line-height:1;color:var(--akzent);
+  background:var(--karte);border:1px dashed var(--linie);border-radius:4px}
+.k .teilmenge .beispielknopf:hover{background:#fffdf6;border-style:solid}
+/* Die Blase selbst. Sie liegt im Feld, nicht auf der Karte: Auf 82 x 70
+   Punkten ist kein Platz fuer eine ausgeschriebene Menge. Ueber allem,
+   damit sie nicht hinter der naechsten Kartenzeile verschwindet. */
+.beispielblase{position:absolute;z-index:40;width:340px;max-width:calc(100% - 16px);
+  padding:8px 11px;border:1.5px dashed var(--akzent);border-radius:9px;
+  background:var(--karte);box-shadow:0 3px 12px rgba(0,0,0,.13);
+  font-size:12px;line-height:1.5;cursor:default}
+.beispielblase .kopf{display:block;font-family:var(--hand);font-size:14px;
+  color:var(--akzent)}
+.beispielblase .menge{margin:3px 0;color:var(--tinte)}
+.beispielblase .menge .stueck{white-space:nowrap}
+.beispielblase .fuss{display:block;color:var(--matt);font-size:11px}
 
 /* ───────── Die Notizleiste (auf allen Seiten gleich) ─────────
    Sie steht unten und ist zugeklappt eine Zeile hoch. Aufgeklappt
