@@ -743,16 +743,13 @@ function etappe3a(){
        // Ertrag der Etappe (agent/13).
        + 'Wollen Sie eine Kopie wieder '
        + 'loswerden, ziehen Sie sie zurück auf den Tisch. '
-       // GEAENDERT (2026-09-14, Maurus' Rueckmeldung): Hier stand
-       // «Situation C liegt noch nicht aus». Situation C liegt sehr wohl
-       // aus - ihr Feld steht von Anfang an rechts. Gemeint waren die
-       // KARTEN zu Situation C (M1, M4, M7, M9), die erst die zweite
-       // Stufe mitbringt. Maurus: «das bezieht sich auf die Kaertchen,
-       // die zu Situation C gehoeren, oder? evtl. praezisieren.»
-       + 'Die Karten zu Situation C liegen noch nicht aus — wer mit B '
+       // GEAENDERT (2026-09-18): Der Satz «Die Karten zu Situation C
+       // liegen noch nicht aus» ist mit der Staffelung weggefallen -
+       // siehe STUFEN_E3A in thema.py. Er hatte selbst schon verraten,
+       // welche Karten zu C gehoeren.
        // NEU (2026-09-16, Rikes Entscheidung zu Maurus' Punkt 7): Das
        // dritte Fach muss angesagt werden, sonst ist es ein Raetsel.
-       + 'fertig ist, holt sie sich. <b>Jede</b> Karte gehört am Ende '
+       + '<b>Jede</b> Karte gehört am Ende '
        + 'irgendwohin: Passt eine zu keiner der beiden Bestellungen, '
        + 'ziehen Sie sie ins untere Fach.</span>'},
     'Alle Mengenkarten', 'Situation B und C',

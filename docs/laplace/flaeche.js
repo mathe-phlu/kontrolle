@@ -452,7 +452,24 @@ function gruppeOrdnen(feldEl){
     k._y = oben + Math.floor(i / spalten) * (kh + 6);
     pos(k);
   });
-  const noetig = oben + Math.ceil(karten.length / spalten) * (kh + 6) + 10;
+  let noetig = oben + Math.ceil(karten.length / spalten) * (kh + 6) + 10;
+  /* FEHLERBEHOBEN (2026-09-18, Rikes Befund «die Karten fallen aus der
+     Kiste raus»): Die Rechnung oben trifft nicht, wo die Karten
+     TATSAECHLICH liegen. Gemessen in Kapitel 2, Etappe 3 bei --kb 132:
+     `oben` ergibt 37, die erste Kartenzeile beginnt aber bei 67 und
+     endet bei 179 - das Feld stand auf 158. Die erste Zeile hing also
+     schon 21 Punkte unten heraus, und das Feld wuchs erst, wenn eine
+     ZWEITE Zeile anfing.
+
+     Statt die Abweichung zu suchen, wird jetzt nachgemessen: Das Feld
+     muss so hoch sein, dass die unterste Karte hineinpasst - was immer
+     ueber ihr steht. Das Rechnen bleibt als Untergrenze, damit ein
+     leeres Feld seine Hoehe behaelt. */
+  if (karten.length){
+    const fr = feldEl.getBoundingClientRect();
+    const tiefste = Math.max(...karten.map(k => k.getBoundingClientRect().bottom));
+    noetig = Math.max(noetig, tiefste - fr.top + 10);
+  }
   // GEAENDERT (2026-09-10, Rueckmeldung der Studierenden zu Etappe 2 in
   // Kapitel 1): Hier stand `if (noetig > offsetHeight)` - das Feld wuchs
   // also nur und schrumpfte nie wieder. Wer Karten wieder herausnahm,
