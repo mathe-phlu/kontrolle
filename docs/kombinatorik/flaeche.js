@@ -162,6 +162,10 @@ function ziehbar(el){
     // Wohin die Karte zurueckfaellt, wenn kein Platz mehr frei ist.
     // Muss VOR dem Ziehen gemerkt werden - waehrend des Ziehens werden
     // _x und _y auf null gesetzt.
+    // Die Meldung gehoert zu der Geste, die sie ausgeloest hat. Wer die
+    // naechste Karte anfasst, hat sie gelesen oder nicht - stehen bleiben
+    // darf sie nicht, sonst steht sie neben einem Zug, der gelungen ist.
+    hinweisWeg();
     el._heim = {x: el._x, y: el._y, rot: el._rot};
     el._lupe = 1; el._zieht = true; el.classList.add('zieht');
     // NEU (2026-09-10): Der Ziehgriff liegt als acht Punkte breiter
@@ -1779,6 +1783,44 @@ function mitnehmen(){
 
    Liefert true, wenn sich etwas geaendert hat - dann muss der Stand neu
    gemerkt werden. */
+/* Eine kurze Meldung, die sich selbst wieder wegraeumt.
+
+   NEU (2026-09-18). Gebraucht ueberall dort, wo die Flaeche eine Geste
+   ABLEHNT: Eine abgelehnte Geste, die nichts sagt, ist von einem Fehler
+   nicht zu unterscheiden.
+
+   Sie haengt an `body` und liegt `fixed` - damit ist sie unabhaengig
+   davon, ob das Feld darunter scrollt, und sie kann nicht an einer
+   Kante abgeschnitten werden. Immer nur EINE gleichzeitig: Zwei
+   Meldungen uebereinander waeren wieder Laerm.
+
+   `zeigen` bekommt optional die Karte, um die es geht - sie blinkt kurz
+   mit, damit man sieht, WELCHE schon da liegt. */
+let _hinweisUhr = null;
+function hinweisWeg(){
+  const alt = document.getElementById('kurzhinweis');
+  if (alt) alt.remove();
+  if (_hinweisUhr){ clearTimeout(_hinweisUhr); _hinweisUhr = null; }
+  document.querySelectorAll('.k.schondrin')
+    .forEach(k => k.classList.remove('schondrin'));
+}
+function kurzerHinweis(text, bei, hervor){
+  hinweisWeg();
+
+  const d = document.createElement('div');
+  d.id = 'kurzhinweis'; d.className = 'kurzhinweis'; d.textContent = text;
+  document.body.appendChild(d);
+  const r = (bei && bei.getBoundingClientRect) ? bei.getBoundingClientRect() : null;
+  const b = d.getBoundingClientRect();
+  if (r){
+    d.style.left = Math.max(8, Math.min(r.left + r.width/2 - b.width/2,
+                                        window.innerWidth - b.width - 8)) + 'px';
+    d.style.top  = Math.max(8, r.top - b.height - 8) + 'px';
+  }
+  if (hervor) hervor.classList.add('schondrin');
+  _hinweisUhr = setTimeout(hinweisWeg, 2200);
+}
+
 function kopierGeste({tisch, els, bauen, ziele, mit}){
   const grund = id => id.split('#')[0];
   let geaendert = false;
@@ -1817,8 +1859,23 @@ function kopierGeste({tisch, els, bauen, ziele, mit}){
         tisch.appendChild(vorrat);
         vorrat._x = h.x; vorrat._y = h.y; vorrat._rot = h.rot; pos(vorrat);
       } else {
+        /* NEU (2026-09-18, Rikes Entscheidung nach ihrem eigenen
+           Schrecken an der veroeffentlichten Fassung): Bis hierher ist
+           alles richtig - dieselbe Karte darf nicht zweimal in dasselbe
+           Feld, eine Ergebnismenge liegt nicht zweimal in derselben
+           Situation. Aber es GESCHAH WORTLOS: Die Karte sprang zurueck
+           auf den Tisch, und das sieht aus wie «hakt, nimmt nichts mehr
+           an». Rike hat genau daraus geschlossen, in ein Feld passten
+           nur zwei Karten, und wir haben zwanzig Minuten an einem
+           Fehler gesucht, den es nicht gab.
+
+           Die Regel bleibt. Sie sagt jetzt nur, dass es sie gibt - und
+           zeigt auf die Karte, die schon da liegt. */
+        const schon = [...kasten.querySelectorAll(':scope > .k')]
+          .find(k => k !== el && grund(k.dataset.id) === id);
         tisch.appendChild(el);
         el._x = h.x; el._y = h.y; el._rot = h.rot; pos(el);
+        kurzerHinweis('Diese Karte liegt hier schon.', schon || kasten, schon);
       }
       geaendert = true;
     });
