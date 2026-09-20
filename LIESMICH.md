@@ -41,7 +41,29 @@ Adresse kennt, kann hineinsehen. Verlinkt ist sie nirgends.
 dürfte. Rückmeldungen werden **nicht** hier gespeichert — sie gehen an
 eine Ablage, die nur Rike sieht.
 
+## `start/` — Rikes Einstieg, seit 2026-09-20
+
+`start/index.html` ist **keine Durchsichtsseite**, sondern Rikes eigener
+Einstieg: drei Karten mit Wimmelbild, je Modul ein Knopf zum Material
+und einer in den Moodle-Kursraum. Ihr Auftrag vom 20.09.2026 — ein Weg
+zum Material, der nicht durch Moodle führt.
+
+`start/meilensteine.html` listet die vier Meilensteine von MA02.02. Sie
+sind **absichtlich nirgends aus der Lernlandschaft verlinkt** (Rikes
+Entscheid vom 09.09.2026, bestätigt am 20.09.2026); Rike gibt die Links
+im Zoomraum weiter.
+
+**Achtung beim Eintragen einer Meilenstein-Adresse.** Solange dort
+matte Knöpfe stehen, steht hier keine Adresse, die niemand haben soll.
+Wer eine einträgt, macht sie an diesem Ort öffentlich lesbar — siehe
+den Abschnitt zur Adresse oben. Das ist bewusst zu tun, nicht im
+Vorbeigehen.
+
 ## Erzeugt, nicht von Hand gepflegt
 
-Alles hier kommt aus dem Agenten **KASPER**. Änderungen werden dort
-gemacht und neu gebaut, nie hier.
+Alles hier kommt aus einem Agenten und wird dort geändert, nie hier:
+
+| Ordner | Agent | Werkzeug |
+|---|---|---|
+| `ergebnismengen/`, `festigung/`, `kombinatorik/`, `laplace/`, `wahrscheinlichkeitsbegriff/`, `index.html`, `teil_b.html` | **KASPER** | dessen Bauer |
+| `start/` | **LARS** | `werkzeuge/startseite.py` |
