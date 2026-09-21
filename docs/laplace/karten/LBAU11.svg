@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-22T05:24:09.272103</dc:date>
+    <dc:date>2026-09-21T13:40:58.951740</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -501,25 +501,23 @@ z
     </g>
    </g>
    <g id="text_3">
-    <!-- $\dfrac{3 \cdot 7 \cdot 6}{8 \cdot 7 \cdot 6} = 0{,}375$ -->
-    <g style="fill: #2d2924" transform="translate(55.311661 91.065748) scale(0.114 -0.114)">
+    <!-- $\dfrac{2 \cdot 7 \cdot 6}{8 \cdot 7 \cdot 6} = 0{,}250$ -->
+    <g style="fill: #2d2924" transform="translate(55.710661 91.065748) scale(0.114 -0.114)">
      <defs>
-      <path id="PennstanderMath-ExtraLight-796" d="M 1638 -10 
-C 2451 -10 3027 480 3027 1274 
-C 3027 1984 2474 2269 1866 2307 
-C 2256 2381 2803 2704 2803 3277 
-C 2803 3920 2339 4272 1693 4272 
-C 982 4272 461 3859 195 3590 
-C 256 3520 394 3398 470 3344 
-C 720 3667 1149 3926 1677 3926 
-C 2186 3926 2429 3629 2429 3245 
-C 2429 2678 1683 2400 934 2400 
-C 934 2298 954 2131 973 2067 
-C 2032 2067 2682 2000 2682 1226 
-C 2682 662 2240 323 1616 323 
-C 1101 323 704 586 605 998 
-C 490 950 339 854 253 778 
-C 387 317 986 -10 1638 -10 
+      <path id="PennstanderMath-ExtraLight-795" d="M 2970 464 
+C 2518 445 1203 352 922 320 
+C 1030 445 1702 1296 2086 1827 
+C 2506 2413 2835 2989 2835 3507 
+C 2835 4022 2429 4365 1869 4365 
+C 1139 4365 579 3914 310 3251 
+C 384 3184 544 3069 608 3040 
+C 832 3622 1200 4029 1830 4029 
+C 2179 4029 2490 3859 2490 3446 
+C 2490 2928 1910 2138 1504 1616 
+C 1107 1104 630 502 410 259 
+C 419 138 445 16 461 -54 
+L 2957 86 
+C 2973 154 2979 381 2970 464 
 z
 " transform="scale(0.015625)"/>
       <path id="PennstanderMath-ExtraLight-140" d="M 752 1568 
@@ -637,27 +635,27 @@ C 752 797 608 611 573 528
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#PennstanderMath-ExtraLight-796" transform="translate(9.25 74.84375)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(78.359937 74.84375)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79d" transform="translate(119.269891 74.84375)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(190.229819 74.84375)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79c" transform="translate(231.139774 74.84375)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79e" transform="translate(6.25 -68.003125)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(81.159924 -68.003125)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79d" transform="translate(122.069879 -68.003125)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(193.029807 -68.003125)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79c" transform="translate(233.939761 -68.003125)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-29f" transform="translate(304.549698 0.775)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-793" transform="translate(381.509625 0.775)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-e" transform="translate(427.559583 0.775)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-796" transform="translate(458.109555 0.775)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79d" transform="translate(510.109509 0.775)"/>
-     <use xlink:href="#PennstanderMath-ExtraLight-79b" transform="translate(563.959454 0.775)"/>
-     <path d="M 6.25 27.275 
-L 6.25 33.525 
-L 281.189716 33.525 
-L 281.189716 27.275 
-L 6.25 27.275 
+     <use xlink:href="#PennstanderMath-ExtraLight-795" transform="translate(9.25 74.796875)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(78.859937 74.796875)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79d" transform="translate(119.769891 74.796875)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(190.729819 74.796875)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79c" transform="translate(231.639774 74.796875)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79e" transform="translate(6.25 -68.05)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(81.159924 -68.05)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79d" transform="translate(122.069879 -68.05)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-140" transform="translate(193.029807 -68.05)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79c" transform="translate(233.939761 -68.05)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-29f" transform="translate(304.549698 0.728125)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-793" transform="translate(381.509625 0.728125)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-e" transform="translate(427.559583 0.728125)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-795" transform="translate(458.109555 0.728125)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-79b" transform="translate(510.609509 0.728125)"/>
+     <use xlink:href="#PennstanderMath-ExtraLight-793" transform="translate(567.409451 0.728125)"/>
+     <path d="M 6.25 27.228125 
+L 6.25 33.478125 
+L 281.189716 33.478125 
+L 281.189716 27.228125 
+L 6.25 27.228125 
 z
 "/>
     </g>

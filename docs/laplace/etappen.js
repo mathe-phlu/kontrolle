@@ -1,613 +1,871 @@
-/* Die drei Etappen von Kapitel 3 — «Wer die Wahl hat … oder nicht?».
+/* Die ZWEI Etappen von Kapitel 3 — «Wer die Wahl hat … oder nicht?».
 
-   Entschieden mit Rike am 2026-08-21.
+   UMGEBAUT am 2026-09-21 auf Rikes Auftrag. Was vorher hier stand —
+   ein Sortierbrett in zwei Zuegen, drei Prueffrage-Felder, ein
+   Transferbrett — steht in Git und ist hier nicht mehr totgelegt,
+   sondern ersetzt.
 
-   Der Kern: Es geht NICHT darum, einen Rechenfehler zu finden. Alle
-   Loesungswege sind sauber gerechnet. Es geht darum zu erkennen, dass
-   ein KORREKT GERECHNETER Weg trotzdem nicht traegt - weil die gewaehlte
-   Ergebnismenge nicht Laplace ist oder das Ereignis gar nicht traegt.
-   Darum gibt es hier auch keine Distraktoren.
+   E1  Vergleichen  Eine TABELLE. Links die Situation mit ihrer Frage,
+                    rechts drei Spalten, in denen Rechnungen
+                    zugeschaltet werden. Darunter sieben Antwortfelder.
+   E2  Einordnen    Das KLEEBLATT. Drei Kreise, eine je Erleichterung.
+                    Runde 1 die Situationen aus E1, Runde 2 die
+                    Aufgaben aus dem Skript.
 
-   E1  Ordnen       zehn Fragen, Versuche in drei Runden. Ein Brett,
-                    das waechst.
-   E2  Strategien   drei Prueffragen, eine je Stapel - auf demselben
-                    Brett, die Karten bleiben liegen.
-   E3  Uebertragen  sieben Transferkarten, sortiert nach den eigenen
-                    Prueffragen aus E2.
+   Der Kern bleibt, was er war: Es geht NICHT darum, einen Rechenfehler
+   zu finden. Alle Wege sind sauber gerechnet. Es geht darum zu sehen,
+   dass ein KORREKT GERECHNETER Weg trotzdem nicht traegt — weil die
+   gewaehlte Ergebnismenge nicht Laplace ist.
+
+   Rikes Befund, der den Umbau ausgeloest hat: Die Zuordnung «welche
+   Rechnung gehoert zu welcher Frage» kostete in der Erprobung die
+   meiste Zeit und war gar nicht der Entscheidungsfaktor. Sie ist jetzt
+   gegeben.
 */
 
-/* Ueber der Flaeche steht, was fuer ALLE Fragen gilt.
+/* Der Stilblock des Kapitels.
+   ACHTUNG: KEINE Backticks hier hinein. Der Block steht in einem
+   Template-Literal und wuerde es beenden — bei «Komplexe Zahlen» hat
+   genau das am 2026-09-20 die Seite stumm gemacht. */
+document.head.insertAdjacentHTML('beforeend', '<style>' + `
+/* ── Etappe 1 · die Tabelle ─────────────────────────────────
 
-   UEBERHOLT (2026-08-21, Rikes Entscheidung): Hier standen beide
-   Situationstexte nebeneinander, jeder mit seinem Buchstaben. Ihr
-   Einwand: «Dadurch, dass wir oben A und B hinschreiben, machen wir
-   diese Unterscheidung schon sehr, sehr explizit - das ist mir zu
-   auffaellig.» Was sich unterscheidet, steht jetzt auf der Karte. */
+   UMGEDREHT am 2026-09-21, Rikes Entscheidung: «Ob wir Spalten und
+   Zeilen aendern. Ziel waere, moeglichst viel zu sehen.»
+
+   Vorher standen die neun Situationen UNTEREINANDER und die vier
+   Rechenwege nebeneinander. Man sah dann vier Situationen am Stueck
+   und musste fuer die uebrigen fuenf rollen - und die Wege, um die es
+   geht, verschwanden dabei aus dem Bild.
+
+   Jetzt stehen die vier WEGE untereinander: sie bleiben alle vier
+   sichtbar, die Situationen laufen nach rechts durch. Die erste Spalte
+   klebt (position:sticky) - man sieht also immer, welcher Weg in
+   welcher Zeile steht, egal wie weit rechts man ist. Und die Antworten
+   stehen in derselben ersten Spalte, direkt neben ihrem Weg. */
+.tabrahmen{flex:1 1 auto;overflow:auto;padding:0 14px 14px}
+.tabelle{display:table;table-layout:fixed;border-collapse:separate;
+   border-spacing:0 7px}
+.tabreihe{display:table-row}
+.tabzelle{display:table-cell;vertical-align:top;padding:7px 8px;width:300px;
+   border:1.5px dashed var(--linie);border-left:none;
+   background:rgba(255,254,251,.72)}
+/* Die erste Spalte klebt am linken Rand - sonst weiss beim Rollen
+   niemand mehr, welche Zeile welcher Weg ist. */
+.tabzelle:first-child{position:sticky;left:0;z-index:4;width:382px;
+   border-left:1.5px dashed var(--linie);border-radius:10px 0 0 10px;
+   background:var(--papier);box-shadow:3px 0 6px -3px rgba(45,41,36,.18)}
+.tabzelle:last-child{border-radius:0 10px 10px 0}
+.tabzelle.leer{background:repeating-linear-gradient(-45deg,
+   transparent,transparent 7px,rgba(0,0,0,.035) 7px,rgba(0,0,0,.035) 14px)}
+.tabreihe.kopfreihe .tabzelle{border:none;background:none;padding:2px 8px 6px}
+.tabreihe.kopfreihe .tabzelle:first-child{background:var(--papier);
+   font-size:12px;font-weight:600;color:var(--akzent);padding-top:8px}
+.tabzelle .kartenzeile{display:flex;gap:8px;flex-wrap:wrap}
+.tabzelle .nichts{font-size:11px;color:var(--matt);font-style:italic}
+.k[data-fest]{position:relative;flex:0 0 auto}
+/* GROSS, und das ist Rikes Befund: «Es ist alles noch sehr, sehr
+   klein.» Die erste Fassung quetschte neun Situationen nebeneinander
+   und machte die Karten dafuer auf .62 der Kartenbreite - unleserlich.
+   Jetzt volle Kartenbreite; dass dafuer weniger Situationen zugleich
+   im Bild sind, ist kein Verlust: Nach rechts wird ohnehin gerollt,
+   und die erste Spalte bleibt stehen.
+
+   Der Regler in der Leiste geht weiter - wer noch groesser will,
+   bekommt es. */
+.tabzelle .k[data-fest]{width:var(--kb);box-sizing:border-box;
+   padding-top:23px}
+/* Die Fragekarte ist NICHT groesser als die Rechnungen. Sie war es
+   (1.14), und das kostete rund vierzig Punkte Hoehe in der Zeile, die
+   am wenigsten davon braucht - oben steht ohnehin immer dieselbe
+   Situation, waehrend unten die Wege verglichen werden. Rikes Ziel
+   war, alle vier Wege zugleich zu sehen. */
+.tabreihe.kopfreihe .k[data-fest]{width:var(--kb);padding-top:0}
+/* FEHLERBEHOBEN (2026-09-21, Rikes Befund «durch diese beiden
+   Kaestchen oben sind die Saetze ueberschrieben»): Omega und das
+   Fragezeichen sassen auf der oberen Kartenkante - und genau dort
+   beginnt die Vorschrift, also der Satz, um den es geht. Die Karte
+   bekommt jetzt oben einen freien Streifen; das Bild ruecht darunter.
+   Verworfen: die Marken an den unteren Rand. Dort sitzt das
+   Urteilszeichen, und der Bruch steht in der Mitte. */
+.tabzelle .k[data-fest] .marke{top:4px}
+/* Eine gewaehlte Situation. Kein Haken und kein Rahmen aussen herum -
+   die Karte selbst hebt sich, wie eine, die man in die Hand genommen
+   hat. */
+.k.gewaehlt{box-shadow:0 0 0 3px var(--akzent), 0 6px 14px rgba(45,41,36,.22);
+   transform:translateY(-3px)}
+.leiste .knopf[disabled]{opacity:.45;cursor:default}
+/* Die zweite Marke sitzt neben der ersten, nicht darauf. */
+.k .marke.denkweg{left:auto;right:4px}
+/* VIER Wegfarben. Rike, 2026-09-21: «Vielleicht nehmen wir vier
+   Farben. Die erste Farbe ist einfach der Standardweg. Die zweite,
+   wenn die Reihenfolge keine Rolle spielt. Die dritte, wenn man nur
+   einen Ausschnitt anschaut. Die vierte, wenn man mit einer
+   Vergroeberung arbeitet. Und diese drei Farben sollten sich im
+   Venn-Diagramm in den Kreisfarben widerspiegeln.»
+
+   Sie tun es: Dieselben drei Hexwerte stehen im Kleeblatt (siehe
+   kleeblattBild) und in der Legende. Derselbe Ton fuer dieselbe Sache,
+   ueber beide Etappen.
+
+   Weg 1 bekommt einen eigenen, STUMPFEN Ton - Sand. Er muss sich von
+   den drei unterscheiden und darf ihnen zugleich nicht die Stimme
+   nehmen: Er ist der Vergleichspunkt, keine Wahl. Nicht das Ocker -
+   das ist die Kapitelfarbe und redete als fuenfte Bedeutung dazwischen.
+
+   UEBERHOLT: Weg 1 war bis eben ungefaerbt. Das war lesbar, machte ihn
+   aber zum Hintergrund statt zu einem der vier - und im Kleeblatt
+   fehlte dann der Bezug, warum genau DREI Kreise dastehen und nicht
+   vier. */
+.k.spaltenton1{background:color-mix(in srgb, #b8a888 20%, #fff);
+   box-shadow:inset 0 0 0 2.5px #b8a888, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton2{background:color-mix(in srgb, var(--zugang) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #7FB069, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton3{background:color-mix(in srgb, var(--fach) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #6C9BD1, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton4{background:color-mix(in srgb, var(--aktion) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #C99BC0, 0 2px 6px rgba(0,0,0,.14)}
+/* ── der Zeilenkopf: Nummer, Name, zwei Fragen ─────────────── */
+.wegnr{display:block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+   text-transform:uppercase;color:var(--matt);margin-bottom:4px;
+   padding-left:13px;position:relative}
+/* Der Farbpunkt am Zeilenkopf. Ohne ihn muesste man erst eine Karte
+   suchen, um zu sehen, welcher Ton zu welchem Weg gehoert - und in
+   einer Zeile ohne Kaertchen gaebe es gar keine. */
+.wegnr::before{content:'';position:absolute;left:0;top:2px;width:8px;
+   height:8px;border-radius:50%;border:2px solid #b8a888}
+.wegreihe[data-weg="2"] .wegnr{color:#5d8a4a}
+.wegreihe[data-weg="2"] .wegnr::before{border-color:#7FB069}
+.wegreihe[data-weg="3"] .wegnr{color:#4a75a8}
+.wegreihe[data-weg="3"] .wegnr::before{border-color:#6C9BD1}
+.wegreihe[data-weg="4"] .wegnr{color:#9c6b93}
+.wegreihe[data-weg="4"] .wegnr::before{border-color:#C99BC0}
+.wegfest{font-size:12.5px;font-weight:600;color:var(--tinte);margin:0 0 2px}
+.wegfest + p{font-size:11px;line-height:1.4;color:var(--matt);margin:0}
+/* ENG GESETZT, und das ist kein Geschmack: Rikes Grund fuer das
+   Umdrehen der Tabelle war «moeglichst viel zu sehen». Wenn der
+   Zeilenkopf hoch wird, ist genau das wieder weg - dann sieht man zwei
+   Wege statt vier. Die Masse unten sind so gewaehlt, dass alle vier
+   Zeilen bei 980 Punkten Fensterhoehe zugleich dastehen. */
+.feld.wegname{position:relative;height:auto;padding:0;margin-bottom:5px}
+.feld.wegname > .schreibfeld{position:static;width:100%;box-sizing:border-box;
+   min-height:26px;height:26px;border:none;background:transparent;padding:4px 6px;
+   font:600 12px/1.3 var(--druck);color:var(--akzent);resize:vertical;
+   outline:none}
+.feld.wegname > .schreibfeld::placeholder{color:#bcae97;font-weight:400;
+   font-style:italic}
+/* Die beiden Fragen stehen NEBENEINANDER, nicht untereinander.
+   Untereinander wurde der Zeilenkopf 195 Punkte hoch, und dann sah man
+   zweieinhalb der vier Wege - also genau das nicht mehr, wofuer die
+   Tabelle umgedreht wurde. Gemessen, nicht geschaetzt. */
+.fragenpaar{display:flex;gap:6px;align-items:stretch}
+.fragenpaar > .antwort{flex:1 1 0;min-width:0}
+.antwort.feld{position:relative;padding:0 0 5px;margin-bottom:0;
+   display:flex;flex-direction:column}
+
+.antwort .kopf{font-size:10px;line-height:1.25;padding:4px 6px 2px;
+   color:#555;flex:0 0 auto}
+.antwort .kopf b{color:var(--akzent)}
+/* FEHLERBEHOBEN (2026-09-21, gemessen): Mit flex:1 1 auto wuchs das
+   Feld auf die Hoehe seines PLATZHALTERS - der umbrach auf vier Zeilen
+   und machte jede Wegzeile 216 Punkte hoch. Ein Platzhalter darf das
+   Layout nicht bestimmen; er steht ja nur da, solange nichts da steht.
+   Jetzt feste 30 Punkte, und der Platzhalter ist kurz. */
+.antwort > .schreibfeld{position:static;width:calc(100% - 12px);margin:0 6px;
+   flex:0 0 auto;min-height:30px;height:30px;box-sizing:border-box;
+   border:none;background:transparent;
+   font:11.5px/1.35 var(--druck);color:var(--tinte);resize:vertical;outline:none;
+   border-top:1px solid var(--linie);padding-top:3px}
+.antwort > .schreibfeld::placeholder{color:#bcae97;font-style:italic}
+/* ── das Sortiment ──────────────────────────────────────────── */
+.sortiment{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:5px;
+   font-size:11.5px;line-height:1.5}
+.sortiment .sgruppe b{color:var(--tinte);font-weight:600;margin-right:5px}
+.sortiment .sorte{white-space:nowrap;margin-right:9px}
+.sortiment i{font-style:normal;font-weight:700;font-size:9.5px;
+   border-radius:3px;padding:0 3px;margin-left:2px;vertical-align:1px}
+.sortiment i.K{background:#e3ecdd;color:#41663a;border:1px solid #9cbb90}
+.sortiment i.N{background:#efe1ec;color:#7a4b70;border:1px solid #c99bc0}
+.sortiment .slegende{color:var(--matt);flex-basis:100%}
+/* ENTFERNT (2026-09-21, ZWEITES Mal derselbe Fehler): Hier stand ein
+   kompletter zweiter Stilblock der Tabelle aus der Fassung mit
+   Spalten - .tabreihe, .tabzelle, .tabzelle.zu, die Kartenbreiten und
+   die Spaltenfarben. Er stand WEITER UNTEN als der gueltige und gewann
+   deshalb jede Regel, die in beiden vorkommt.
+
+   Gemessen: Karte 87 statt 132 Punkte breit, obwohl oben
+   width:var(--kb) steht - Rikes Befund «es ist alles noch sehr, sehr
+   klein» war genau das. Der Regler half nicht: Er stellt --kb, und
+   .66 davon bleibt .66 davon.
+
+   Beim ersten Mal (der Block «die sieben Antworten») war die Lehre
+   schon aufgeschrieben. Sie hat nicht getragen, weil beim Ersetzen
+   eines Layouts nach dem KOPFKOMMENTAR gesucht wurde und nicht nach
+   den Regeln. Wer ein Layout ablöst, sucht nach jedem Selektor, den
+   die neue Fassung benutzt - und findet so auch die Reste, die anders
+   ueberschrieben sind. */
+/* ENTFERNT (2026-09-21): Hier stand der Stilblock der ersten
+   Fassung - «die sieben Antworten» als eigenes Raster unter der
+   Tabelle, mit .antworten, .antwort und einem zweiten
+   .antwort > .schreibfeld. Seit die Tabelle umgedreht ist, stehen die
+   Antworten IM Zeilenkopf und werden oben gesetzt.
+
+   Der Block war nicht bloss ueberfluessig: Er stand WEITER UNTEN und
+   gewann deshalb. Gemessen: das Antwortfeld war 62 Punkte hoch statt
+   30, und jede Wegzeile 216 statt 165 - die vierte Zeile fiel aus dem
+   Bild, und zwar genau die, deretwegen die Tabelle umgedreht wurde.
+   Tote Regeln sind nicht still. */
+/* ── Etappe 2 · das Kleeblatt ───────────────────────────────── */
+.kleeblattbild{position:absolute;left:0;top:0;width:100%;
+   pointer-events:none;z-index:0}
+#feld .feld.zone{z-index:2}
+#feld .feld.zone > .kopf{font-size:10.5px;padding:3px 5px 0;color:var(--matt)}
+#feld .feld.zone .k{width:calc(var(--kb) * .40)}
+.klegende{display:inline-block;margin-left:10px;font-size:11px;font-weight:400;
+   color:var(--matt);padding-left:13px;position:relative;text-transform:none}
+.klegende::before{content:'';position:absolute;left:0;top:3px;width:8px;
+   height:8px;border-radius:50%;border:2px solid}
+.klegende.rf::before{border-color:#7FB069}
+.klegende.aus::before{border-color:#6C9BD1}
+.klegende.kat::before{border-color:#C99BC0}
+` + '</style>');
+
+/* Ueber der Flaeche steht, was fuer ALLE Fragen gilt. Seit dem
+   2026-09-21 gehoert die 4:4-Aufteilung dazu — ohne sie ist die dritte
+   Spalte nicht entscheidbar (siehe thema.LAGE). */
 function praemissen(){
-  return `<div class="praemisse"><span>${D.lage}</span></div>`;
+  /* NEU (2026-09-21, Rikes Befund aus der Lehre): Die acht Sorten
+     stehen AUFGEZAEHLT da, mit beiden Einteilungen nebeneinander.
+
+     «Die Studierenden hatten ein Problem damit, dass ihnen nicht
+     bewusst war, was die Neuzugaenge und was die Klassiker sind.»
+     Bis heute stand nur die ZAHL da - «4 Klassiker und 4 Neuzugaenge».
+     Das genuegt fuer die Rechnung und nicht fuer die Entscheidung: Wer
+     vor «genau zwei Kugeln sind Neuzugaenge» sitzt, muss wissen,
+     welche Sorte dazugehoert.
+
+     Es ist der zweite Bericht derselben Sache — Maurus hat sie am
+     2026-09-18 fuer Kapitel 2 gemeldet, und die Zahl war die Antwort
+     darauf. Sie hat nicht gereicht.
+
+     Beide Einteilungen nebeneinander zeigen ausserdem, dass sie QUER
+     zueinander liegen: Unter den drei Sorbets sind Klassiker und
+     Neuzugaenge, unter den fuenf Milcheis auch. */
+  const S = D.sortiment || [];
+  const zahl = f => S.filter(f).length;
+  const gruppe = art => {
+    const drin = S.filter(x => x.art === art);
+    return '<div class="sgruppe"><b>' + drin.length + ' ' + art + '</b>'
+      + drin.map(x => `<span class="sorte">${x.name}<i class="${
+          x.gruppe === 'Klassiker' ? 'K' : 'N'}">${
+          x.gruppe === 'Klassiker' ? 'K' : 'N'}</i></span>`).join('')
+      + '</div>';
+  };
+  return `<div class="praemisse"><span>${D.lage}</span>
+    <div class="sortiment">${gruppe('Sorbet')}${gruppe('Milcheis')}
+      <span class="slegende"><i class="K">K</i> Klassiker (${
+        zahl(x => x.gruppe === 'Klassiker')}) &nbsp;·&nbsp; <i class="N">N</i> Neuzugang (${
+        zahl(x => x.gruppe === 'Neuzugang')}) &nbsp;— jede Sorte gehört zu
+      genau einer der beiden Gruppen.</span>
+    </div></div>`;
 }
 
-/* Ein Brett aus FESTEN Fragereihen — für Zug 2 und Etappe 2.
+const NACH_ID = {};
+D.loesungen.forEach(l => { NACH_ID[l.id] = l; });
 
-   In Zug 1 gibt es das seit dem 2026-08-21 nicht mehr: Dort liegen die
-   Fragen MIT auf dem Tisch und werden selbst herübergezogen. Rikes
-   Begründung, dieselbe wie in Kapitel 1: «Vielleicht ist es gar nicht
-   die Situation, die Ihnen am sympathischsten ist.»
+/* Eine Rechnung in der Tabelle. Sie liegt FEST — gezogen wird hier
+   nichts, die Zuordnung ist gegeben.
 
-   Sobald die Zuordnung steht, ist ein festes Brett aber genau richtig -
-   die Reihenfolge ist dann gewählt und soll liegen bleiben. */
-function fragebrett(els, beweglich){
-  const feld = document.getElementById('feld');
-  feld.querySelectorAll('.feld').forEach(d=>d.remove());
-  const kb = parseFloat(getComputedStyle(document.documentElement)
-              .getPropertyValue('--kb'));
-  const bb = feld.clientWidth || 520;
-  D.fragen.forEach(f=>{
-    const d = document.createElement('div');
-    d.className = 'feld reihe'; d.dataset.ort = f.id;
-    d.style.left = '8px'; d.style.width = (bb - 16) + 'px';
-    // Kein Buchstabe mehr - die Unterscheidung steht auf der Karte.
-    d.innerHTML = `<img class="reihenkopf" src="karten/${f.id}.svg" alt=""
-             style="width:${kb * 0.72}px">`;
-    feld.appendChild(d);
+   Zwei Marken:
+     Ω   die Ergebnismenge, ausgeschrieben (Rike, 2026-08-22)
+     ?   der DENKWEG (Lars' Anstoss, Rikes Ausgestaltung): «Man sollte,
+         wenn man auf die Karte drauf geht, den Denkweg einblenden
+         koennen.» Er steht deshalb nicht auf der Karte — die bleibt in
+         der uebersichtlichen Form, die Rike behalten wollte. */
+function rechenkarte(l){
+  const el = karte(l.id, {text:'Ω', art:'sit', titel:l.menge}, {fest:true});
+  const zweite = mkMarke({text:'?', art:'skript',
+    titel:'<b>So hat die Person gedacht</b><br>' + l.denkweg}, el);
+  zweite.classList.add('denkweg');
+  el.appendChild(zweite);
+  /* FEHLERBEHOBEN (2026-09-21, Rikes Befund beim Rollen: «die
+     erscheinen immer noch in der vorderen Spalte, die werden
+     mitgezogen»).
+
+     Ursache: karte() hebt eine Karte beim Daraufzeigen auf
+     z-index 99999, damit die Lupe ueber den Nachbarn liegt. Die
+     klebende erste Spalte hat z-index 4. Eine einmal angezeigte Karte
+     blieb damit ueber ihr - und wanderte beim Rollen sichtbar durch
+     den Zeilenkopf.
+
+     Der Zuhoerer hier wird NACH dem von karte() angemeldet und laeuft
+     deshalb danach; er nimmt die Hebung auf einen Wert zurueck, der
+     ueber den Nachbarkarten und unter der klebenden Spalte liegt. Die
+     Lupe bleibt, sie wird am Zeilenkopf nur beschnitten - und das ist
+     richtig: Der Zeilenkopf sagt, welcher Weg das ist. */
+  el.addEventListener('pointerenter', () => { el.style.zIndex = 3; });
+  el.classList.add('spaltenton' + l.spalte);
+  /* KEIN Urteilszeichen auf dem Standardweg.
+
+     Rike, 2026-09-21: «Wir sagen ja, ganz links steht die Rechnung,
+     die immer stimmt. Dann müssten diese Kreise dort gar nicht mehr
+     auftauchen.»
+
+     Sie hat recht, und es ist mehr als Aufraeumen: Ein Knopf, dessen
+     Antwort schon im Auftragstext steht, ist keine Entscheidung. Er
+     wuerde die drei echten Entscheidungen darunter entwerten - wer
+     neunmal «trägt» anklickt, bevor die erste Frage kommt, hat
+     gelernt, dass der Knopf nichts bedeutet. */
+  if (l.spalte > 1) urteilsmarke(el, l);
+  return el;
+}
+
+/* Das Urteil auf der Karte — unveraendert aus der alten Etappe 1
+   uebernommen, weil es sich dort bewaehrt hat:
+       leer  →  ✓ traegt  →  ✗ traegt nicht  →  leer
+   und was nicht traegt, wird DURCHGESTRICHEN (Rikes Vorschlag).
+
+   Neu ist nur, wozu es dient: Rike will die falschen Rechnungen am
+   Ende AUSSORTIERT haben, «sodass am Ende nur noch richtige Loesungen
+   dastehen». Der Strich leistet genau das, ohne die Karte zu
+   entfernen — wer sie wegnaehme, koennte nicht mehr zeigen, WARUM sie
+   weg ist. */
+function urteilsmarke(el, l){
+  const FOLGE = [null, 'ja', 'nein'];
+  const m = document.createElement('div');
+  m.className = 'urteil';
+  const zeichen = () => {
+    const u = stand.urteil[l.id];
+    m.textContent = u === 'ja' ? '✓' : u === 'nein' ? '✗' : '·';
+    m.title = u === 'ja' ? 'trägt' : u === 'nein' ? 'trägt nicht'
+                                   : 'noch kein Urteil';
+    m.classList.toggle('ja', u === 'ja');
+    m.classList.toggle('nein', u === 'nein');
+    el.classList.toggle('traegtnicht', u === 'nein');
+  };
+  m.onclick = ev => {
+    ev.stopPropagation();
+    const jetzt = FOLGE.indexOf(stand.urteil[l.id] || null);
+    stand.urteil[l.id] = FOLGE[(jetzt + 1) % FOLGE.length];
+    el.classList.remove('ok', 'falsch');
+    zeichen(); merken();
+  };
+  m.addEventListener('pointerdown', ev => ev.stopPropagation());
+  el.appendChild(m);
+  zeichen();
+}
+
+/* ───────── Etappe 1 · Vergleichen ─────────
+
+   Drei Schritte auf DERSELBEN Tabelle. Jeder Schritt schaltet eine
+   Spalte frei und mit ihr die Fragen, die zu ihr gehoeren.
+
+   Warum nicht alles auf einmal: Der Reiz liegt im Vergleich. «Was
+   macht Spalte 2 anders als Spalte 1?» ist nur eine Frage, solange
+   Spalte 1 schon dastand. */
+function etappe1(){
+  const a = D.etappen[0];
+  if (!stand.schritt) stand.schritt = 1;
+  if (!stand.urteil) stand.urteil = {};
+  /* FEHLERBEHOBEN (2026-09-21, sofort im Browser): Diese zwei Zeilen
+     standen weiter unten, bei der Tabelle. Die Leiste wird aber VORHER
+     geschrieben und liest stand.spaltenfolge - beim ersten Aufruf war
+     sie noch null, und die Etappe brach ab, bevor irgendetwas zu sehen
+     war. Ein Ausweichwert gehoert vor den ersten Leser, nicht vor den
+     ersten Schreiber. */
+  if (!stand.spaltenfolge || stand.spaltenfolge.length !== D.zeilen.length)
+    stand.spaltenfolge = D.zeilen.map(z => z.id);
+  if (!stand.gewaehlt) stand.gewaehlt = [];
+  const schritt = stand.schritt;
+  const letzter = schritt >= D.spalten.length;
+
+  const b = document.getElementById('buehne');
+  window._nachAblegen = null;
+  window._zustaendig = null;
+  b.innerHTML = `
+    <div class="auftrag"><span class="rang">${a.rang}</span>
+      <span class="titel">Etappe 1 · Schritt ${schritt} von ${
+        D.spalten.length}</span>
+      <span class="text">${a.auftrag}
+        <span class="zart">In den Wegen 2 bis 4 trägt jede Rechnung ein
+        <b>·</b> in der Ecke: antippen schaltet durch — <b>✓ trägt</b>,
+        <b>✗ trägt nicht</b>. Was nicht trägt, wird durchgestrichen.</span>
+      </span></div>
+    ${praemissen()}
+    <div class="buehne"><div class="tabrahmen">
+      <div class="tabelle" id="tabelle"></div>
+    </div></div>
+    <div class="leiste">
+      <button class="knopf leer" id="zurueck" title="Alle Urteile zurücknehmen">↺</button>
+      <button class="knopf" id="pruefen">Urteile prüfen</button>
+      ${letzter ? '' : `<button class="knopf leer" id="mehr">${
+        D.spalten[schritt - 1].knopf}</button>`}
+      ${schritt > 1 ? '<button class="knopf leer" id="zurueckschritt">← ein Schritt zurück</button>' : ''}
+      <button class="knopf leer" id="gruppieren"${
+        stand.gewaehlt.length < 2 ? ' disabled' : ''}>${
+        stand.gewaehlt.length < 2
+          ? 'Situationen anklicken, um sie zu gruppieren'
+          : stand.gewaehlt.length + ' nebeneinander legen'}</button>
+      ${stand.spaltenfolge.join() !== D.zeilen.map(z=>z.id).join()
+        ? '<button class="knopf leer" id="folgezurueck">Reihenfolge zurück</button>' : ''}
+      <span class="befund" id="befund"></span>
+      <button class="knopf leer" id="weiter" style="margin-left:auto">${
+        letzter ? 'Etappe 2 →' : 'Weiter →'}</button>
+    </div>`;
+  _leisteChrome(b);
+
+  /* ---- die Tabelle: WEGE als Zeilen, Situationen als Spalten ----
+
+     Rikes Bauplan vom 2026-09-21: «Wir haben die Situationszeile, die
+     Situationen, und dann haben wir vier weitere Zeilen unten drunter.
+     Wir haben vier verschiedene Berechnungswege. Eins ist der
+     Standardweg, der geht immer. Und dann haben wir drei
+     Spezialfaelle. Und die Frage ist: Wie nennen Sie den Spezialfall
+     jeweils? Und wann funktioniert der?»
+
+     Der Standardweg traegt seinen Namen also mit - er ist gegeben,
+     nicht zu finden. Die drei Spezialfaelle bekommen ein leeres Feld.
+     Ihre Namen wandern nach Etappe 2 ins Kleeblatt. */
+  const tab = document.getElementById('tabelle');
+
+  /* Die Reihenfolge der Situationen ist NICHT fest.
+
+     Rike, 2026-09-21: «Ob wir ihnen die Option geben, die Spalten
+     nachher zu verschieben, sodass sie dort ein bisschen mehr Muster
+     erkennen. Man koennte sagen: Spalten, die Sie nebeneinander haben
+     wollen, koennen Sie anklicken, und dann gibt es einen Knopf.»
+
+     Damit ist Etappe 1 wieder eine SORTIERHANDLUNG - nur nicht mehr
+     «welche Rechnung gehoert zu welcher Frage» (das kostete die Zeit
+     und trug nichts), sondern «welche Situationen verhalten sich
+     gleich». Genau das ist der Lerngegenstand.
+
+     Gelegt wird nicht per Ziehen, sondern per Auswahl und Knopf: Eine
+     Spalte ist keine Karte, sie ist so breit wie das Fenster hoch ist,
+     und das Ziehen einer ganzen Tabellenspalte waere auf dem Tablet
+     nicht zu treffen. */
+  const nachSit = {};
+  D.zeilen.forEach(z => { nachSit[z.id] = z; });
+  const SIT = stand.spaltenfolge.map(id => nachSit[id]).filter(Boolean);
+
+  const kopf = document.createElement('div');
+  kopf.className = 'tabreihe kopfreihe';
+  const ecke = document.createElement('div');
+  ecke.className = 'tabzelle';
+  ecke.innerHTML = '<span data-alsbild>Die Situationen →</span>';
+  kopf.appendChild(ecke);
+  SIT.forEach(z => {
+    const c = document.createElement('div');
+    c.className = 'tabzelle';
+    const kz = document.createElement('div');
+    kz.className = 'kartenzeile';
+    const kk = karte(z.id, null, {fest:true});
+    kk.classList.toggle('gewaehlt', stand.gewaehlt.includes(z.id));
+    kk.style.cursor = 'pointer';
+    kk.title = 'Anklicken, um diese Situation zu wählen';
+    kk.onclick = () => {
+      const i = stand.gewaehlt.indexOf(z.id);
+      if (i < 0) stand.gewaehlt.push(z.id); else stand.gewaehlt.splice(i, 1);
+      merken(); etappe1();
+    };
+    kz.appendChild(kk);
+    c.appendChild(kz);
+    kopf.appendChild(c);
   });
-  const tisch = document.getElementById('tisch');
-  Object.entries(stand.karten).forEach(([id, s])=>{
-    const el = els[id]; if (!el) return;
-    const ziel = s.ort === 'tisch' ? tisch
-      : (feld.querySelector(`[data-ort="${s.ort}"]`) || tisch);
-    ziel.appendChild(el); el._x = s.x; el._y = s.y; el._rot = s.rot; pos(el);
-    if (!beweglich) el.style.pointerEvents = 'none';
+  tab.appendChild(kopf);
+
+  D.spalten.filter(w => w.nr <= schritt).forEach(w => {
+    const r = document.createElement('div');
+    r.className = 'tabreihe wegreihe'; r.dataset.weg = w.nr;
+
+    // --- der Zeilenkopf, klebend am linken Rand -----------------
+    const kzelle = document.createElement('div');
+    kzelle.className = 'tabzelle wegkopf';
+    if (w.nr === 1){
+      kzelle.innerHTML = '<span class="wegnr" data-alsbild>Der Standardweg</span>'
+        + '<p class="wegfest">Geht immer.</p>'
+        + '<p>Jede Kugel mit ihrer Sorte, von unten nach oben, '
+        + 'vollständig. Hier steht in <b>jeder</b> Situation eine '
+        + 'Rechnung — und sie stimmt. Nichts zu beurteilen.</p>';
+    } else {
+      kzelle.innerHTML = `<span class="wegnr" data-alsbild>Spezialfall ${
+        w.nr - 1}</span>`;
+      const nf = document.createElement('div');
+      nf.className = 'feld wegname'; nf.dataset.ort = 'wegname' + w.nr;
+      const nt = document.createElement('textarea');
+      nt.className = 'schreibfeld';
+      nt.placeholder = 'Wie nennen Sie diesen Weg?';
+      nt.value = stand.texte['wegname' + w.nr] || '';
+      nt.oninput = () => { stand.texte['wegname' + w.nr] = nt.value; };
+      nf.appendChild(nt);
+      kzelle.appendChild(nf);
+      const paar = document.createElement('div');
+      paar.className = 'fragenpaar';
+      D.fragen.filter(f => f.spalte === w.nr).forEach(f => {
+        const d = document.createElement('div');
+        d.className = 'antwort feld'; d.dataset.ort = f.id;
+        d.innerHTML = `<div class="kopf">${f.text}</div>`;
+        const t = document.createElement('textarea');
+        t.className = 'schreibfeld';
+        t.placeholder = 'Ihre Antwort …';
+        t.value = stand.texte[f.id] || '';
+        t.oninput = () => { stand.texte[f.id] = t.value; };
+        d.appendChild(t);
+        paar.appendChild(d);
+      });
+      kzelle.appendChild(paar);
+    }
+    r.appendChild(kzelle);
+
+    // --- je Situation eine Zelle --------------------------------
+    SIT.forEach(z => {
+      const c = document.createElement('div');
+      c.className = 'tabzelle';
+      const ids = z.spalten[String(w.nr)] || [];
+      if (!ids.length){
+        /* Eine LEERE Zelle ist kein Versehen, sondern die Antwort auf
+           die erste der beiden Fragen links. Sie wird schraffiert und
+           nicht bloss weiss gelassen - weiss saehe aus wie «noch
+           nicht gebaut».
+
+           Was dasteht, sagt nur, DASS keine Rechnung da ist. Rike
+           fragt: «Warum steht bei manchen Situationen kein Kaertchen,
+           warum schon?» - die Antwort gehoert nicht in die Zelle. */
+        c.classList.add('leer');
+        c.innerHTML = '<span class="nichts">kein Kärtchen</span>';
+      } else {
+        const kz = document.createElement('div');
+        kz.className = 'kartenzeile';
+        ids.forEach(i => kz.appendChild(rechenkarte(NACH_ID[i])));
+        c.appendChild(kz);
+      }
+      r.appendChild(c);
+    });
+    tab.appendChild(r);
   });
-  reihenSetzen(feld, 0.72);
+
+  /* Die Breite wird GESETZT, nicht gerechnet vom Browser.
+
+     FEHLERBEHOBEN (2026-09-21, gemessen): Mit width:100% stand die
+     Tabelle am Schirm richtig da - und im Bild zum Mitnehmen war sie
+     500000 Punkte breit. Grund: _aufklappen() gibt jedem rollenden
+     Behaelter fuers Messen width:auto. Eine Tabelle mit width:100% in
+     einem Behaelter, dessen Breite von ihr selbst abhaengt, hat dann
+     keinen Bezug mehr. Gemessen: Karte 2 bei x = 116703 - weit
+     ausserhalb der Leinwand, und sie fiel lautlos aus dem Bild.
+
+     Eine feste Punktbreite hat diesen Bezug nicht noetig. Sie wird
+     hier aus der Zahl der Situationen gerechnet und ueberlebt das
+     Aufklappen, weil sie als eigener Stil am Element haengt. */
+  tab.style.width = (382 + SIT.length * 300 + 24) + 'px';
+
+  // ---- die Knoepfe ------------------------------------------------
+  const befund = document.getElementById('befund');
+  /* Weg 1 ist NICHT dabei: Seine Karten tragen kein Urteilszeichen
+     mehr, könnten also nie eines bekommen. Stünden sie in dieser
+     Liste, meldete «Urteile prüfen» dauerhaft neun Karten ohne
+     Urteil - eine Meldung, die niemand abstellen kann. */
+  const sichtbar = () => D.loesungen.filter(
+    l => l.spalte <= schritt && l.spalte > 1);
+
+  document.getElementById('pruefen').onclick = () => {
+    document.querySelectorAll('.k').forEach(k =>
+      k.classList.remove('ok', 'falsch'));
+    let stimmt = 0, daneben = 0, offen = 0;
+    sichtbar().forEach(l => {
+      const el = document.querySelector(`.k[data-id="${l.id}"]`);
+      const u = stand.urteil[l.id];
+      if (!u){ offen++; return; }
+      const gut = (u === 'ja') === !!l.richtig;
+      if (el) el.classList.add(gut ? 'ok' : 'falsch');
+      if (gut) stimmt++; else daneben++;
+    });
+    const satz = [];
+    if (offen) satz.push(`${offen} Rechnungen tragen noch kein Urteil.`);
+    satz.push(`${stimmt} richtig beurteilt`
+      + (daneben ? `, ${daneben} nicht.` : '.'));
+    if (!offen && !daneben)
+      satz.push('Alles beurteilt — jetzt die Fragen darunter beantworten.');
+    befund.textContent = satz.join(' ');
+    stand.geprueft = true; merken();
+  };
+
+  document.getElementById('zurueck').onclick = () => {
+    sichtbar().forEach(l => { delete stand.urteil[l.id]; });
+    merken(); etappe1();
+  };
+
+  /* Die gewaehlten Spalten ruecken zusammen - an den Platz der am
+     weitesten LINKS stehenden von ihnen. Die anderen behalten ihre
+     Reihenfolge. So bleibt jede Umstellung nachvollziehbar: Wer drei
+     waehlt und den Knopf drueckt, sieht sie beieinander und den Rest
+     unveraendert. */
+  document.getElementById('gruppieren').onclick = () => {
+    const folge = stand.spaltenfolge;
+    const gewaehlt = folge.filter(id => stand.gewaehlt.includes(id));
+    if (gewaehlt.length < 2) return;
+    const wo = folge.indexOf(gewaehlt[0]);
+    const rest = folge.filter(id => !stand.gewaehlt.includes(id));
+    const vor = rest.filter(id => folge.indexOf(id) < wo);
+    stand.spaltenfolge = [...vor, ...gewaehlt,
+                          ...rest.filter(id => folge.indexOf(id) > wo)];
+    stand.gewaehlt = [];
+    merken(); etappe1();
+  };
+  const zurueckKnopf = document.getElementById('folgezurueck');
+  if (zurueckKnopf) zurueckKnopf.onclick = () => {
+    stand.spaltenfolge = D.zeilen.map(z => z.id);
+    stand.gewaehlt = [];
+    merken(); etappe1();
+  };
+
+  if (!letzter) document.getElementById('mehr').onclick = () => {
+    stand.schritt = schritt + 1; merken(); etappe1();
+  };
+  if (schritt > 1) document.getElementById('zurueckschritt').onclick = () => {
+    stand.schritt = schritt - 1; merken(); etappe1();
+  };
+  document.getElementById('weiter').onclick = () => {
+    if (!letzter){ stand.schritt = schritt + 1; merken(); etappe1(); return; }
+    stand.etappe = 1; los();
+  };
+  window._neuzeichnen = () => etappe1();
+  // Nur in index.html sichtbar - sie nennt die vier Ueberschriften,
+  // die auf der Flaeche mit Absicht fehlen.
+  loesungsHinweis(D.loesung_e1);
 }
 
-/* NEU (Rikes Entscheidung, 2026-08-22): Die Ergebnismenge laesst sich
-   EINBLENDEN. Auf der Karte steht die Vorschrift in Worten; die Menge
-   ausgeschrieben danebenzustellen lehnt Rike aus Platzgruenden ab -
-   «rein einfach aus Platzgruenden wuerd ich's im Moment so lassen».
-   Ihr Gegenvorschlag ist dieser hier: «Aehnlich, wie wir's haben bei
-   den Situationen oder bei den Urnenmodellen, wo man sich die Situation
-   noch mal einblenden lassen koennte, koennte man sich dort die
-   Ergebnismenge einblenden lassen.»
+/* ───────── Etappe 2 · Einordnen ─────────
 
-   Also dieselbe Marke mit derselben Blase wie bei den Situationen -
-   nur traegt sie ein Ω statt einer Nummer, damit man ihr ansieht, was
-   dahintersteckt.
+   Das Kleeblatt. Drei Kreise, eine Erleichterung je Kreis — und zwar
+   GENAU die drei Spalten aus Etappe 1. Etappe 2 ordnet, was Etappe 1
+   nebeneinandergelegt hat.
 
-   Sie verraet nichts: Ob eine Vorschrift Laplace ist, haengt daran, ob
-   die Elemente von Ω gleich wahrscheinlich sind - und DAS liest man Ω
-   nicht an, dafuer muss man auf die Durchfuehrungen zurueck. Die Blase
-   macht sichtbar, WORUEBER geurteilt wird, nicht WIE das Urteil
-   ausfaellt. Genau das war Rikes Befund an den Urteilsknoepfen: «Wer
-   nicht sieht, worueber er urteilt, haelt den Knopf fuer wirkungslos.»
+   «Mit Reihenfolge» ist kein Kreis. Sie ist immer moeglich, weil sie
+   den groessten Detailgrad hat — ein Kreis, in dem alles laege, sagt
+   nichts. Die Kreise fragen nach der ERLEICHTERUNG.
 
-   Steht hier oben, weil alle drei Stellen, an denen eine
-   Loesungskarte entsteht, dieselbe Blase brauchen - Etappe 1 Zug 1,
-   Zug 2 und das Nachschlagebrett von Etappe 2. */
-function loesungskarte(l){
-  return karte(l.id, l.menge ? {text:'Ω', art:'sit', titel:l.menge} : null);
+   BEFUND, gerechnet in tabelle.pruefen() und erweiterung.pruefen():
+   Zwei der sieben Felder bleiben zwingend leer. «Ohne Reihenfolge»
+   braucht eine Situation OHNE Wiederholung, «nur die Art» eine MIT —
+   die beiden Kreise koennen sich also nicht schneiden. Und ein
+   Ausschnitt ist nur moeglich, wo das Ereignis von Plaetzen spricht;
+   dann erzwingt es die Reihenfolge, und der linke Kreis ist zu.
+
+   Die leeren Felder sind deshalb DA und nicht weggelassen. Wer sie
+   nicht sieht, kann nicht bemerken, dass sie leer bleiben — und genau
+   das ist die Einsicht. */
+
+// Die Geometrie des Kleeblatts. EINE Quelle: Das Hintergrundbild und
+// die Ablagefelder rechnen beide daraus.
+const KLEE = {
+  breite: 600, hoehe: 540, r: 160,
+  mitte: {rf: [200, 190], aus: [400, 190], kat: [300, 350]},
+  // Je Feld: Kuerzel, welche Kreise, Rechteck [x, y, b, h].
+  felder: [
+    {id:'rf',        in:['rf'],              kasten:[ 80, 140, 140, 105]},
+    {id:'aus',       in:['aus'],             kasten:[380, 140, 140, 105]},
+    {id:'rf-aus',    in:['rf','aus'],        kasten:[236,  92, 128,  76]},
+    {id:'rf-kat',    in:['rf','kat'],        kasten:[134, 290, 118,  76]},
+    {id:'aus-kat',   in:['aus','kat'],       kasten:[348, 290, 118,  76]},
+    {id:'rf-aus-kat',in:['rf','aus','kat'],  kasten:[248, 234, 104,  68]},
+    {id:'kat',       in:['kat'],             kasten:[236, 396, 128,  84]},
+    {id:'keine',     in:[],                  kasten:[ 20, 424, 150, 100]},
+  ],
+};
+
+/* Umbruch auf hoechstens `breit` Zeichen je Zeile, hoechstens drei
+   Zeilen. Ein SVG bricht Text nicht von selbst um - und ein
+   selbstgeschriebener Name kann lang sein. */
+function _umbruch(text, breit){
+  const zeilen = [];
+  let zeile = '';
+  text.split(/\s+/).forEach(w => {
+    if ((zeile + ' ' + w).trim().length > breit && zeile){
+      zeilen.push(zeile); zeile = w;
+    } else zeile = (zeile + ' ' + w).trim();
+  });
+  if (zeile) zeilen.push(zeile);
+  return zeilen.slice(0, 3);
 }
 
-/* ───────── Etappe 1 · Ordnen — in ZWEI ZUEGEN ─────────
+/* Was in ein SVG geschrieben wird, muss maskiert sein - der Name kommt
+   aus einem Textfeld, in dem ein & oder ein < stehen darf. Ohne das
+   waere die Zeichnung ab dort kaputt, und zwar stumm. */
+function _roh(s){
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                  .replace(/>/g, '&gt;');
+}
 
-   NEU (2026-08-21, Rikes Entscheidung «sehr, sehr gut»): Bisher hatte
-   Etappe 1 EINEN Auftrag und EINEN Pruefknopf, und der sagte beides auf
-   einmal - gruen «am richtigen Ort und traegt», bernstein «am richtigen
-   Ort, traegt aber nicht». Damit entschieden die Studierenden nie
-   selbst, welcher Versuch traegt; die Flaeche sagte es ihnen. Das war
-   Rikes Befund «die gesamte Sortierlogik stimmt noch nicht».
+function kleeblattBild(){
+  const g = KLEE, t = [];
+  t.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.breite} ${g.hoehe}">`);
+  const toene = {rf:'#7FB069', aus:'#6C9BD1', kat:'#C99BC0'};
+  D.kreise.forEach(k => {
+    const [x, y] = g.mitte[k.id];
+    t.push(`<circle cx="${x}" cy="${y}" r="${g.r}" fill="${toene[k.id]}" `
+      + `fill-opacity=".13" stroke="${toene[k.id]}" stroke-width="2"/>`);
+  });
+  /* An den Kreisen stehen DIE SELBST GESCHRIEBENEN NAMEN.
 
-   Neu sind es zwei Zuege auf DEMSELBEN Brett:
+     Rike, 2026-09-21: «Der Name der Spezialfaelle, so wie Sie sie
+     benennen, das sollte dann nachher im Venn-Diagramm erscheinen.»
 
-     Zug 1  ZUORDNEN    Jeden Versuch zu der Frage legen, bei der er
-                        vermutlich gerechnet wurde. Geprueft wird NUR
-                        das. Ueber richtig und falsch faellt kein Wort.
-     Zug 2  ENTSCHEIDEN Je Karte selbst setzen: traegt / traegt nicht.
-                        Erst danach wird geprueft.
+     Damit haengen die beiden Etappen wirklich zusammen: Was in
+     Etappe 1 benannt wurde, ist hier die Ueberschrift, unter der
+     einsortiert wird. Wer keinen Namen geschrieben hat, sieht das -
+     der Platzhalter schickt zurueck, statt einen Namen zu liefern.
 
-   Warum kein Fach «die richtige» und keines «die falsche»: Ihre Zahl
-   wuerde verraten, wie viele Wege tragen. Rikes Bedingung war
-   ausdruecklich, dass nichts vorweggenommen wird - mal tragen beide,
-   mal einer von vieren. Am einzelnen Kaertchen zu urteilen laesst das
-   offen.
-*/
-/* Fertig sortiertes Brett fuer loesungsKnopf() - nur fuer Zug 2, dessen
-   Brett feste Reihen je Frage hat (dataset.ort = Fragen-ID direkt).
-   Zug 1 hat ein dynamisches Brett wie Kombinatoriks Etappe 1 (Reihen
-   werden erst durchs Herueberziehen einer Fragekarte eroeffnet) - dafuer
-   gibt es hier bewusst keine Loesungsansicht, das waere derselbe Aufwand
-   wie in Kombinatorik noch einmal, an einer Stelle ohne eigene Wertung. */
-function _loesungStandZug2(){
+     FEHLERBEHOBEN (2026-09-21, beim ersten Blick im Browser): Die
+     vollen Saetze standen ueber den Kreisen und ueberlappten einander;
+     «Ohne Reihenfolge geht auchEin Ausschnitt genuegt» stand als ein
+     Wort da. Der Name sitzt jetzt im aeusseren Zipfel des eigenen
+     Kreises, wo kein Ablagefeld liegt, und wird bei Bedarf umbrochen. */
+  const wo = {rf:[130, 86], aus:[470, 86], kat:[300, 500]};
+  D.kreise.forEach(k => {
+    const [x, y] = wo[k.id];
+    const eigen = (stand.texte['wegname' + k.weg] || '').trim();
+    const zeilen = eigen ? _umbruch(eigen, 20)
+                         : ['Spezialfall ' + (k.weg - 1), '(noch ohne Namen)'];
+    zeilen.forEach((z, i) => {
+      t.push(`<text x="${x}" y="${y + i * 17}" text-anchor="middle" `
+        + `font-family="sans-serif" font-size="14" `
+        + `font-weight="${eigen ? 600 : 400}" `
+        + `fill="${eigen ? '#5a5349' : '#a09786'}">${_roh(z)}</text>`);
+    });
+  });
+  t.push(`<text x="95" y="418" text-anchor="middle" font-family="sans-serif" `
+    + `font-size="13" fill="#8a8279">keiner der drei</text>`);
+  t.push('</svg>');
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t.join(''));
+}
+
+/* Wo gehoert eine Zeile hin? Aus D.kleeblatt — gerechnet, nicht
+   hingeschrieben. */
+const KLEEZIEL = {};
+D.kleeblatt.forEach(z => {
+  KLEEZIEL[z.id] = z.gehoert.length ? z.gehoert.slice().sort().join('-')
+                                    : 'keine';
+});
+
+function _loesungStandE2(){
   const karten = {};
-  D.loesungen.forEach(l => { karten[l.id] = {ort: l.frage, x:0, y:0, rot:0}; });
+  Object.entries(KLEEZIEL).forEach(([id, ort]) => {
+    karten[id] = {ort, x: 0, y: 0, rot: 0};
+  });
   return {karten};
 }
 
-function etappe1(){
-  const a = D.etappen[0];
-  if (!stand.runde) stand.runde = 1;
-  if (!stand.zug) stand.zug = 1;
-  if (!stand.urteil) stand.urteil = {};
-  const runde = D.runden.find(r=>r.nr === stand.runde) || D.runden[0];
-  const letzte = stand.runde >= D.runden.length;
-  const zug2 = stand.zug === 2;
-  if (zug2) loesungAnwenden(_loesungStandZug2);
+function etappe2(){
+  const a = D.etappen[1];
+  if (!stand.runde2) stand.runde2 = 1;
+  const runde2 = stand.runde2 === 2;
+  if (!runde2) loesungAnwenden(_loesungStandE2);
 
-  const auftrag = zug2
-    ? 'Bei manchen Fragen liegt jetzt <b>mehr als ein Versuch</b>. '
-      + 'Entscheiden Sie für jeden einzeln: Trägt er — oder trägt er nicht? '
-      + '<span class="zart">Alle sind sauber gerechnet. Die Frage ist nicht, '
-      + 'ob jemand sich verrechnet hat, sondern ob die gewählte '
-      + 'Ergebnismenge diese Frage überhaupt tragen kann.</span>'
-    : 'Jede Lösungskarte ist ein <b>Versuch</b>: sauber gerechnet, richtig '
-      + 'gezählt. Legen Sie jeden Versuch zu der Frage, bei der er '
-      + '<b>vermutlich gerechnet wurde</b>. '
-      + '<span class="zart">Ob er trägt, ist hier noch nicht die Frage — '
-      + 'das kommt im zweiten Zug.</span>';
+  const auftrag = runde2
+    ? 'Jetzt die Aufgaben aus dem Skript. Sie spielen nicht mehr in der '
+      + 'Eisdiele — Ihr Kriterium muss trotzdem tragen. '
+      + '<span class="zart">Hier gibt es keine hinterlegte Lösung. Prüfen '
+      + 'Sie am eigenen Satz, nicht an einer Tabelle.</span>'
+    : 'Drei Erleichterungen, drei Kreise. Legen Sie jede Situation aus '
+      + 'Etappe 1 dorthin, wo sie hingehört — <b>mit Reihenfolge</b> geht '
+      + 'immer, danach wird nicht gefragt. '
+      + '<span class="zart">Passt keine der drei, gibt es unten links '
+      + 'ein Feld dafür. Und schauen Sie, welche Felder leer bleiben.</span>';
 
   buehne({rolle:a.rolle, rang:a.rang,
-    titel: zug2 ? 'Etappe 1 · Zug 2 — Entscheiden'
-                : 'Etappe 1 · Zug 1 — Zuordnen',
+    // GEZAEHLT, nicht hingeschrieben: Es waren acht, dann neun. Eine
+    // Zahl im Text, die niemand nachzieht, ist eine, die still falsch
+    // wird.
+    titel: runde2 ? 'Etappe 2 · Runde 2 — die Aufgaben aus dem Skript'
+                  : `Etappe 2 · Runde 1 — die ${D.zeilen.length} Situationen`,
     text: auftrag},
-    zug2 ? 'Lösungsversuche' : 'Tisch — Fragen und Rechenwege',
-    zug2 ? 'Die sieben Fragen' : 'Ihre Zuordnung',
+    runde2 ? 'Aufgaben aus dem Skript' : `Die ${D.zeilen.length} Situationen`,
+    'Was ist hier erlaubt? ' + D.kreise.map(k => {
+      const eigen = (stand.texte['wegname' + k.weg] || '').trim();
+      return `<span class="klegende ${k.id}" title="${k.lang}">${
+        eigen || 'Spezialfall ' + (k.weg - 1)}</span>`;
+    }).join(''),
     `<button class="knopf leer" id="zurueck" title="Alle Karten zurück">↺</button>
-     <button class="knopf" id="pruefen">Prüfen</button>
-     ${(!zug2 && !letzte) ? '<button class="knopf leer" id="mehr">Nächste Runde dazulegen</button>' : ''}
-     ${zug2 ? '<button class="knopf leer" id="zurueckzug">← zurück zum Zuordnen</button>' : ''}
-     <span class="befund" id="befund"></span>
-     <button class="knopf leer" id="weiter" style="margin-left:auto">${
-       zug2 ? 'Etappe 2 →' : 'Weiter: Welche Wege tragen? →'}</button>`,
+     ${runde2 ? '' : '<button class="knopf" id="pruefen">Prüfen</button>'}
+     ${runde2 ? '<button class="knopf leer" id="zurueckrunde">← zurück zu den Situationen</button>'
+              : '<button class="knopf leer" id="mehr">Aufgaben aus dem Skript dazu</button>'}
+     <span class="befund" id="befund"></span>`,
     praemissen());
 
   const tisch = document.getElementById('tisch');
   const feld = document.getElementById('feld');
-  // In Zug 2 liegt alles auf dem Tisch, was es gibt - sonst faellt ein
-  // Stapel aus der Entscheidung heraus.
-  const bis = zug2 ? D.runden.length : stand.runde;
-  const dabei = D.loesungen.filter(l => l.stapel <= bis);
   const els = {};
-  /* NEU (Rikes Entscheidung, 2026-08-22): Die drei Stapel tragen ihre
-     Farbe VON ANFANG AN, nicht erst nach der Pruefung von Zug 2.
+  const dabei = runde2 ? D.transfer : D.zeilen;
+  dabei.forEach(z => { els[z.id] = karte(z.id); });
 
-     Rikes Begruendung, und sie hebt ihren eigenen frueheren Einwand auf:
-     «Es ist quasi nicht notwendig, dass sie am Anfang nicht gefaerbt
-     sind, weil dadurch, dass wir eh nacheinander sortieren, haben wir
-     die eh schon getrennt. Und die Farbe gibt dort keine Informationen,
-     die wir nicht geben wollen.»
-
-     Der Stapel IST die Runde - `dabei` filtert auf `l.stapel <= bis`.
-     «Neue Karten, neue Farbe» faellt damit von selbst zusammen mit dem,
-     was die Marke «neu» sagen sollte. */
-  dabei.forEach(l => {
-    const el = zug2 ? urteilskarte(l) : loesungskarte(l);
-    el.classList.add('stapel' + l.stapel);
-    els[l.id] = el;
-  });
-  // In Zug 1 sind auch die FRAGEN Karten - sie liegen mit auf dem Tisch
-  // und werden selbst herübergezogen.
-  if (!zug2) D.fragen.forEach(f => { els[f.id] = karte(f.id); });
-
-  if (!stand.e1reihen) stand.e1reihen = [];
-
-  /* ZUG 1: kein festes Brett. Wer eine Fragekarte nach rechts legt,
-     macht damit eine ZEILE auf; die Rechenwege kommen DANEBEN.
-
-     BERICHTIGT (2026-08-21, Rikes Einwand «das ist ein echter Fehler»):
-     Die erste Fassung stapelte unter der Fragekarte Platz um Platz,
-     und neben der Frage blieb die halbe Zeile leer. Rike: «Wir
-     brauchen eine lange Liste - Situation, daneben die Rechnungen, alle
-     in einer Zeile nebeneinander. Und darunter die naechste Situation.»
-     Genau das leistet reiheOrdnen(), das Kapitel 2 schon benutzt; die
-     gemeinsame Flaeche kann seit heute auch eine KARTE als Kopf. */
-  function reihen(){
+  function zonen(){
     feld.querySelectorAll('.feld').forEach(d => d.remove());
+    feld.querySelectorAll('.kleeblattbild').forEach(d => d.remove());
     const bb = feld.clientWidth || 520;
-    stand.e1reihen.forEach((r, i) => {
+    const f = bb / KLEE.breite;
+    const bild = document.createElement('img');
+    bild.className = 'kleeblattbild'; bild.src = kleeblattBild();
+    bild.alt = ''; feld.appendChild(bild);
+    KLEE.felder.forEach(z => {
+      const [x, y, w, h] = z.kasten;
       const d = document.createElement('div');
-      d.className = 'feld reihe offen'; d.dataset.ort = 'f' + i;
-      d.style.left = '8px'; d.style.width = (bb - 16) + 'px';
+      d.className = 'feld zone'; d.dataset.ort = z.id;
+      d.style.left = (x * f) + 'px'; d.style.top = (y * f) + 'px';
+      d.style.width = (w * f) + 'px'; d.style.height = (h * f) + 'px';
       feld.appendChild(d);
     });
-
-    const wink = document.createElement('div');
-    wink.className = 'feld neu'; wink.dataset.ort = 'neuereihe';
-    wink.style.left = '8px'; wink.style.width = (bb - 16) + 'px';
-    wink.style.height = '52px';
-    wink.innerHTML = '<span>Fragekarte hierher ziehen</span>';
-    feld.appendChild(wink);
-
+    feld.style.minHeight = (KLEE.hoehe * f + 16) + 'px';
     Object.entries(stand.karten).forEach(([id, s]) => {
       const el = els[id]; if (!el) return;
       const ziel = s.ort === 'tisch' ? tisch
         : (feld.querySelector(`[data-ort="${s.ort}"]`) || tisch);
-      // Die Fragekarte ist der Kopf ihrer Zeile - reiheOrdnen legt sie
-      // nach links, die Rechenwege fliessen daneben.
-      el.classList.toggle('kopfkarte',
-        s.ort !== 'tisch' && D.fragen.some(f => f.id === id));
       ziel.appendChild(el); el._x = s.x; el._y = s.y; el._rot = s.rot; pos(el);
     });
-    const unten = reihenSetzen(feld, 0.72);
-    wink.style.top = unten + 'px';
-    feld.style.minHeight = (unten + 72) + 'px';
+    feld.querySelectorAll('.feld.zone').forEach(d => gruppeOrdnen(d));
   }
 
-  // Eine Fragekarte auf dem Wink macht eine Reihe auf.
-  window._e1ablage = (el, zielOrt) => {
-    if (zug2) return zielOrt;
-    const id = el.dataset.id;
-    if (!D.fragen.some(f => f.id === id)) return zielOrt;
-    if (zielOrt === 'neuereihe' || zielOrt === null){
-      stand.e1reihen.push({frage: id});
-      return 'f' + (stand.e1reihen.length - 1);
-    }
-    return zielOrt;
+  window._neuzeichnen = zonen;
+  window._nachAblegen = () => {
+    feld.querySelectorAll('.feld.zone').forEach(d => gruppeOrdnen(d));
   };
-
-  /* Welche Fragekarte liegt in Reihe i? Vom Brett abgelesen. */
-  const reiheFrage = i => {
-    const k = document.querySelector(`[data-ort="f${i}"] .k.kopfkarte`);
-    return k ? k.dataset.id : null;
-  };
-
-  /* Beim Wechsel nach Zug 2 wird aus «liegt in Reihe 3» ein «gehoert
-     zu Frage FA5». Ohne diese Uebersetzung faenden die Karten in Zug 2
-     ihren Platz nicht - dort heissen die Orte nach den Fragen. */
-  function uebergabe(){
-    const neu = {};
-    Object.entries(stand.karten).forEach(([id, s]) => {
-      if (D.fragen.some(f => f.id === id)) return;   // Fragen bleiben liegen
-      const nr = (s.ort.match(/^f(\d+)$/) || [])[1];
-      const frage = nr === undefined ? null : reiheFrage(nr);
-      neu[id] = frage ? {...s, ort: frage, x: 8, y: 8} : {...s, ort: 'tisch'};
-    });
-    stand.karten = neu;
-  }
-
-  // Der Tisch in zwei Baendern - Fragen oben, Rechenwege unten.
-  const BAENDER = [
-    {art:'F', name:'Die Fragen', ids:()=>D.fragen.map(f=>f.id)},
-    {art:'R', name:'Die Rechenwege', ids:()=>dabei.map(l=>l.id)},
-  ];
-  const tischOrdnen = () => baenderOrdnen(tisch, BAENDER, els);
-
-  if (zug2){
-    window._neuzeichnen = ()=>fragebrett(els, false);
-    window._nachAblegen = ()=>reihenSetzen(feld, 0.72);
-    fragebrett(els, false);
-  } else {
-    window._neuzeichnen = ()=>{ reihen(); tischOrdnen(); };
-    // Nach jedem Ablegen die Zeilen neu setzen - eine Zeile waechst mit
-    // der Zahl der Rechenwege, die darin liegen.
-    window._nachAblegen = ()=>{
-      const unten = reihenSetzen(feld, 0.72);
-      const w = feld.querySelector('[data-ort="neuereihe"]');
-      if (w){ w.style.top = unten + 'px';
-              feld.style.minHeight = (unten + 72) + 'px'; }
-    };
-    reihen();
-  }
-
-  const neueF = D.fragen.filter(f=>!(f.id in stand.karten)).map(f=>els[f.id]);
-  const neue = dabei.filter(l=>!(l.id in stand.karten)).map(l=>els[l.id]);
-  // FEHLERBEHOBEN (2026-08-21): Die erste Fassung trug die neuen Karten
-  // von Hand in stand.karten ein und rief dann merken(). Das loeschte
-  // sie sofort wieder: merken() baut stand.karten AUS DEM DOM neu auf,
-  // und die Karten hingen noch nirgends. Gemessen: 0 Karten auf dem
-  // Tisch, obwohl 18 erzeugt waren. Richtig ist die Reihenfolge aus
-  // Kapitel 1 - erst streuen (das haengt sie ein), dann merken.
-  const neuAlle = [...(zug2 ? [] : neueF), ...neue];
-  if (neuAlle.length){
-    // UEBERHOLT (2026-08-22, Rikes Entscheidung «die Marke neu brauchen
-    // wir nicht»): Hier bekam jede Karte einer spaeteren Runde eine
-    // Marke «neu». Sie sollte das Wachsen zeigen, ohne die
-    // Stapelzugehoerigkeit zu verraten.
-    //
-    // Beides ist hinfaellig. Die Zugehoerigkeit wird jetzt ohnehin
-    // gezeigt, und das Wachsen zeigt sich von selbst: «Sobald ein neuer
-    // Stapel dazukommt, sind die alten Karten schon rueberrgerutscht,
-    // nicht mehr auf dem ungeordneten Feld. Dann muessen wir dort diese
-    // Unterscheidung nicht haben.»
-    streuen(neuAlle, tisch);
-    merken();
-  }
-  if (!zug2) tischOrdnen();
+  zonen();
+  const neu = dabei.filter(z => !(z.id in stand.karten)).map(z => els[z.id]);
+  if (neu.length){ streuen(neu, tisch); merken(); }
 
   const befund = document.getElementById('befund');
-  if (!zug2){
-    befund.textContent = stand.runde === 1
-      ? `Runde 1 — ${runde.anzahl} Versuche.`
-      : `Runde ${stand.runde}: ${runde.anzahl} weitere Versuche liegen dazu. `
-        + `Was machen sie anders?`;
-  } else {
-    befund.textContent = `${dabei.length} Versuche. Setzen Sie an jeder Karte `
-      + `ein Urteil.`;
-  }
-
-  const mehr = document.getElementById('mehr');
-  if (mehr) mehr.onclick = ()=>{ stand.runde++; etappe1(); };
-
-  const zurueckzug = document.getElementById('zurueckzug');
-  if (zurueckzug) zurueckzug.onclick = ()=>{ stand.zug = 1; etappe1(); };
-
-  document.getElementById('zurueck').onclick = ()=>{
-    stand.karten = {}; stand.runde = 1; stand.zug = 1; stand.urteil = {};
-    stand.e1reihen = [];
-    document.querySelectorAll('.k').forEach(k=>
-      k.classList.remove('ok','falsch','fastok'));
-    etappe1();
-  };
-
-  /* Eine Loesungskarte mit ihrem Urteil.
-
-     BERICHTIGT (2026-08-22, Rikes Befund «da gibt's zwar diese Buttons,
-     aber die tun nichts»): Sie taten etwas - man sah es nur nicht. Zwei
-     Knöpfe mit Beschriftung deckten die Karte in der Reihe fast
-     vollständig zu; vom Rechenweg blieb ein Streifen. Wer nicht sieht,
-     worüber er urteilt, hält den Knopf für wirkungslos.
-
-     Neu ist es EIN kleines Zeichen in der Ecke, das durchschaltet:
-         leer  →  ✓ trägt  →  ✗ trägt nicht  →  leer
-     und Rikes Vorschlag dazu: Was nicht trägt, wird DURCHGESTRICHEN.
-     Das Urteil steht damit auf der Karte, nicht davor. */
-  function urteilskarte(l){
-    const el = loesungskarte(l);
-    const FOLGE = [null, 'ja', 'nein'];
-    const marke = document.createElement('div');
-    marke.className = 'urteil';
-    const zeichen = () => {
-      const u = stand.urteil[l.id];
-      marke.textContent = u === 'ja' ? '✓' : u === 'nein' ? '✗' : '·';
-      marke.title = u === 'ja' ? 'trägt' : u === 'nein' ? 'trägt nicht'
-                                         : 'noch kein Urteil';
-      marke.classList.toggle('ja', u === 'ja');
-      marke.classList.toggle('nein', u === 'nein');
-      el.classList.toggle('traegtnicht', u === 'nein');
-    };
-    marke.onclick = ev => {
-      ev.stopPropagation();
-      const jetzt = FOLGE.indexOf(stand.urteil[l.id] || null);
-      stand.urteil[l.id] = FOLGE[(jetzt + 1) % FOLGE.length];
-      el.classList.remove('ok', 'falsch');
-      zeichen(); merken();
-    };
-    marke.addEventListener('pointerdown', ev => ev.stopPropagation());
-    el.appendChild(marke);
-    zeichen();
-    return el;
-  }
-
-  document.getElementById('pruefen').onclick = ()=>{
-    document.querySelectorAll('.k').forEach(k=>
-      k.classList.remove('ok','falsch','fastok'));
-
-    if (!zug2){
-      // ZUG 1 prueft NUR die Zuordnung. Kein Wort ueber tragen.
-      //
-      // Welche Frage in einer Reihe liegt, wird am BRETT abgelesen und
-      // nicht aus stand.e1reihen genommen: Wer die Fragekarte
-      // nachtraeglich austauscht, soll auch danach geprueft werden.
-      let getroffen=0, daneben=0, offen=0, ohneFrage=0;
-      dabei.forEach(l=>{
-        const s = stand.karten[l.id];
-        if (!s || s.ort === 'tisch'){ offen++; return; }
-        const el = els[l.id];
-        const nr = (s.ort.match(/^f(\d+)$/) || [])[1];
-        const frage = nr === undefined ? null : reiheFrage(nr);
-        if (frage === null){ ohneFrage++; return; }
-        if (frage === l.frage){ el.classList.add('ok'); getroffen++; }
-        else { el.classList.add('falsch'); daneben++; }
-      });
-      if (ohneFrage) befund.textContent =
-        `${ohneFrage} Versuche liegen in einer Reihe ohne Fragekarte. `;
-      const satz = [`${getroffen} von ${dabei.length} bei der richtigen Frage.`];
-      if (daneben) satz.push(`${daneben} liegen woanders.`);
-      if (offen) satz.push(`${offen} liegen noch auf dem Tisch.`);
-      if (!daneben && !offen) satz.push('Alles zugeordnet — weiter zum zweiten Zug.');
-      befund.textContent = satz.join(' ');
-      return;
-    }
-
-    // ZUG 2 prueft das URTEIL - und nur bei den Karten, die am
-    // richtigen Ort liegen. Ein Urteil ueber eine falsch zugeordnete
-    // Karte waere ein Urteil ueber die falsche Frage.
-    let richtigBeurteilt=0, falschBeurteilt=0, ohneUrteil=0, verlegt=0;
-    dabei.forEach(l=>{
-      const s = stand.karten[l.id], el = els[l.id];
-      if (!s || s.ort !== l.frage){ verlegt++; return; }
-      const u = stand.urteil[l.id];
-      if (!u){ ohneUrteil++; return; }
-      const stimmt = (u === 'ja') === !!l.richtig;
-      el.classList.add(stimmt ? 'ok' : 'falsch');
-      if (stimmt) richtigBeurteilt++; else falschBeurteilt++;
+  if (!runde2) document.getElementById('pruefen').onclick = () => {
+    document.querySelectorAll('.k').forEach(k =>
+      k.classList.remove('ok', 'falsch'));
+    let gut = 0, schief = 0, offen = 0;
+    D.zeilen.forEach(z => {
+      const s = stand.karten[z.id], el = els[z.id];
+      if (!s || s.ort === 'tisch'){ offen++; return; }
+      if (s.ort === KLEEZIEL[z.id]){ el.classList.add('ok'); gut++; }
+      else { el.classList.add('falsch'); schief++; }
     });
-    stand.geprueft = true;
     const satz = [];
-    if (ohneUrteil) satz.push(`${ohneUrteil} Karten tragen noch kein Urteil.`);
-    if (verlegt) satz.push(`${verlegt} liegen bei der falschen Frage — `
-      + `zurück zum Zuordnen.`);
-    satz.push(`${richtigBeurteilt} richtig beurteilt`
-      + (falschBeurteilt ? `, ${falschBeurteilt} nicht.` : '.'));
-    if (!ohneUrteil && !verlegt && !falschBeurteilt){
-      // UEBERHOLT (2026-08-22): Hier faerbten sich die Stapel erst jetzt.
-      // Sie tragen ihre Farbe seit Rikes Entscheidung von Anfang an -
-      // siehe oben. Der Satz benennt darum, was man sieht, statt eine
-      // Faerbung anzukuendigen, die schon da ist.
-      satz.push('Alles beurteilt. Die drei Farben auf dem Tisch sind drei '
-        + 'Sorten von Versuch — das ist der Stoff von Etappe 2.');
-    }
+    if (offen) satz.push(`${offen} liegen noch auf dem Tisch.`);
+    satz.push(`${gut} von ${D.zeilen.length} richtig eingeordnet`
+      + (schief ? `, ${schief} nicht.` : '.'));
+    if (!offen && !schief) satz.push('Und jetzt: Welche Felder sind leer '
+      + 'geblieben — und warum können sie gar nicht anders?');
     befund.textContent = satz.join(' ');
   };
 
-  document.getElementById('weiter').onclick = ()=>{
-    if (!zug2){
-      // FEHLERBEHOBEN (2026-08-21): Hier stand merken() zwischen
-      // uebergabe() und etappe1(). Es baut stand.karten AUS DEM DOM neu
-      // auf - und der zeigte in diesem Moment noch Zug 1 mit den Karten
-      // in ihren Reihen. Die eben gemachte Uebersetzung wurde damit
-      // sofort wieder ueberschrieben: Gemessen 19 Karten uebertragen,
-      // davon 0 am richtigen Ort. etappe1() merkt selbst, sobald die
-      // Karten stehen.
-      uebergabe();
-      stand.zug = 2; stand.runde = D.runden.length; etappe1(); return;
-    }
-    stand.etappe = 1; los();
+  document.getElementById('zurueck').onclick = () => {
+    dabei.forEach(z => { delete stand.karten[z.id]; });
+    merken(); etappe2();
   };
-  // Nur in Zug 2 - siehe _loesungStandZug2().
-  if (zug2) loesungsKnopf(() => etappe1());
-}
-
-/* ───────── Etappe 2 · Strategien ─────────
-   Bleibt, obwohl sie sich zuerst ueberfluessig anfuehlt. In Kapitel 1
-   und 2 hat die mittlere Etappe ein ERGEBNIS - benannte Gruppen,
-   zugeordnete Ereignisse. Hier hatte sie bisher keines und wirkte wie
-   ein blosses Gespraech. Das Material nennt das Ergebnis aber selbst:
-   drei geschriebene Prueffragen, eine je Stapel. */
-/* Fuellt die drei Pruefframen-Textfelder mit der Formulierung, mit der
-   geplant wurde (thema.STAPEL) - keine feste Loesung, aber eine
-   moegliche, lesbare Fassung statt eines leeren Feldes. */
-function _loesungStandE2(){
-  const texte = {};
-  Object.entries(D.stapel).forEach(([nr, s]) => { texte['prueffrage'+nr] = s.prueffrage; });
-  return {texte};
-}
-
-function etappe2(){
-  loesungAnwenden(_loesungStandE2);
-  const a = D.etappen[1];
-  buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 2 · Strategien',
-    text:'Die Versuche bleiben liegen. Sehen Sie sich an, was die drei Stapel '
-       + '<b>unterscheidet</b> — und schreiben Sie zu jedem eine Prüffrage: '
-       + 'Woran sehen Sie einer Frage an, ob dieser Weg bei ihr trägt, '
-       + '<b>bevor</b> Sie rechnen?'},
-    'Ihre drei Prüffragen', 'Ihre Zuordnung aus Etappe 1',
-    `<span class="befund">Hier gibt es nichts zu prüfen — es sind Ihre Sätze.
-       Sie werden in Etappe 3 gebraucht.</span>
-     <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 3 →</button>`,
-    praemissen());
-
-  // Rechts: dasselbe Brett wie in Etappe 1, aber unbeweglich. Die Karten
-  // sollen nachgeschlagen, nicht umsortiert werden - der eigene Satz
-  // wird an ihnen geprueft.
-  const els = {};
-  D.loesungen.forEach(l => { els[l.id] = loesungskarte(l); });
-  fragebrett(els, false);
-
-  // Links: drei Schreibfelder, eines je Stapel.
-  const tisch = document.getElementById('tisch');
-  const kb = parseFloat(getComputedStyle(document.documentElement)
-              .getPropertyValue('--kb'));
-  const bb = tisch.clientWidth || 340;
-  let y = 12;
-  Object.keys(D.stapel).forEach(nr=>{
-    const kasten = document.createElement('div');
-    kasten.className = 'feld'; kasten.dataset.ort = 'prueffrage' + nr;
-    kasten.style.left = '8px'; kasten.style.top = y + 'px';
-    kasten.style.width = (bb - 16) + 'px';
-    kasten.innerHTML = `<div class="kopf"><span class="nr">${nr}</span>`
-      + `Stapel ${nr}</div>`;
-    const feldchen = document.createElement('textarea');
-    feldchen.className = 'schreibfeld';
-    feldchen.placeholder = 'Woran erkenne ich, dass dieser Weg trägt?';
-    feldchen.value = stand.texte['prueffrage' + nr] || '';
-    feldchen.oninput = ()=>{ stand.texte['prueffrage' + nr] = feldchen.value; };
-    kasten.appendChild(feldchen);
-    tisch.appendChild(kasten);
-    kasten.style.height = (kb * 1.15) + 'px';
-    y += kb * 1.15 + 12;
-  });
-  tisch.style.minHeight = (y + 20) + 'px';
-
-  window._neuzeichnen = ()=>etappe2();
-  window._nachAblegen = null;
-  document.getElementById('weiter').onclick = ()=>{ stand.etappe = 2; los(); };
-  loesungsKnopf(() => etappe2());
-}
-
-/* ───────── Etappe 3 · Übertragen ─────────
-   Die drei Felder tragen die SELBST geschriebenen Prueffragen als
-   Ueberschrift - nicht die Stapelnamen. Ohne die drei Saetze aus
-   Etappe 2 waere der Transfer wieder Raten; mit ihnen ist er eine
-   Anwendung des eigenen Kriteriums. */
-function etappe3(){
-  const a = D.etappen[2];
-  buehne({rolle:a.rolle, rang:a.rang, titel:'Etappe 3 · Übertragen',
-    text:'Verlassen Sie die Eisdiele und nehmen Sie Ihre drei Prüffragen mit. '
-       + 'Zu welcher gehört welche Aufgabe? '
-       + '<span class="zart">Die Karte auf dem Tisch <b>bleibt liegen</b> — '
-       + 'nach rechts wandert eine Kopie. Passt eine Aufgabe zu mehreren '
-       + 'Prüffragen, ziehen Sie sie einfach noch einmal hinüber. Wollen '
-       + 'Sie eine Kopie loswerden, ziehen Sie sie zurück auf den '
-       + 'Tisch.</span>'},
-    'Aufgaben von ausserhalb', 'Ihre Prüffragen',
-    `<span class="befund">Hier gibt es nichts zu prüfen — Sie wenden Ihr
-       eigenes Kriterium an. Sichern Sie den Stand als Bild.</span>`);
-
-  const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
-  const els = {};
-  const grund = id => id.split('#')[0];
-
-  /* GEAENDERT (2026-09-10, Rikes Rueckmeldung «das ist muehsam»): Das
-     «+» ist weg, die Geste selbst ist die Kopie - dieselbe Regel wie in
-     Kapitel 2, und sie steht gemeinsam in flaeche.js (kopierGeste).
-
-     Hier zaehlt sie besonders: «Passt eine zu mehreren» ist in dieser
-     Etappe der Normalfall, und ob eine Aufgabe auch zur zweiten
-     Pruefrage passt, merkt man erst, wenn sie bei der ersten liegt. */
-  const marken = {};
-  D.transfer.forEach(t=>{ marken[t.id] = {text:t.marke, art:'skript'}; });
-  const aufgabenkarte = id =>
-    karte(id, marken[grund(id)] || {text:'', art:'skript'});
-
-  D.transfer.forEach(t=>{ els[t.id] = aufgabenkarte(t.id); });
-  Object.keys(stand.karten).filter(id=>id.includes('#')).forEach(id=>{
-    if (!els[id]) els[id] = aufgabenkarte(id); });
-
-  function vorratWahren(){
-    return kopierGeste({
-      tisch, els, bauen: aufgabenkarte,
-      ziele: () => Object.keys(D.stapel).map(
-        nr => feld.querySelector(`[data-ort="p${nr}"]`)),
-    });
-  }
-
-  function felder(){
-    feld.querySelectorAll('.feld').forEach(d=>d.remove());
-    const kb = parseFloat(getComputedStyle(document.documentElement)
-                .getPropertyValue('--kb'));
-    const bb = feld.clientWidth||520, fh = Math.max(kb*1.7, 160);
-    Object.keys(D.stapel).forEach((nr,i)=>{
-      const eigen = (stand.texte['prueffrage'+nr] || '').trim();
-      const d = document.createElement('div');
-      d.className='feld'; d.dataset.ort='p'+nr;
-      d.style.left='8px'; d.style.top=(26+i*(fh+12))+'px';
-      d.style.width=(bb-16)+'px'; d.style.height=fh+'px';
-      d.innerHTML = `<div class="kopf"><span class="nr">${nr}</span>`
-        + (eigen ? eigen
-                 : '<i>Sie haben zu diesem Stapel noch keine Prüffrage '
-                   + 'geschrieben — zurück zu Etappe 2.</i>') + '</div>';
-      feld.appendChild(d);
-    });
-    feld.style.minHeight=(26+Object.keys(D.stapel).length*(fh+12)+20)+'px';
-    Object.entries(stand.karten).forEach(([id,s])=>{
-      const el=els[id]; if(!el) return;
-      const ziel = s.ort==='tisch' ? tisch
-        : (feld.querySelector(`[data-ort="${s.ort}"]`)||tisch);
-      ziel.appendChild(el); el._x=s.x; el._y=s.y; el._rot=s.rot; pos(el);
-    });
-    faecherSetzen(feld);
-  }
-  window._neuzeichnen = felder;
-  window._nachAblegen = ()=>{
-    const geaendert = vorratWahren();
-    faecherSetzen(feld);
-    if (geaendert) merken();
+  if (runde2) document.getElementById('zurueckrunde').onclick = () => {
+    stand.runde2 = 1; merken(); etappe2();
   };
-  felder();
-  const neu = D.transfer.filter(t=>!(t.id in stand.karten)).map(t=>els[t.id]);
-  if (neu.length){ streuen(neu, tisch); merken(); }
-  loesungsHinweis(D.loesung_e3);
+  else document.getElementById('mehr').onclick = () => {
+    stand.runde2 = 2; merken(); etappe2();
+  };
+
+  if (!runde2) loesungsKnopf(() => etappe2());
+  else loesungsHinweis(D.loesung_e2);
 }
 
-ETAPPEN.push(etappe1, etappe2, etappe3);
+ETAPPEN.push(etappe1, etappe2);
