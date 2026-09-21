@@ -917,12 +917,21 @@ function _leisteChrome(b){
   const g = document.createElement('span');
   g.className = 'groesse';
   g.innerHTML = `<button class="stufe" data-s="-1">−</button>`
-    + `<input type="range" min="96" max="210" step="6" value="${
+    /* GEAENDERT (2026-09-21, Rikes Befund an Kapitel 3: «Ich finde es
+       immer noch sehr, sehr klein»): Die Obergrenze lag bei 210. Auf
+       einer Flaeche, auf der die KARTE das Lesbare traegt - Vorschrift
+       und Bruch stehen darauf, nicht daneben -, ist das zu wenig. Die
+       Untergrenze bleibt: Darunter faellt der Kartentext unter die
+       Lesbarkeitsschwelle aus agent/05, und das Feld mehr zu sehen
+       lohnt den Verlust nicht.
+       Additiv: Kein Kapitel aendert sich davon, nur der Regler geht
+       weiter. */
+    + `<input type="range" min="96" max="300" step="6" value="${
         parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb'))}">`
     + `<button class="stufe" data-s="1">+</button>`;
   const regler = g.querySelector('input');
   const setzen2 = v => {
-    v = Math.min(210, Math.max(96, v));
+    v = Math.min(300, Math.max(96, v));
     regler.value = v;
     document.documentElement.style.setProperty('--kb', v+'px');
     if (window._neuzeichnen) window._neuzeichnen();
