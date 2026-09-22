@@ -80,7 +80,13 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    am wenigsten davon braucht - oben steht ohnehin immer dieselbe
    Situation, waehrend unten die Wege verglichen werden. Rikes Ziel
    war, alle vier Wege zugleich zu sehen. */
-.tabreihe.kopfreihe .k[data-fest]{width:var(--kb);padding-top:0}
+/* Die Situationskarte ist KLEINER als die Rechnungen - von Anfang an.
+   Rike, 2026-09-21: «Es wird besser, wenn wir die Situation kleiner
+   schieben koennen. Allerdings sollten wir das vielleicht von Anfang
+   an.» Sie steht in jeder Spalte oben und aendert sich nicht; gelesen
+   wird sie einmal. Die Rechnungen darunter werden verglichen, und die
+   brauchen den Platz. */
+.tabreihe.kopfreihe .k[data-fest]{width:calc(var(--kb) * .72);padding-top:0}
 /* FEHLERBEHOBEN (2026-09-21, Rikes Befund «durch diese beiden
    Kaestchen oben sind die Saetze ueberschrieben»): Omega und das
    Fragezeichen sassen auf der oberen Kartenkante - und genau dort
@@ -94,6 +100,14 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    Denkwegs. Das Fragezeichen blieb oben, obwohl es unten stehen
    sollte. Eine Regel, die «alle Marken» sagt und «die obere» meint. */
 .tabzelle .k[data-fest] .marke.sit{top:4px}
+/* Die beiden Haelften der Karte. Unsichtbar, bis man darueberfaehrt -
+   dann hellt sich die auf, zu der die Blase gehoert. */
+.kteil{position:absolute;left:0;right:0;z-index:2;cursor:help;
+   border-radius:7px;transition:background-color .1s}
+.kteil.oben{top:0;height:54%}
+.kteil.unten{top:54%;bottom:0}
+.kteil:hover{background:rgba(255,255,255,.42);
+   box-shadow:inset 0 0 0 1.5px var(--akzent)}
 .tabzelle .k[data-fest] .marke.denkweg{top:auto;bottom:5px}
 /* Eine gewaehlte Situation. Kein Haken und kein Rahmen aussen herum -
    die Karte selbst hebt sich, wie eine, die man in die Hand genommen
@@ -267,14 +281,21 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    Bild, und zwar genau die, deretwegen die Tabelle umgedreht wurde.
    Tote Regeln sind nicht still. */
 /* ── Etappe 2 · das Kleeblatt ───────────────────────────────── */
-.kleeblattbild{position:absolute;left:0;top:0;width:100%;
-   pointer-events:none;z-index:0}
+.kleeblattbild{position:absolute;top:0;pointer-events:none;z-index:0}
 #feld .feld.zone{z-index:2}
 #feld .feld.zone > .kopf{font-size:10.5px;padding:3px 5px 0;color:var(--matt)}
-/* Mit --kb 186 waere .40 schon 74 Punkte - die Ablagefelder des
-   Kleeblatts sind nach der ZEICHNUNG bemessen, nicht nach der
-   Kartengroesse, und liefen damit ueber. */
-#feld .feld.zone .k{width:calc(var(--kb) * .30)}
+/* Die Textkarte. Feste Breite in Punkten, nicht als Bruchteil der
+   Kartengroesse: Sie traegt Text, und Text hat eine Lesbarkeitsgrenze,
+   die mit dem Regler nichts zu tun hat. */
+.k.textkarte{width:132px;padding:5px 7px 6px;box-sizing:border-box;
+   background:#fffefb;display:block}
+.k.textkarte .kherkunft{display:block;font-size:9.5px;line-height:1.3;
+   color:var(--matt);margin-bottom:3px}
+.k.textkarte .kereignis{display:block;font-size:11.5px;line-height:1.3;
+   color:var(--tinte);font-weight:600}
+.k.textkarte b{font-weight:700}
+.k.textkarte.vorn{box-shadow:0 4px 14px rgba(45,41,36,.3),
+   inset 0 0 0 2.5px var(--akzent)}
 #feld .feld.zone{background:rgba(255,254,251,.55)}
 #feld .feld.zone.ueber{background:#fff}
 /* Woher kommt die Karte? Rike, 2026-09-21: «Ich haette gerne, dass das
@@ -384,6 +405,21 @@ if (!stand.kbGesetzt){
 function festkarte(id, marke){
   const el = karte(id, marke || null, {fest:true});
   el.addEventListener('pointerenter', () => { el.style.zIndex = 3; });
+  /* FEHLERBEHOBEN (2026-09-21, Maurus' Befund «Rollover-Zoom ist z.T.
+     hinter den benachbarten Karten»): Die Hebung wurde nie
+     zurueckgenommen. Der Kern setzt sie beim Weggehen auf `_z0`
+     zurueck - das ist der Wert VOR dem Daraufzeigen, und der ist leer,
+     also falsy; die Zeile `zIndex = _z0 || zIndex` liess damit den
+     bestehenden Wert stehen.
+
+     Folge: Jede einmal beruehrte Karte behielt die 3. Zwei Karten mit
+     derselben Zahl entscheidet die Reihenfolge im DOM - die spaetere
+     gewinnt. Wer erst die rechte und dann die linke Karte ansah, sah
+     die linke vergroessert HINTER der rechten. Genau das.
+
+     Jetzt wird beim Weggehen geleert. Dann hat immer nur die Karte
+     unter dem Zeiger eine Hebung. */
+  el.addEventListener('pointerleave', () => { el.style.zIndex = ''; });
   return el;
 }
 
@@ -393,6 +429,50 @@ function rechenkarte(l){
     titel:'<b>So hat die Person gedacht</b><br>' + l.denkweg}, el);
   zweite.classList.add('denkweg');
   el.appendChild(zweite);
+
+  /* DIE KARTE HAT ZWEI TEILE, und das soll man sehen.
+
+     Rike, 2026-09-21: «Wir haben quasi zwei Teile. Das eine ist dieses
+     Notiert - was wird notiert -, und dazu gehört das Omega. Und die
+     Rechnung, und was die Person gedacht hat, sollte Teil dieser
+     Rechnung sein. Im Moment wird nicht sichtbar, dass dieses Omega zu
+     diesem Notiert-wird gehört.»
+
+     Eine Marke an die Textzeile zu setzen geht nicht: Der Text steht
+     zentriert im Kartenbild, umbricht je nach Vorschrift auf zwei bis
+     vier Zeilen, und die Marke sässe mal daneben, mal darin.
+
+     Deshalb ueber die FLAECHE statt ueber die Position: Der obere Teil
+     der Karte - die Vorschrift - oeffnet die Omega-Blase, der untere -
+     die Rechnung - den Denkweg. Beim Daraufzeigen hellt sich der Teil
+     auf, zu dem die Blase gehoert. Damit ist die Zugehoerigkeit nicht
+     behauptet, sondern vorgefuehrt: Man faehrt ueber «Notiert wird …»
+     und bekommt die Menge, man faehrt ueber den Bruch und bekommt den
+     Gedanken.
+
+     Die Trennung sitzt bei 54 Prozent - dort laeuft im Kartenbild die
+     Linie, die bauen.py unter die Vorschrift zeichnet. Die Marken
+     bleiben als Anker in ihrem Teil stehen. */
+  [['oben', el.querySelector('.marke.sit')],
+   ['unten', zweite]].forEach(([wo, marke]) => {
+    const teil = document.createElement('span');
+    teil.className = 'kteil ' + wo;
+    teil.addEventListener('pointerenter', e => {
+      if (e.pointerType === 'touch') return;
+      blaseOeffnen(marke, false);
+    });
+    teil.addEventListener('pointerleave', e => {
+      if (e.pointerType === 'touch') return;
+      if (marke.dataset.fest) return;
+      blasenSchliessen();
+    });
+    teil.addEventListener('click', e => {
+      e.stopPropagation();
+      if (marke.dataset.fest){ blasenSchliessen(); return; }
+      blaseOeffnen(marke, true);
+    });
+    el.appendChild(teil);
+  });
   el.classList.add('spaltenton' + l.spalte);
   /* KEIN Urteilszeichen auf dem Standardweg.
 
@@ -486,7 +566,6 @@ function etappe1(){
     </div></div>
     <div class="leiste">
       <button class="knopf leer" id="zurueck" title="Alle Urteile zurücknehmen">↺</button>
-      <button class="knopf" id="pruefen">Urteile prüfen</button>
       ${letzter ? '' : `<button class="knopf leer" id="mehr">${
         D.spalten[schritt - 1].knopf}</button>`}
       ${schritt > 1 ? '<button class="knopf leer" id="zurueckschritt">← ein Schritt zurück</button>' : ''}
@@ -497,7 +576,6 @@ function etappe1(){
           : stand.gewaehlt.length + ' nebeneinander legen'}</button>
       ${stand.spaltenfolge.join() !== D.zeilen.map(z=>z.id).join()
         ? '<button class="knopf leer" id="folgezurueck">Reihenfolge zurück</button>' : ''}
-      <span class="befund" id="befund"></span>
       <button class="knopf leer" id="weiter" style="margin-left:auto">${
         letzter ? 'Etappe 2 →' : 'Weiter →'}</button>
     </div>`;
@@ -649,35 +727,37 @@ function etappe1(){
   tab.style.width = (382 + SIT.length * 300 + 24) + 'px';
 
   // ---- die Knoepfe ------------------------------------------------
-  const befund = document.getElementById('befund');
-  /* Weg 1 ist NICHT dabei: Seine Karten tragen kein Urteilszeichen
-     mehr, könnten also nie eines bekommen. Stünden sie in dieser
-     Liste, meldete «Urteile prüfen» dauerhaft neun Karten ohne
-     Urteil - eine Meldung, die niemand abstellen kann. */
+  /* KEIN PRUEFKNOPF IN ETAPPE 1.
+
+     Rikes Entscheidung vom 2026-09-21, auf Maurus' Frage «Pruefbutton:
+     Braucht es den?»: «Den braucht es in eins ehrlich gesagt nicht. Das
+     Einzige, wo man pruefen koennte, ist, ob die Falschen richtig
+     ausgekreuzt sind. Aber ich glaube, wir lassen den Pruefbutton da
+     weg.»
+
+     Der Grund ist der des ganzen Kapitels: Hier soll man VOR dem
+     Rechnen sehen, welcher Weg traegt. Ein Knopf, der es nachher sagt,
+     kann genau das ersetzen - man kreuzt, drueckt, korrigiert und hat
+     nichts gesehen. Das Kreuz bleibt; es haelt fest, was die Gruppe
+     entschieden hat, und die zwei Fragen je Weg verlangen die
+     Begruendung.
+
+     Die Ruecknahme (↺) bleibt: Sie nimmt keine Antwort ab, sie raeumt
+     den Tisch.
+
+     In Etappe 2 bleibt der Pruefknopf. Dort ist die Zuordnung ins
+     Kleeblatt gerechnet, und die Frage ist eine andere.
+
+     UEBERHOLT: Hier stand die Auswertung der Urteile - Zaehlung,
+     gruene und rote Karten, Befundzeile. Entfernt statt totgelegt,
+     damit niemand sie fuer einen noch benutzten Weg haelt; sie steht
+     in Git.
+
+     Weg 1 bleibt aus `sichtbar()` heraus: Seine Karten tragen kein
+     Urteilszeichen, also kann die Ruecknahme dort auch nichts
+     zuruecknehmen. */
   const sichtbar = () => D.loesungen.filter(
     l => l.spalte <= schritt && l.spalte > 1);
-
-  document.getElementById('pruefen').onclick = () => {
-    document.querySelectorAll('.k').forEach(k =>
-      k.classList.remove('ok', 'falsch'));
-    let stimmt = 0, daneben = 0, offen = 0;
-    sichtbar().forEach(l => {
-      const el = document.querySelector(`.k[data-id="${l.id}"]`);
-      const u = stand.urteil[l.id];
-      if (!u){ offen++; return; }
-      const gut = (u === 'ja') === !!l.richtig;
-      if (el) el.classList.add(gut ? 'ok' : 'falsch');
-      if (gut) stimmt++; else daneben++;
-    });
-    const satz = [];
-    if (offen) satz.push(`${offen} Rechnungen tragen noch kein Urteil.`);
-    satz.push(`${stimmt} richtig beurteilt`
-      + (daneben ? `, ${daneben} nicht.` : '.'));
-    if (!offen && !daneben)
-      satz.push('Alles beurteilt — jetzt die Fragen darunter beantworten.');
-    befund.textContent = satz.join(' ');
-    stand.geprueft = true; merken();
-  };
 
   document.getElementById('zurueck').onclick = () => {
     sichtbar().forEach(l => { delete stand.urteil[l.id]; });
@@ -747,19 +827,36 @@ function etappe1(){
 
 // Die Geometrie des Kleeblatts. EINE Quelle: Das Hintergrundbild und
 // die Ablagefelder rechnen beide daraus.
+/* GROESSER, und die Ablageflaechen fuellen die Lappen.
+
+   Rike, 2026-09-21: «Wir haben ja so viel Platz in diesen
+   Kreisdiagrammen, nicht nur diese rechten Winkel. Da ist das einfach
+   noch nicht optimal geloest.»
+
+   Stimmt: Die erste Fassung setzte acht Briefmarken in eine grosse
+   Zeichnung. Jetzt sind die Kreise groesser (r 178 statt 160, weiter
+   auseinander), und die drei EINZELLAPPEN bekommen grosszuegige
+   Felder - dort landet fast alles. Die Schnittfelder bleiben klein;
+   drei von ihnen koennen nach Befund (2) ohnehin nie etwas enthalten,
+   und sie stehen da, damit man das sieht.
+
+   Die Ecken eines Rechtecks liegen nicht immer vollstaendig im
+   Lappen - ein Kreisabschnitt ist nun einmal kein Rechteck. Die MITTE
+   jedes Feldes liegt tief darin, und die Kreise sind durchscheinend
+   gezeichnet, also ist die Zugehoerigkeit lesbar. */
 const KLEE = {
-  breite: 600, hoehe: 540, r: 160,
-  mitte: {rf: [200, 190], aus: [400, 190], kat: [300, 350]},
+  breite: 640, hoehe: 610, r: 178,
+  mitte: {rf: [205, 205], aus: [435, 205], kat: [320, 405]},
   // Je Feld: Kuerzel, welche Kreise, Rechteck [x, y, b, h].
   felder: [
-    {id:'rf',        in:['rf'],              kasten:[ 80, 140, 140, 105]},
-    {id:'aus',       in:['aus'],             kasten:[380, 140, 140, 105]},
-    {id:'rf-aus',    in:['rf','aus'],        kasten:[236,  92, 128,  76]},
-    {id:'rf-kat',    in:['rf','kat'],        kasten:[134, 290, 118,  76]},
-    {id:'aus-kat',   in:['aus','kat'],       kasten:[348, 290, 118,  76]},
-    {id:'rf-aus-kat',in:['rf','aus','kat'],  kasten:[248, 234, 104,  68]},
-    {id:'kat',       in:['kat'],             kasten:[236, 396, 128,  84]},
-    {id:'keine',     in:[],                  kasten:[ 20, 424, 150, 100]},
+    {id:'rf',        in:['rf'],              kasten:[ 52, 118, 166, 152]},
+    {id:'aus',       in:['aus'],             kasten:[422, 118, 166, 152]},
+    {id:'rf-aus',    in:['rf','aus'],        kasten:[268, 140, 104,  84]},
+    {id:'rf-kat',    in:['rf','kat'],        kasten:[152, 302, 116,  92]},
+    {id:'aus-kat',   in:['aus','kat'],       kasten:[372, 302, 116,  92]},
+    {id:'rf-aus-kat',in:['rf','aus','kat'],  kasten:[268, 252, 104,  86]},
+    {id:'kat',       in:['kat'],             kasten:[233, 418, 174, 148]},
+    {id:'keine',     in:[],                  kasten:[ 16, 452, 176, 140]},
   ],
 };
 
@@ -810,7 +907,7 @@ function kleeblattBild(){
      «Ohne Reihenfolge geht auchEin Ausschnitt genuegt» stand als ein
      Wort da. Der Name sitzt jetzt im aeusseren Zipfel des eigenen
      Kreises, wo kein Ablagefeld liegt, und wird bei Bedarf umbrochen. */
-  const wo = {rf:[130, 86], aus:[470, 86], kat:[300, 500]};
+  const wo = {rf:[135, 82], aus:[505, 82], kat:[320, 596]};
   D.kreise.forEach(k => {
     const [x, y] = wo[k.id];
     const eigen = (stand.texte['wegname' + k.weg] || '').trim();
@@ -823,8 +920,8 @@ function kleeblattBild(){
         + `fill="${eigen ? '#5a5349' : '#a09786'}">${_roh(z)}</text>`);
     });
   });
-  t.push(`<text x="95" y="418" text-anchor="middle" font-family="sans-serif" `
-    + `font-size="13" fill="#8a8279">keiner der drei</text>`);
+  t.push(`<text x="104" y="443" text-anchor="middle" font-family="sans-serif" `
+    + `font-size="14" fill="#8a8279">keiner der drei</text>`);
   t.push('</svg>');
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t.join(''));
 }
@@ -843,6 +940,54 @@ function _loesungStandE2(){
     karten[id] = {ort, x: 0, y: 0, rot: 0};
   });
   return {karten};
+}
+
+/* Eine Situation als TEXT, nicht als verkleinertes Kartenbild.
+
+   Rike, 2026-09-21: «Die Situationen sind so mini klein im
+   Venn-Diagramm, dass man sie praktisch nicht mehr lesen kann. Und
+   auch nicht, wenn man draufgeht und sie groesser macht.»
+
+   Sie hat recht, und das Vergroessern hilft wirklich nicht: Das
+   Kartenbild ist fuer 186 Punkte Breite gesetzt. Auf 55 Punkte
+   geschrumpft ist seine Schrift rund zwei Punkte gross, und die Lupe
+   macht daraus drei. Ein Bild kann man nicht kleiner setzen, ohne es
+   unleserlich zu machen - Text schon.
+
+   Also traegt die Karte im Kleeblatt ihren Text selbst: oben die
+   Herkunft (die Wiederholungszeile bzw. «Skript 3.1»), darunter das
+   Ereignis. Bei 150 Punkten Breite sind das zwei bis drei gut lesbare
+   Zeilen - auf derselben Flaeche, auf der vorher ein unlesbares
+   Bildchen sass.
+
+   `ziehbar()` ist dieselbe Geste wie bei jeder anderen Karte; nur das
+   Innere ist ein anderes. */
+function textkarte(id, herkunft, oben, ereignis){
+  const el = document.createElement('div');
+  el.className = 'k textkarte ' + herkunft;
+  el.dataset.id = id;
+  el._x = 0; el._y = 0; el._rot = 0;
+  el.innerHTML = `<span class="kherkunft">${oben}</span>`
+               + `<span class="kereignis">${ereignis}</span>`;
+  el.ondragstart = () => false;
+  /* Liegen mehr Karten in einem Feld, als Platz ist, ruecken sie
+     uebereinander - siehe zoneOrdnen(). Dann muss man die untere lesen
+     koennen, ohne sie herauszuziehen. Daraufzeigen hebt sie nach vorn.
+     Die Lupe des Kerns gibt es hier nicht: Sie vergroessert ein BILD,
+     und diese Karte traegt Text - der ist schon lesbar, er war nur
+     verdeckt. */
+  el.addEventListener('pointerenter', () => {
+    el._zVorn = el.style.zIndex;
+    el.style.zIndex = 900;
+    el.classList.add('vorn');
+  });
+  el.addEventListener('pointerleave', () => {
+    if (el._zieht) return;
+    el.style.zIndex = el._zVorn || '';
+    el.classList.remove('vorn');
+  });
+  ziehbar(el);
+  return el;
 }
 
 /* Die Karten eines Ablagefeldes ordnen - OHNE das Feld zu vergroessern.
@@ -940,39 +1085,49 @@ function etappe2(){
   const feld = document.getElementById('feld');
   const els = {};
   D.zeilen.forEach(z => {
-    const el = karte(z.id);
-    el.classList.add('auseisdiele');
-    els[z.id] = el;
+    els[z.id] = textkarte(z.id, 'auseisdiele', z.lage, z.text);
   });
   if (stand.skriptDa) D.transfer.forEach(t => {
-    // Die Marke ist die Herkunft, nicht eine Aussage ueber die Karte -
-    // deshalb die helle Skript-Marke, wie in Kapitel 2.
-    const el = karte(t.id, {text:t.marke, art:'skript'});
-    el.classList.add('ausskript');
-    els[t.id] = el;
+    els[t.id] = textkarte(t.id, 'ausskript', t.marke, t.text);
   });
   const dabei = Object.keys(els);
 
   function zonen(){
     feld.querySelectorAll('.feld').forEach(d => d.remove());
     feld.querySelectorAll('.kleeblattbild').forEach(d => d.remove());
+    /* FEHLERBEHOBEN (2026-09-21): Der Massstab kam allein aus der
+       BREITE. Bei einem breiten, niedrigen Feld wurde die Zeichnung
+       dann hoeher als das Fenster, und man sah immer nur den halben
+       Klee - bei einem Venn-Diagramm ist das der halbe Sinn, weil die
+       Aussage in den Lagen ZUEINANDER steckt.
+
+       Jetzt entscheidet, was knapper ist. Die Zeichnung steht damit
+       immer ganz da; dafuer werden die Ablagefelder bei niedrigen
+       Fenstern kleiner, und die Karten darin ruecken uebereinander wie
+       ein Stapel. Das ist der bessere Tausch: Ein Stapel laesst sich
+       auseinanderziehen, ein halbes Venn nicht. */
     const bb = feld.clientWidth || 520;
-    const f = bb / KLEE.breite;
+    const bh = feld.clientHeight || 420;
+    const f = Math.min(bb / KLEE.breite, Math.max(bh - 12, 260) / KLEE.hoehe);
+    const rand = Math.max(0, (bb - KLEE.breite * f) / 2);
     const bild = document.createElement('img');
     bild.className = 'kleeblattbild'; bild.src = kleeblattBild();
-    bild.alt = ''; feld.appendChild(bild);
+    bild.alt = '';
+    bild.style.left = rand + 'px';
+    bild.style.width = (KLEE.breite * f) + 'px';
+    feld.appendChild(bild);
     KLEE.felder.forEach(z => {
       const [x, y, w, h] = z.kasten;
       const d = document.createElement('div');
       d.className = 'feld zone'; d.dataset.ort = z.id;
-      d.style.left = (x * f) + 'px'; d.style.top = (y * f) + 'px';
+      d.style.left = (rand + x * f) + 'px'; d.style.top = (y * f) + 'px';
       d.style.width = (w * f) + 'px'; d.style.height = (h * f) + 'px';
       // Die gesetzte Hoehe merken - zoneOrdnen stellt sie wieder her,
       // nachdem der Kern sie beim Ablegen veraendert hat.
       d.dataset.hoehe = Math.round(h * f);
       feld.appendChild(d);
     });
-    feld.style.minHeight = (KLEE.hoehe * f + 16) + 'px';
+    feld.style.minHeight = (KLEE.hoehe * f + 12) + 'px';
     Object.entries(stand.karten).forEach(([id, s]) => {
       const el = els[id]; if (!el) return;
       const ziel = s.ort === 'tisch' ? tisch

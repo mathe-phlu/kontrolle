@@ -57,7 +57,7 @@ z
    </g>
    <g id="text_1">
     <!-- Klassenlager -->
-    <g style="fill: #6c6357" transform="translate(72.342161 21.98652) scale(0.064 -0.064)">
+    <g style="fill: #6c6357" transform="translate(68.898443 18.136551) scale(0.076 -0.076)">
      <defs>
       <path id="FiraSans-Regular-91" d="M 1248 4410 
 L 640 4410 
@@ -218,8 +218,8 @@ z
     </g>
    </g>
    <g id="text_2">
-    <!-- 12 Kinder (5 Mädchen, 7 Jungen) -->
-    <g style="fill: #2d2924" transform="translate(39.457036 44.999717) scale(0.072 -0.072)">
+    <!-- 12 Kinder (5 Mädchen, 7 -->
+    <g style="fill: #2d2924" transform="translate(44.309286 40.826425) scale(0.088 -0.088)">
      <defs>
       <path id="FiraSans-Regular-879" d="M 2067 4282 
 L 1549 4282 
@@ -407,6 +407,36 @@ L 2650 3840
 L 2650 4282 
 z
 " transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#FiraSans-Regular-879"/>
+     <use xlink:href="#FiraSans-Regular-87d" transform="translate(43.296875 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(92.796875 0)"/>
+     <use xlink:href="#FiraSans-Regular-91" transform="translate(119.296875 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(178.203125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(205.796875 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(263.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(322.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(377.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(415.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-8ef" transform="translate(441.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-889" transform="translate(474.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(524.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-a1" transform="translate(550.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-16a" transform="translate(628.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(682.609375 0)"/>
+     <use xlink:href="#FiraSans-Regular-189" transform="translate(741.609375 0)"/>
+     <use xlink:href="#FiraSans-Regular-1eb" transform="translate(789.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(847.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(901.71875 0)"/>
+     <use xlink:href="#FiraSans-Regular-8d7" transform="translate(959.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(983.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-891" transform="translate(1010.125 0)"/>
+    </g>
+   </g>
+   <g id="text_3">
+    <!-- Jungen) werden zufällig -->
+    <g style="fill: #2d2924" transform="translate(44.316849 53.330297) scale(0.088 -0.088)">
+     <defs>
       <path id="FiraSans-Regular-8d" d="M 1344 4410 
 L 736 4410 
 L 736 640 
@@ -440,44 +470,6 @@ C 1254 -38 1818 723 1818 2240
 C 1818 3757 1254 4518 627 5408 
 z
 " transform="scale(0.015625)"/>
-     </defs>
-     <use xlink:href="#FiraSans-Regular-879"/>
-     <use xlink:href="#FiraSans-Regular-87d" transform="translate(43.296875 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(92.796875 0)"/>
-     <use xlink:href="#FiraSans-Regular-91" transform="translate(119.296875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(178.203125 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(205.796875 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(263.703125 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(322.703125 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(377.109375 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(415.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-8ef" transform="translate(441.90625 0)"/>
-     <use xlink:href="#FiraSans-Regular-889" transform="translate(474.3125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(524.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-a1" transform="translate(550.90625 0)"/>
-     <use xlink:href="#FiraSans-Regular-16a" transform="translate(628.703125 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(682.609375 0)"/>
-     <use xlink:href="#FiraSans-Regular-189" transform="translate(741.609375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1eb" transform="translate(789.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(847.3125 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(901.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-8d7" transform="translate(959.625 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(983.625 0)"/>
-     <use xlink:href="#FiraSans-Regular-891" transform="translate(1010.125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(1054.53125 0)"/>
-     <use xlink:href="#FiraSans-Regular-8d" transform="translate(1081.03125 0)"/>
-     <use xlink:href="#FiraSans-Regular-2af" transform="translate(1111.53125 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(1169.03125 0)"/>
-     <use xlink:href="#FiraSans-Regular-1d6" transform="translate(1226.9375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(1278.9375 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(1333.34375 0)"/>
-     <use xlink:href="#FiraSans-Regular-8f1" transform="translate(1391.25 0)"/>
-    </g>
-   </g>
-   <g id="text_3">
-    <!-- werden zufällig auf 4 Zimmer zu -->
-    <g style="fill: #2d2924" transform="translate(39.136974 55.230157) scale(0.072 -0.072)">
-     <defs>
       <path id="FiraSans-Regular-2dd" d="M 4461 3373 
 L 3898 3373 
 L 3283 410 
@@ -526,6 +518,36 @@ L 1254 3840
 C 1254 4166 1382 4326 1754 4326 
 z
 " transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#FiraSans-Regular-8d"/>
+     <use xlink:href="#FiraSans-Regular-2af" transform="translate(30.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(88 0)"/>
+     <use xlink:href="#FiraSans-Regular-1d6" transform="translate(145.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(197.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(252.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-8f1" transform="translate(310.21875 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(342.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-2dd" transform="translate(369.125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(440.828125 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(495.234375 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(531.53125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(590.53125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(644.9375 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(702.84375 0)"/>
+     <use xlink:href="#FiraSans-Regular-2f2" transform="translate(729.34375 0)"/>
+     <use xlink:href="#FiraSans-Regular-2af" transform="translate(772.546875 0)"/>
+     <use xlink:href="#FiraSans-Regular-1d1" transform="translate(830.046875 0)"/>
+     <use xlink:href="#FiraSans-Regular-16a" transform="translate(862.546875 0)"/>
+     <use xlink:href="#FiraSans-Regular-21b" transform="translate(915.953125 0)"/>
+     <use xlink:href="#FiraSans-Regular-21b" transform="translate(945.359375 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(974.765625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1d6" transform="translate(1002.359375 0)"/>
+    </g>
+   </g>
+   <g id="text_4">
+    <!-- auf 4 Zimmer zu je 3 -->
+    <g style="fill: #2d2924" transform="translate(50.852224 65.834168) scale(0.088 -0.088)">
+     <defs>
       <path id="FiraSans-Regular-885" d="M 3213 1523 
 L 2656 1523 
 L 2656 2675 
@@ -579,44 +601,6 @@ L 4890 2419
 C 4890 3053 4525 3450 3974 3450 
 z
 " transform="scale(0.015625)"/>
-     </defs>
-     <use xlink:href="#FiraSans-Regular-2dd"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(71.703125 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(126.109375 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(162.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(221.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(275.8125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(333.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-2f2" transform="translate(360.21875 0)"/>
-     <use xlink:href="#FiraSans-Regular-2af" transform="translate(403.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1d1" transform="translate(460.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-16a" transform="translate(493.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-21b" transform="translate(546.828125 0)"/>
-     <use xlink:href="#FiraSans-Regular-21b" transform="translate(576.234375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(605.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1d6" transform="translate(633.234375 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(685.234375 0)"/>
-     <use xlink:href="#FiraSans-Regular-157" transform="translate(711.734375 0)"/>
-     <use xlink:href="#FiraSans-Regular-2af" transform="translate(765.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1d1" transform="translate(823.140625 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(856.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-885" transform="translate(883.140625 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(936.34375 0)"/>
-     <use xlink:href="#FiraSans-Regular-144" transform="translate(962.84375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(1015.046875 0)"/>
-     <use xlink:href="#FiraSans-Regular-22d" transform="translate(1042.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-22d" transform="translate(1127.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(1212.640625 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(1267.046875 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(1305.34375 0)"/>
-     <use xlink:href="#FiraSans-Regular-2f2" transform="translate(1331.84375 0)"/>
-     <use xlink:href="#FiraSans-Regular-2af" transform="translate(1375.046875 0)"/>
-    </g>
-   </g>
-   <g id="text_4">
-    <!-- je 3 verteilt. «In Zimmer 1 sind -->
-    <g style="fill: #2d2924" transform="translate(41.715474 65.460597) scale(0.072 -0.072)">
-     <defs>
       <path id="FiraSans-Regular-20d" d="M 890 4992 
 C 646 4992 480 4819 480 4589 
 C 480 4365 646 4192 890 4192 
@@ -652,6 +636,33 @@ C 2355 2387 2707 2714 2707 3258
 C 2707 3834 2259 4346 1440 4346 
 z
 " transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#FiraSans-Regular-157"/>
+     <use xlink:href="#FiraSans-Regular-2af" transform="translate(53.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1d1" transform="translate(111.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(144.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-885" transform="translate(171.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(224.609375 0)"/>
+     <use xlink:href="#FiraSans-Regular-144" transform="translate(251.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(303.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-22d" transform="translate(330.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-22d" transform="translate(415.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(500.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(555.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(593.609375 0)"/>
+     <use xlink:href="#FiraSans-Regular-2f2" transform="translate(620.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-2af" transform="translate(663.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(720.8125 0)"/>
+     <use xlink:href="#FiraSans-Regular-20d" transform="translate(747.3125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(775.015625 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(829.421875 0)"/>
+     <use xlink:href="#FiraSans-Regular-881" transform="translate(855.921875 0)"/>
+    </g>
+   </g>
+   <g id="text_5">
+    <!-- verteilt. «In Zimmer 1 -->
+    <g style="fill: #2d2924" transform="translate(48.547724 78.33804) scale(0.088 -0.088)">
+     <defs>
       <path id="FiraSans-Regular-2d9" d="M 3085 3373 
 L 2464 3373 
 L 1587 525 
@@ -715,43 +726,59 @@ L 1248 4410
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#FiraSans-Regular-20d"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(27.703125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(82.109375 0)"/>
-     <use xlink:href="#FiraSans-Regular-881" transform="translate(108.609375 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(158.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-2d9" transform="translate(185.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(233.8125 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(288.21875 0)"/>
-     <use xlink:href="#FiraSans-Regular-29a" transform="translate(326.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(361.109375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(415.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-21b" transform="translate(443.109375 0)"/>
-     <use xlink:href="#FiraSans-Regular-29a" transform="translate(472.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(509.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(533.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-913" transform="translate(559.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-79" transform="translate(617.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(646.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(704.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-144" transform="translate(730.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(783.125 0)"/>
-     <use xlink:href="#FiraSans-Regular-22d" transform="translate(810.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-22d" transform="translate(895.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(980.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(1035.125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(1073.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-879" transform="translate(1099.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(1143.21875 0)"/>
-     <use xlink:href="#FiraSans-Regular-28c" transform="translate(1169.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(1216.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(1244.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(1301.921875 0)"/>
+     <use xlink:href="#FiraSans-Regular-2d9"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(48.796875 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(103.203125 0)"/>
+     <use xlink:href="#FiraSans-Regular-29a" transform="translate(141.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(176.09375 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(230.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-21b" transform="translate(258.09375 0)"/>
+     <use xlink:href="#FiraSans-Regular-29a" transform="translate(287.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(324 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(348 0)"/>
+     <use xlink:href="#FiraSans-Regular-913" transform="translate(374.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-79" transform="translate(432 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(461.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(519.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-144" transform="translate(545.90625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(598.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-22d" transform="translate(625.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-22d" transform="translate(710.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(795.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(850.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(888.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-879" transform="translate(914.90625 0)"/>
     </g>
    </g>
-   <g id="text_5">
-    <!-- alle drei Kinder Mädchen.» -->
-    <g style="fill: #2d2924" transform="translate(47.208286 75.691037) scale(0.072 -0.072)">
+   <g id="text_6">
+    <!-- sind alle drei Kinder -->
+    <g style="fill: #2d2924" transform="translate(50.658349 90.841911) scale(0.088 -0.088)">
+     <use xlink:href="#FiraSans-Regular-28c"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(46.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(74.296875 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(132.203125 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(191.203125 0)"/>
+     <use xlink:href="#FiraSans-Regular-157" transform="translate(217.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-21b" transform="translate(271.109375 0)"/>
+     <use xlink:href="#FiraSans-Regular-21b" transform="translate(300.515625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(329.421875 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(383.828125 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(410.328125 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(469.328125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(505.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(560.03125 0)"/>
+     <use xlink:href="#FiraSans-Regular-925" transform="translate(587.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-91" transform="translate(614.125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(673.03125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(700.625 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(758.53125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(817.53125 0)"/>
+     <use xlink:href="#FiraSans-Regular-27c" transform="translate(871.9375 0)"/>
+    </g>
+   </g>
+   <g id="text_7">
+    <!-- Mädchen.» -->
+    <g style="fill: #2d2924" transform="translate(69.178911 103.345783) scale(0.088 -0.088)">
      <defs>
       <path id="FiraSans-Regular-915" d="M 704 3424 
 L 352 3181 
@@ -773,32 +800,15 @@ L 2150 3424
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#FiraSans-Regular-157"/>
-     <use xlink:href="#FiraSans-Regular-21b" transform="translate(53.40625 0)"/>
-     <use xlink:href="#FiraSans-Regular-21b" transform="translate(82.8125 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(111.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(166.125 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(192.625 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(251.625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(287.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(342.328125 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(369.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-91" transform="translate(396.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(455.328125 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(482.921875 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(540.828125 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(599.828125 0)"/>
-     <use xlink:href="#FiraSans-Regular-27c" transform="translate(654.234375 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(692.53125 0)"/>
-     <use xlink:href="#FiraSans-Regular-a1" transform="translate(719.03125 0)"/>
-     <use xlink:href="#FiraSans-Regular-16a" transform="translate(796.828125 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(850.734375 0)"/>
-     <use xlink:href="#FiraSans-Regular-189" transform="translate(909.734375 0)"/>
-     <use xlink:href="#FiraSans-Regular-1eb" transform="translate(957.53125 0)"/>
-     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(1015.4375 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(1069.84375 0)"/>
-     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(1127.75 0)"/>
-     <use xlink:href="#FiraSans-Regular-915" transform="translate(1151.75 0)"/>
+     <use xlink:href="#FiraSans-Regular-a1"/>
+     <use xlink:href="#FiraSans-Regular-16a" transform="translate(77.796875 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(131.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-189" transform="translate(190.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-1eb" transform="translate(238.5 0)"/>
+     <use xlink:href="#FiraSans-Regular-1a8" transform="translate(296.40625 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(350.8125 0)"/>
+     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(408.71875 0)"/>
+     <use xlink:href="#FiraSans-Regular-915" transform="translate(432.71875 0)"/>
     </g>
    </g>
   </g>

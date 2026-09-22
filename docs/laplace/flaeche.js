@@ -36,9 +36,29 @@ let stand = { aufnahme:null, weg:null, etappe:0, karten:{}, gruppen:[], e3gezeig
 let zmax = 10;
 
 /* ───────── Karten: setzen, ziehen, Lupe ───────── */
+/* FEHLERBEHOBEN (2026-09-21, Maurus' Befund «Rollover-Zoom ist
+   unscharf»): Hier stand IMMER translate3d(). Das schiebt das Element
+   auf eine eigene Ebene der Grafikkarte - beim Ziehen genau richtig,
+   es macht die Bewegung fluessig. Fuer die Lupe ist es falsch: Die
+   Ebene wird in der Groesse gerastert, die das Element im Layout hat,
+   und danach vergroessert. Man sieht also ein hochskaliertes Bild
+   statt einer neu gezeichneten Karte - und die Kartenbilder sind SVG,
+   koennten also beliebig scharf sein.
+
+   Neu: translate3d nur ohne Lupe. Sobald vergroessert wird, eine
+   gewoehnliche 2D-Verschiebung; dann zeichnet der Browser die Karte in
+   der neuen Groesse. Gezogen wird nie mit Lupe (ziehbar() setzt
+   _lupe = 1), die Fluessigkeit bleibt also erhalten.
+
+   PRUEFEN: Ob es auf Maurus' Rechner wirklich scharf ist, kann Kasper
+   nicht messen - Schaerfe ist kein Wert, den man auslesen kann. Die
+   Ursache ist begruendet, die Wirkung muss jemand SEHEN. */
 function pos(el){
   const l = el._lupe || 1;
-  el.style.transform = `translate3d(${el._x}px,${el._y}px,0)`
+  const schub = l !== 1
+    ? `translate(${el._x}px,${el._y}px)`
+    : `translate3d(${el._x}px,${el._y}px,0)`;
+  el.style.transform = schub
     + (el._rot ? ` rotate(${el._rot}deg)` : '') + (l!==1 ? ` scale(${l})` : '');
 }
 const LUPE = 1.5;
@@ -1448,6 +1468,13 @@ function standAlsLeinwand(){
     // Die alte Fassung griff blind auf im.src zu - mit einer solchen
     // Karte auf dem Tisch brach die Bildsicherung ab, und zwar still.
     if (!im){
+      /* NEU (2026-09-21): Eine Karte ohne Bild muss kein Schreibfeld
+         sein - sie kann ihren Text auch selbst tragen. Kapitel 3 setzt
+         im Kleeblatt die Situationen als TEXT statt als verkleinertes
+         Kartenbild; bei 55 Punkten Breite ist die Schrift eines
+         Kartenbildes nicht mehr zu lesen, auch mit der Lupe nicht.
+         Ohne diesen Rueckfall stuenden im Bild zum Mitnehmen leere
+         Kaestchen. */
       const feld = k.querySelector('textarea');
       const x = q.left-r.left, y = q.top-r.top;
       g.save();
@@ -1455,7 +1482,8 @@ function standAlsLeinwand(){
       g.beginPath(); g.roundRect(x, y, q.width, q.height, 8);
       g.fill(); g.stroke();
       g.fillStyle = '#2d2924'; g.font = '12px sans-serif';
-      const worte = ((feld && feld.value) || '').split(/\s+/);
+      const worte = ((feld && feld.value) || k.innerText || '')
+                      .trim().split(/\s+/);
       let zeile = '', zy = y + 26;
       worte.forEach(w=>{
         const probe = zeile ? zeile + ' ' + w : w;
