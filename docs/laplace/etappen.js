@@ -131,6 +131,71 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    durch, die Seite lud, und zwei Marken lagen uebereinander. */
 .k .marke.denkweg{top:auto;bottom:5px;left:auto;right:5px}
 .tabzelle .k[data-fest] .marke.denkweg{top:auto;bottom:5px}
+/* VIER Wegfarben. Rike, 2026-09-21: «Vielleicht nehmen wir vier
+   Farben. Die erste Farbe ist einfach der Standardweg. Die zweite,
+   wenn die Reihenfolge keine Rolle spielt. Die dritte, wenn man nur
+   einen Ausschnitt anschaut. Die vierte, wenn man mit einer
+   Vergroeberung arbeitet. Und diese drei Farben sollten sich im
+   Venn-Diagramm in den Kreisfarben widerspiegeln.»
+
+   Sie tun es: Dieselben drei Hexwerte stehen im Kleeblatt und in den
+   Namenskaesten. Derselbe Ton fuer dieselbe Sache, ueber beide
+   Etappen.
+
+   Weg 1 bekommt einen eigenen, STUMPFEN Ton - Sand. Er muss sich von
+   den dreien unterscheiden und darf ihnen zugleich nicht die Stimme
+   nehmen: Er ist der Vergleichspunkt, keine Wahl. Nicht das Ocker -
+   das ist die Kapitelfarbe und redete als fuenfte Bedeutung
+   dazwischen.
+
+   WIEDER DA (2026-09-22): Auch diese vier Regeln standen im Block mit
+   den Kartenhaelften und sind mit ihm verschwunden. Rike: «Wir hatten
+   in der letzten Version, dass die Wege jeweils die Farbe der
+   Spezialfaelle tragen - das tun sie nicht mehr.» Fuenfte Regel an
+   einem Tag; sie steht jetzt mit in NOETIGE_STILE. */
+.k.spaltenton1{background:color-mix(in srgb, #b8a888 20%, #fff);
+   box-shadow:inset 0 0 0 2.5px #b8a888, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton2{background:color-mix(in srgb, var(--zugang) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #7FB069, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton3{background:color-mix(in srgb, var(--fach) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #6C9BD1, 0 2px 6px rgba(0,0,0,.14)}
+.k.spaltenton4{background:color-mix(in srgb, var(--aktion) 22%, #fff);
+   box-shadow:inset 0 0 0 2.5px #C99BC0, 0 2px 6px rgba(0,0,0,.14)}
+/* Durchgestrichen heisst «traegt nicht» - und zwar SICHTBAR.
+
+   Rike, 2026-09-21: «Das Durchstreichen finde ich noch nicht
+   ueberzeugend genug. Vielleicht wuerden wir in beide Richtungen
+   durchstreichen, so wie ein Kreuz, dass klar wird: komplett
+   durchgestrichen.»
+
+   Der Kern zieht einen fast waagrechten Strich (-9 Grad) ueber die
+   Kartenmitte. Auf einer Karte, die selbst waagrechte Linien traegt -
+   den Bruchstrich, die Trennlinie unter der Vorschrift -, geht er
+   darin unter. Zwei Diagonalen von Ecke zu Ecke tun das nicht.
+
+   Gezeichnet mit zwei Farbverlaeufen statt mit gedrehten Balken: Ein
+   gedrehter Balken braucht die Diagonale als Laenge, und die haengt an
+   der Kartengroesse, die der Regler verstellt. Ein Verlauf «nach
+   unten rechts» trifft die Ecke immer.
+
+   WIEDER DA (2026-09-22): Dieser Block stand zwischen den
+   Kartenhaelften und dem Zeilenkopf und ist beim Entfernen der
+   Haelften mit verschwunden. Die Karte fiel damit auf den einen
+   Strich des Kerns zurueck - lautlos, denn beides sieht nach
+   «durchgestrichen» aus. Rike hat es gesehen: «Bitte wieder wie in
+   der letzten Version.» */
+.tabzelle .k.traegtnicht{opacity:.62}
+.tabzelle .k.traegtnicht::after{
+   content:'';position:absolute;left:0;right:0;top:0;bottom:0;
+   width:auto;height:auto;transform:none;background-color:transparent;
+   pointer-events:none;z-index:3;border-radius:8px;
+   background-image:
+     linear-gradient(to bottom right, transparent calc(50% - 1.6px),
+       #8a5a12 calc(50% - 1.6px), #8a5a12 calc(50% + 1.6px),
+       transparent calc(50% + 1.6px)),
+     linear-gradient(to bottom left, transparent calc(50% - 1.6px),
+       #8a5a12 calc(50% - 1.6px), #8a5a12 calc(50% + 1.6px),
+       transparent calc(50% + 1.6px))}
 /* ── der Zeilenkopf: Nummer, Name, zwei Fragen ─────────────── */
 .wegnr{display:block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
    text-transform:uppercase;color:var(--matt);margin-bottom:4px;
@@ -221,81 +286,163 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    30, und jede Wegzeile 216 statt 165 - die vierte Zeile fiel aus dem
    Bild, und zwar genau die, deretwegen die Tabelle umgedreht wurde.
    Tote Regeln sind nicht still. */
+/* ── Etappe 2 · die Entscheidkarte in der Liste ─────────────── */
+/* NEU (2026-09-22, Rikes Entscheidung): Etappe 2 hat keine gezogenen
+   Karten mehr.
+
+   Der Weg dahin, weil er die Bauart erklaert: Erst drei Kreise, dann
+   drei Rechtecke, dann drei gleich grosse ueberlappende Formen - und
+   jedes Mal war dasselbe das Problem, naemlich dass eine LESBARE
+   Karte in einen Lappen gelegt werden soll, der dafuer zu schmal ist.
+   Die Geometrie gibt das nicht her: Ein Bereich zwischen drei Formen
+   ist klein, das ist keine Einstellungssache.
+
+   Also wird nicht mehr gelegt. Die Karte bleibt links, in voller
+   Groesse und lesbar, und traegt DREI ENTSCHEIDUNGEN - je eine pro
+   Spezialfall, ja oder nein. Sobald alle drei stehen, erscheint die
+   Kurzform der Karte von selbst im richtigen Bereich des Kleeblatts.
+
+   Das ist nicht nur ein Ausweg aus dem Platzproblem, es ist der
+   bessere Handgriff: Wer zielt, entscheidet einmal und stumm; wer
+   dreimal ja oder nein sagt, hat die drei Kriterien einzeln in der
+   Hand - und beim Pruefen laesst sich sagen, WELCHES der drei
+   danebenlag, nicht bloss «falscher Lappen». */
+.eliste{padding:6px 10px 14px;box-sizing:border-box}
+.ekarte{position:relative;background:var(--karte);border-radius:10px;
+   padding:7px 9px 8px;margin:0 0 9px;box-sizing:border-box;
+   box-shadow:0 2px 6px rgba(45,41,36,.13);
+   font-size:clamp(11px, calc(var(--kb) * .072), 14.5px);line-height:1.3}
+.ekarte.auseisdiele{box-shadow:inset 0 0 0 2.5px var(--akzent),
+   0 2px 6px rgba(45,41,36,.13)}
+.ekarte.ausskript{background:#f2f1ee;
+   box-shadow:inset 0 0 0 2px #9a948a, 0 2px 6px rgba(45,41,36,.13)}
+.ekarte .ekopf{display:flex;align-items:baseline;gap:7px;margin-bottom:3px}
+.ekarte .kwdh{display:inline-block;font-weight:700;flex:0 0 auto;
+   font-size:.80em;letter-spacing:.02em;padding:1px 6px;border-radius:7px}
+.ekarte.wdhA .kwdh{background:#f4e3cf;color:#8a5a12}
+.ekarte.wdhB .kwdh{background:#dfe9f4;color:#3c5f86}
+.ekarte .kwdh.skript{background:#ebe9e4;color:#6b655c}
+.ekarte .ekurz{font-weight:700;flex:1 1 auto;min-width:0}
+.ekarte .eherkunft{color:var(--matt);font-size:.88em;margin-bottom:2px}
+.ekarte .eereignis{margin-bottom:6px}
+.ekarte b{font-weight:700}
+/* Die AMPEL - drei Punkte in den Farben der drei Kreise. Rike,
+   2026-09-22: «Die Karten erhalten dann auch farbliche Markierungen
+   nach der Entscheidung.» Gefuellt heisst ja, blass durchgestrichen
+   heisst nein, leerer Ring heisst noch offen. Dieselbe Ampel steht
+   auf dem Schildchen im Kleeblatt - daran erkennt man die Karte
+   drueben wieder. */
+.eampel{display:inline-flex;gap:3px;flex:0 0 auto;align-self:center}
+.eampel i{width:9px;height:9px;border-radius:50%;border:2px solid;
+   box-sizing:border-box;display:block}
+.eampel i.rf{border-color:#7FB069}
+.eampel i.aus{border-color:#6C9BD1}
+.eampel i.kat{border-color:#C99BC0}
+.eampel i.ja.rf{background:#7FB069}
+.eampel i.ja.aus{background:#6C9BD1}
+.eampel i.ja.kat{background:#C99BC0}
+.eampel i.nein{opacity:.3}
+/* Die drei Entscheidungszeilen. Der Name links ist der, den die
+   Studierenden in Etappe 1 selbst geschrieben haben - steht dort noch
+   nichts, steht hier der Platzhalter und schickt zurueck. */
+.wahlzeile{display:flex;align-items:center;gap:6px;margin-top:3px;
+   padding-left:13px;position:relative}
+.wahlzeile::before{content:'';position:absolute;left:0;top:calc(50% - 4px);
+   width:8px;height:8px;border-radius:50%;border:2px solid;box-sizing:border-box}
+.wahlzeile.rf::before{border-color:#7FB069}
+.wahlzeile.aus::before{border-color:#6C9BD1}
+.wahlzeile.kat::before{border-color:#C99BC0}
+.wahlzeile .wname{flex:1 1 auto;min-width:0;font-size:.86em;
+   color:var(--matt);overflow:hidden;text-overflow:ellipsis;
+   white-space:nowrap}
+.wahlzeile .wname.ohne{font-style:italic}
+.jn{flex:0 0 auto;font:inherit;font-size:.82em;line-height:1;
+   padding:3px 8px;border-radius:7px;cursor:pointer;
+   border:1.5px solid var(--linie);background:var(--karte);color:var(--matt)}
+.jn:hover{border-color:var(--tinte);color:var(--tinte)}
+.wahlzeile.rf .jn.an{background:#7FB069;border-color:#7FB069;color:#fff}
+.wahlzeile.aus .jn.an{background:#6C9BD1;border-color:#6C9BD1;color:#fff}
+.wahlzeile.kat .jn.an{background:#C99BC0;border-color:#C99BC0;color:#fff}
+.wahlzeile .jn.nein.an{background:var(--matt);border-color:var(--matt);
+   color:#fff}
+/* Die Rueckmeldung sitzt an der ZEILE, nicht an der Karte: Beim
+   Pruefen soll dastehen, welches der drei Kriterien danebenlag. */
+.wahlzeile.ok::after{content:'✓';color:#2f7a3d;font-weight:700;
+   flex:0 0 auto;width:13px;text-align:center}
+.wahlzeile.falsch::after{content:'✗';color:#a33;font-weight:700;
+   flex:0 0 auto;width:13px;text-align:center}
+.ekarte.fertig{opacity:.62}
+.ekarte.fertig:hover{opacity:1}
+.ekarte.hervor{outline:2.5px solid var(--akzent);outline-offset:2px}
+
 /* ── Etappe 2 · das Kleeblatt ───────────────────────────────── */
-.kleeblattbild{position:absolute;top:0;pointer-events:none;z-index:0}
-#feld .feld.zone{z-index:2}
-#feld .feld.zone > .kopf{font-size:10.5px;padding:3px 5px 0;color:var(--matt)}
-/* FEHLERBEHOBEN (2026-09-22, Rikes Befund «der Groesser-kleiner-Knopf
-   bewirkt beim Venn-Diagramm gar nichts»): Die Textkarte hatte eine
-   FESTE Breite in Punkten. Der Regler stellt --kb, und daran hing hier
-   nichts - er drehte ins Leere, waehrend er in Etappe 1 wirkte. Ein
-   Knopf, der auf einer Seite wirkt und auf der anderen nicht, ist
-   schlimmer als keiner.
-
-   Die urspruengliche Begruendung («Text hat eine Lesbarkeitsgrenze,
-   die mit dem Regler nichts zu tun hat») stimmt fuer die SCHRIFT, aber
-   nicht fuer die Breite: Breiter heisst weniger Umbrueche, und die
-   Schrift waechst mit, nur langsamer. Beides haengt jetzt an --kb, die
-   Schrift gedaempft und nach unten begrenzt. */
-.k.textkarte{width:calc(var(--kb) * .74);padding:5px 7px 6px;
-   box-sizing:border-box;background:#fffefb;display:block}
-.k.textkarte .kwdh{display:inline-block;font-weight:700;
-   font-size:clamp(8px, calc(var(--kb) * .046), 10px);line-height:1.25;
-   padding:1px 5px;border-radius:4px;margin-bottom:3px}
-.k.textkarte.wdhA .kwdh{background:#f4e3cf;color:#8a5a12;
-   border:1px solid #d9b789}
-.k.textkarte.wdhB .kwdh{background:#dfe9f4;color:#3c5f86;
-   border:1px solid #9cb7d6}
-.k.textkarte .kwdh.skript{background:#ebe9e4;color:#6b655c;
-   border:1px solid #bdb7ac}
-.k.textkarte .kherkunft{display:block;
-   font-size:clamp(8px, calc(var(--kb) * .052), 10.5px);line-height:1.3;
-   color:var(--matt);margin-bottom:3px}
-.k.textkarte .kereignis{display:block;
-   font-size:clamp(10px, calc(var(--kb) * .064), 13px);line-height:1.3;
-   color:var(--tinte);font-weight:600}
-.k.textkarte b{font-weight:700}
-.k.textkarte.vorn{box-shadow:0 4px 14px rgba(45,41,36,.3),
-   inset 0 0 0 2.5px var(--akzent)}
-/* IM ABLAGEFELD wird die Karte KLEINER.
-
-   Rike, 2026-09-22: «Die Kaertchen werden nicht kleiner, wenn ich sie
-   auf die Felder schiebe.» Stimmt - sie waren ueberall gleich breit,
-   und damit lagen im Lappen vier Karten, wo drei Platz hatten.
-
-   Auf dem Tisch werden die Karten GELESEN, im Feld werden sie
-   GEZAEHLT: Dort geht es darum, welche Situationen beieinander liegen,
-   nicht mehr darum, was auf ihnen steht. Deshalb schrumpft die Karte
-   beim Ablegen auf zwei Zeilen Ereignis - und wer doch nachlesen
-   will, zeigt darauf: Dann klappt sie auf ihre volle Groesse auf und
-   kommt nach vorn.
-
-   Die Herkunftszeile faellt im Feld weg. Sie sagt, aus welcher
-   Situation die Karte stammt - das ist beim Einsortieren schon
-   entschieden. */
-#feld .feld.zone .k.textkarte{width:calc(var(--kb) * .58);
-   padding:4px 5px 5px;transition:width .12s}
-#feld .feld.zone .k.textkarte .kherkunft{display:none}
-#feld .feld.zone .k.textkarte .kereignis{
-   font-size:clamp(9px, calc(var(--kb) * .056), 11.5px);line-height:1.25;
-   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
-   overflow:hidden}
-#feld .feld.zone .k.textkarte.vorn{width:calc(var(--kb) * .88)}
-#feld .feld.zone .k.textkarte.vorn .kherkunft{display:block}
-#feld .feld.zone .k.textkarte.vorn .kereignis{
-   font-size:clamp(10px, calc(var(--kb) * .064), 13px);
-   -webkit-line-clamp:none;overflow:visible}
-#feld .feld.zone{background:rgba(255,254,251,.55)}
-#feld .feld.zone.ueber{background:#fff}
-/* Woher kommt die Karte? Rike, 2026-09-21: «Ich haette gerne, dass das
-   farblich unterschieden ist, ob ich gerade die Situation aus der
-   Eisdiele habe oder ob die Situationen aus dem Skript dazugekommen
-   sind.» Die Eisdiele warm (Kapitelton), das Skript kuehl und blass -
-   es ist Herkunft, keine Wertung, und soll deshalb zuruecktreten. */
-.k.auseisdiele{background:color-mix(in srgb, var(--akzent) 20%, #fff);
-   box-shadow:inset 0 0 0 2.5px var(--akzent), 0 2px 6px rgba(0,0,0,.14)}
-.k.ausskript{background:#f2f1ee;
-   box-shadow:inset 0 0 0 2px #9a948a, 0 2px 6px rgba(0,0,0,.14)}
+/* Jetzt wieder KREISE. Das ging vorher nicht: In eine Sichel zwischen
+   drei Kreisen passt keine lesbare Karte. Ein Schildchen mit zwei
+   Woertern passt - also darf die Figur wieder die sein, die alle
+   kennen. Das ist der eigentliche Gewinn des Umbaus. */
+.vform{position:absolute;z-index:0;border-radius:50%;border:2.5px solid;
+   pointer-events:none;transition:opacity .15s}
+.vform.rf{border-color:#7FB069;background:rgba(127,176,105,.13)}
+.vform.aus{border-color:#6C9BD1;background:rgba(108,155,209,.13)}
+.vform.kat{border-color:#C99BC0;background:rgba(201,155,192,.13)}
+#feld .feld.zone{z-index:2;position:absolute;background:none;border:none;
+   display:flex;flex-direction:column;align-items:center;
+   justify-content:center;gap:3px;overflow:visible;padding:0}
+#feld .feld.zone.aussen{align-items:flex-start;justify-content:flex-start}
+/* Ein SCHMALER Bereich - die Sichel zwischen zwei Kreisen ist an der
+   engsten Stelle keine 90 Punkte breit. Dort traegt das Schildchen
+   nur noch Marke und Kurzform; die Ampel faellt weg, denn WO es
+   liegt, sagt ohnehin dasselbe wie sie. Ohne diese Regel quoll der
+   Text aus dem Kreis heraus (gemessen: 145 Punkte Schild in einem
+   78 Punkte breiten Bereich). */
+#feld .feld.zone.eng .kleechip{font-size:10px;padding:2px 4px;gap:3px}
+#feld .feld.zone.eng .kleechip .eampel{display:none}
+#feld .feld.zone.eng .kleechip .ctext{-webkit-line-clamp:3}
+/* Das Schildchen im Kleeblatt. Es traegt die Kurzform, die Marke der
+   Situation und dieselbe Ampel wie die Karte links. */
+.kleechip{display:inline-flex;align-items:center;gap:4px;max-width:100%;
+   font-size:clamp(9.5px, calc(var(--kb) * .058), 12.5px);line-height:1.15;
+   padding:2px 6px;border-radius:8px;background:var(--karte);
+   border:1.5px solid var(--linie);box-shadow:0 1px 3px rgba(45,41,36,.16);
+   cursor:default;box-sizing:border-box;text-align:left}
+.kleechip .cmarke{font-weight:700;flex:0 0 auto;font-size:.88em;
+   padding:0 3px;border-radius:5px}
+.kleechip.wdhA .cmarke{background:#f4e3cf;color:#8a5a12}
+.kleechip.wdhB .cmarke{background:#dfe9f4;color:#3c5f86}
+.kleechip.skript .cmarke{background:#ebe9e4;color:#6b655c}
+.kleechip .ctext{overflow:hidden;min-width:0;
+   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.kleechip .eampel i{width:7px;height:7px;border-width:1.5px}
+.kleechip.ok{border-color:#2f7a3d;box-shadow:0 0 0 1.5px rgba(47,122,61,.3)}
+.kleechip.falsch{border-color:#a33;box-shadow:0 0 0 1.5px rgba(170,51,51,.3)}
+.kleechip.hervor{outline:2px solid var(--akzent);outline-offset:1px}
+/* Mehr Schildchen als Platz: Der Rest wird gezaehlt, statt aus dem
+   Kreis zu quellen. Draufzeigen nennt sie. */
+.kleerest{font-size:11px;color:var(--matt);font-style:italic;cursor:default}
+/* Hervorheben: Was in der gewaehlten Menge liegt, bleibt; der Rest
+   tritt zurueck. Je ein Waehler auf EINER Zeile - ein Umbruch mitten
+   in einem Waehler waere ein Nachfahren-Zeichen und traefe nichts
+   (gemessen am 2026-09-22). */
+#feld.hervor-rf .feld.zone:not([data-ort="rf"]):not([data-ort="rf-aus"]):not([data-ort="rf-kat"]):not([data-ort="rf-aus-kat"]),
+#feld.hervor-aus .feld.zone:not([data-ort="aus"]):not([data-ort="rf-aus"]):not([data-ort="aus-kat"]):not([data-ort="rf-aus-kat"]),
+#feld.hervor-kat .feld.zone:not([data-ort="kat"]):not([data-ort="rf-kat"]):not([data-ort="aus-kat"]):not([data-ort="rf-aus-kat"]){opacity:.22}
+#feld.hervor-rf .vform:not(.rf),
+#feld.hervor-aus .vform:not(.aus),
+#feld.hervor-kat .vform:not(.kat){opacity:.22}
+/* Der Kasten mit dem Kreisnamen. Handschrift, weil er eine
+   Ueberschrift ist und keine Beschriftung - und weil die
+   Studierenden ihn selbst geschrieben haben. */
+.kreisname{position:absolute;z-index:3;pointer-events:none;
+   font-family:var(--hand);font-size:16px;line-height:1.25;text-align:center;
+   padding:3px 8px;border-radius:9px;background:var(--karte);
+   border:1.5px solid;box-shadow:0 1px 3px rgba(45,41,36,.14);
+   box-sizing:border-box}
+.kreisname.rf{color:#41663a;border-color:#7FB069}
+.kreisname.aus{color:#2f5580;border-color:#6C9BD1}
+.kreisname.kat{color:#7a4b70;border-color:#C99BC0}
+.kreisname.ohne{color:var(--matt);border-color:var(--linie);
+   border-style:dashed;background:transparent;box-shadow:none}
+.kreisname.keiner{color:var(--matt);border-color:#bdb7ac;font-size:15px}
 .klegende{display:inline-block;margin-left:10px;font-size:11px;font-weight:400;
    color:var(--matt);padding-left:13px;position:relative;text-transform:none}
 .klegende::before{content:'';position:absolute;left:0;top:3px;width:8px;
@@ -836,34 +983,32 @@ function etappe1(){
 
 // Die Geometrie des Kleeblatts. EINE Quelle: Das Hintergrundbild und
 // die Ablagefelder rechnen beide daraus.
-/* Das Kleeblatt - und die Ablagefelder werden GERECHNET, nicht
-   hingeschrieben.
+/* DAS KLEEBLATT - wieder aus drei KREISEN.
 
-   Rike, 2026-09-22: «Das Venn-Diagramm ist insgesamt zu klein.
-   Zweitens sind die Boxen insgesamt zu klein. Ich frage mich, ob es
-   wirklich notwendig ist, dass wir diese Boxen machen - wir haetten
-   ja dort noch mehr Platz aussenrum.»
+   Der Weg hierher, weil er die Form erklaert:
 
-   Noetig sind sie: Etwas muss sagen, wohin eine Karte faellt, und ein
-   Kreisabschnitt ist kein Ziel, das man treffen kann. ZU KLEIN waren
-   sie, weil ich sie von Hand in Koordinaten hingeschrieben habe - acht
-   Rechtecke, nach Augenmass in die Lappen gesetzt und aus Vorsicht zu
-   knapp bemessen.
+   Zuerst drei Kreise. Rike: «Die Boxen sind zu klein.» Stimmte, und
+   der Grund ist geometrisch: Ein Lappen zwischen drei gleich grossen
+   Kreisen ist eine SICHEL, und in eine Sichel passt keine lesbare
+   KARTE. Dann drei Rechtecke - die Bereiche gross genug, die Form
+   weg. Dann drei gleich grosse ueberlappende Formen mit runden Ecken -
+   die Form wieder da, die Bereiche knapp, die Karten gestapelt.
 
-   Jetzt rechnet `lappenKaesten()` je Lappen das GROESSTE Rechteck aus,
-   das ganz hineinpasst. Damit ist jedes Feld so gross, wie die
-   Geometrie es zulaesst, und wer die Kreise verschiebt, bekommt die
-   neuen Felder von selbst.
+   Dreimal dasselbe Problem, und es lag nie an der Figur: Eine Karte,
+   die man lesen koennen muss, ist rund 150 Punkte breit, und so viel
+   gibt kein Schnittbereich zwischen drei Formen her.
 
-   Die Kreise sind ausserdem groesser geworden und ruecken enger
-   zusammen: Bei d = 1.22 r sind die Einzellappen breiter als bei
-   1.29 r, und dort landet fast alles. */
+   Rikes Entscheidung vom 2026-09-22 nimmt das Problem weg, statt es
+   zu verschieben: Die KARTE bleibt links in der Liste, ins Kleeblatt
+   kommt nur ihre KURZFORM - ein Schildchen mit zwei Woertern. Damit
+   duerfen die Kreise wieder Kreise sein. */
 const KLEE = {
-  breite: 640, hoehe: 610, r: 190,
-  mitte: {rf: [212, 210], aus: [428, 210], kat: [320, 397]},
-  /* Je Feld: in welchen Kreisen es liegt. Die Reihenfolge bestimmt,
-     welches Feld bei gleich grossen Moeglichkeiten zuerst bedient
-     wird - die Einzellappen zuerst, sie tragen die Last. */
+  breite: 740, hoehe: 620, r: 195,
+  formen: {
+    rf:  {cx: 275, cy: 230},
+    aus: {cx: 465, cy: 230},
+    kat: {cx: 370, cy: 390},
+  },
   felder: [
     {id:'rf',         in:['rf']},
     {id:'aus',        in:['aus']},
@@ -876,33 +1021,29 @@ const KLEE = {
   ],
 };
 
-/* Das groesste achsenparallele Rechteck in jedem Lappen.
+/* Das groesste achsenparallele Rechteck in jedem Bereich.
 
-   Gerastert wird auf ein Gitter von RASTER Punkten je Achse; je Punkt
-   steht fest, in welchen Kreisen er liegt. Danach je Lappen das
-   groesste Rechteck aus lauter Treffern - das ist das bekannte
-   «groesstes Rechteck im Histogramm», Zeile fuer Zeile, in linearer
-   Zeit. Bei 128 mal 122 Punkten laeuft das in wenigen Millisekunden
-   und wird nur beim Aufbau gebraucht.
+   Gerastert, dann je Bereich «groesstes Rechteck im Histogramm»,
+   Zeile fuer Zeile. Laeuft nur beim Aufbau. Gerechnet und nicht
+   hingeschrieben: Wer die drei Kreise verschiebt oder ihren Radius
+   aendert, bekommt die neuen Felder von selbst.
 
-   «keine» ist der Bereich AUSSERHALB aller drei Kreise. Dort ist das
-   groesste Rechteck eine der vier Ecken - genommen wird die linke
-   untere, weil dort auch die Beschriftung steht. */
+   «keine» ist der Bereich AUSSERHALB aller drei; dort wird die untere
+   linke Ecke genommen, weil dort Platz ist. */
 let _kaesten = null;
 function lappenKaesten(){
   if (_kaesten) return _kaesten;
-  const RASTER = 128;
-  const sx = KLEE.breite / RASTER, sy = KLEE.hoehe / RASTER;
+  const NX = 148, NY = 124;
+  const sx = KLEE.breite / NX, sy = KLEE.hoehe / NY;
+  const rr = KLEE.r * KLEE.r;
   const drin = (x, y, k) => {
-    const [cx, cy] = KLEE.mitte[k];
-    return (x - cx) * (x - cx) + (y - cy) * (y - cy) < KLEE.r * KLEE.r;
+    const f = KLEE.formen[k];
+    return (x - f.cx) * (x - f.cx) + (y - f.cy) * (y - f.cy) < rr;
   };
-  // Je Gitterpunkt: welche Kreise decken ihn?
   const lage = [];
-  for (let j = 0; j < RASTER; j++){
-    const zeile = [];
-    const y = (j + 0.5) * sy;
-    for (let i = 0; i < RASTER; i++){
+  for (let j = 0; j < NY; j++){
+    const zeile = [], y = (j + 0.5) * sy;
+    for (let i = 0; i < NX; i++){
       const x = (i + 0.5) * sx;
       zeile.push(['rf', 'aus', 'kat'].filter(k => drin(x, y, k)).join('-'));
     }
@@ -911,314 +1052,240 @@ function lappenKaesten(){
   _kaesten = {};
   KLEE.felder.forEach(f => {
     const soll = f.in.join('-');
-    // Fuer «keine» nur die linke untere Ecke zulassen - sonst gewinnt
-    // irgendein Zipfel am Rand, und das Feld liegt, wo niemand es
-    // sucht.
     const erlaubt = (i, j) => lage[j][i] === soll
-      && (f.in.length || (i < RASTER * 0.42 && j > RASTER * 0.55));
-    const hoehen = new Array(RASTER).fill(0);
+      && (f.in.length || (i < NX * 0.26 && j > NY * 0.70));
+    const hoehen = new Array(NX).fill(0);
     let best = {flaeche: 0};
-    for (let j = 0; j < RASTER; j++){
-      for (let i = 0; i < RASTER; i++)
+    for (let j = 0; j < NY; j++){
+      for (let i = 0; i < NX; i++)
         hoehen[i] = erlaubt(i, j) ? hoehen[i] + 1 : 0;
-      // groesstes Rechteck im Histogramm `hoehen`, Unterkante j
       const stapel = [];
-      for (let i = 0; i <= RASTER; i++){
-        const h = i === RASTER ? 0 : hoehen[i];
+      for (let i = 0; i <= NX; i++){
+        const h = i === NX ? 0 : hoehen[i];
         let start = i;
         while (stapel.length && stapel[stapel.length - 1].h >= h){
           const o = stapel.pop();
-          const flaeche = o.h * (i - o.i);
-          if (flaeche > best.flaeche)
-            best = {flaeche, i: o.i, breite: i - o.i, hoehe: o.h, j};
+          const fl = o.h * (i - o.i) * sx * sy;
+          if (fl > best.flaeche)
+            best = {flaeche: fl, i: o.i, breite: i - o.i, hoehe: o.h, j};
           start = o.i;
         }
         stapel.push({i: start, h});
       }
     }
     _kaesten[f.id] = best.flaeche
-      ? [best.i * sx, (best.j - best.hoehe + 1) * sy,
-         best.breite * sx, best.hoehe * sy]
+      ? [best.i * sx + 3, (best.j - best.hoehe + 1) * sy + 3,
+         best.breite * sx - 6, best.hoehe * sy - 6]
       : [0, 0, 0, 0];
   });
   return _kaesten;
 }
 
-/* Umbruch auf hoechstens `breit` Zeichen je Zeile, hoechstens drei
-   Zeilen. Ein SVG bricht Text nicht von selbst um - und ein
-   selbstgeschriebener Name kann lang sein.
+/* Was WAERE richtig? Aus D.kleeblatt — gerechnet, nicht behauptet.
 
-   WIEDER DA (2026-09-22): Diese beiden Helfer standen im Block mit der
-   alten Geometrie und sind beim Ersetzen mit verschwunden. Die Seite
-   brach danach beim Zeichnen des Kleeblatts ab - gefunden sofort, weil
-   Etappe 2 gar nicht mehr aufging. Zweimal an einem Tag dasselbe:
-   Wer einen Block ersetzt, prueft, was SONST noch darin stand. */
-function _umbruch(text, breit){
-  const zeilen = [];
-  let zeile = '';
-  text.split(/\s+/).forEach(w => {
-    if ((zeile + ' ' + w).trim().length > breit && zeile){
-      zeilen.push(zeile); zeile = w;
-    } else zeile = (zeile + ' ' + w).trim();
-  });
-  if (zeile) zeilen.push(zeile);
-  return zeilen.slice(0, 3);
-}
-
-/* Was in ein SVG geschrieben wird, muss maskiert sein - der Name kommt
-   aus einem Textfeld, in dem ein & oder ein < stehen darf. */
-function _roh(s){
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
-                  .replace(/>/g, '&gt;');
-}
-
-function kleeblattBild(){
-  const g = KLEE, t = [];
-  t.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.breite} ${g.hoehe}">`);
-  const toene = {rf:'#7FB069', aus:'#6C9BD1', kat:'#C99BC0'};
-  D.kreise.forEach(k => {
-    const [x, y] = g.mitte[k.id];
-    t.push(`<circle cx="${x}" cy="${y}" r="${g.r}" fill="${toene[k.id]}" `
-      + `fill-opacity=".12" stroke="${toene[k.id]}" stroke-width="2.5"/>`);
-  });
-  /* An den Kreisen stehen DIE SELBST GESCHRIEBENEN NAMEN.
-
-     Rike, 2026-09-21: «Der Name der Spezialfaelle, so wie Sie sie
-     benennen, das sollte dann nachher im Venn-Diagramm erscheinen.»
-
-     Damit haengen die beiden Etappen wirklich zusammen: Was in
-     Etappe 1 benannt wurde, ist hier die Ueberschrift, unter der
-     einsortiert wird. Wer keinen Namen geschrieben hat, sieht das -
-     der Platzhalter schickt zurueck, statt einen Namen zu liefern.
-
-     FEHLERBEHOBEN (2026-09-21, beim ersten Blick im Browser): Die
-     vollen Saetze standen ueber den Kreisen und ueberlappten einander;
-     «Ohne Reihenfolge geht auchEin Ausschnitt genuegt» stand als ein
-     Wort da. Der Name sitzt jetzt im aeusseren Zipfel des eigenen
-     Kreises, wo kein Ablagefeld liegt, und wird bei Bedarf umbrochen. */
-  /* Die Namen sitzen AM RECHTECK, nicht an einer hingeschriebenen
-     Stelle: ueber dem Feld bei den beiden oberen Lappen, darunter beim
-     unteren. Vorher standen sie fest bei y 62 - und seit die Felder
-     gerechnet werden und bis y 71 hinaufreichen, lagen sie auf den
-     Karten. Wer die Kreise verschiebt, verschiebt jetzt die Namen mit. */
-  const kaesten = lappenKaesten();
-  const wo = {
-    rf:  [kaesten.rf[0] + kaesten.rf[2] / 2,  kaesten.rf[1] - 20],
-    aus: [kaesten.aus[0] + kaesten.aus[2] / 2, kaesten.aus[1] - 20],
-    kat: [kaesten.kat[0] + kaesten.kat[2] / 2,
-          kaesten.kat[1] + kaesten.kat[3] + 26],
-  };
-  /* WIEDER DA (2026-09-22): Beim Umstellen auf die gerechneten
-     Rechtecke ist die Schleife, die die Namen ZEICHNET, mit
-     weggefallen - stehen geblieben war nur ihre Begruendung. Die
-     Kreise standen danach ohne Beschriftung da.
-     Dritter Fall an einem Tag: Wer einen Block ersetzt, prueft, was
-     sonst noch darin stand. */
-  D.kreise.forEach(k => {
-    const [x, y] = wo[k.id];
-    const eigen = (stand.texte['wegname' + k.weg] || '').trim();
-    const zeilen = eigen ? _umbruch(eigen, 22)
-                         : ['Spezialfall ' + (k.weg - 1), '(noch ohne Namen)'];
-    // Oberhalb des Feldes nach OBEN wachsen, unterhalb nach unten -
-    // sonst laeuft die zweite Zeile ins Feld hinein.
-    const hoch = k.id !== 'kat';
-    zeilen.forEach((z, i) => {
-      const dy = hoch ? (i - (zeilen.length - 1)) * 17 : i * 17;
-      t.push(`<text x="${x}" y="${y + dy}" text-anchor="middle" `
-        + `font-family="sans-serif" font-size="14.5" `
-        + `font-weight="${eigen ? 600 : 400}" `
-        + `fill="${eigen ? '#5a5349' : '#a09786'}">${_roh(z)}</text>`);
-    });
-  });
-  t.push(`<text x="${kaesten.keine[0] + kaesten.keine[2] / 2}" `
-    + `y="${kaesten.keine[1] - 12}" text-anchor="middle" `
-    + `font-family="sans-serif" font-size="14" `
-    + `fill="#8a8279">keiner der drei</text>`);
-  t.push('</svg>');
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t.join(''));
-}
-
-/* Wo gehoert eine Zeile hin? Aus D.kleeblatt — gerechnet, nicht
-   hingeschrieben. */
-const KLEEZIEL = {};
+   Frueher stand hier nur der Ort (`rf-kat`). Seit die Studierenden
+   DREI Entscheidungen faellen statt einer, braucht es die drei
+   Wahrheitswerte einzeln: Nur so kann das Pruefen sagen, WELCHES
+   Kriterium danebenlag, statt bloss «falscher Lappen». */
+const SOLLWAHL = {};
 D.kleeblatt.forEach(z => {
-  KLEEZIEL[z.id] = z.gehoert.length ? z.gehoert.slice().sort().join('-')
-                                    : 'keine';
+  SOLLWAHL[z.id] = {rf: z.gehoert.indexOf('rf')  >= 0,
+                    aus: z.gehoert.indexOf('aus') >= 0,
+                    kat: z.gehoert.indexOf('kat') >= 0};
 });
+
+/* Wo landet eine Karte mit dieser Wahl? `null`, solange nicht alle
+   drei Fragen beantwortet sind - dann bleibt sie links liegen und
+   taucht im Kleeblatt gar nicht auf. Das ist Absicht: Ein halb
+   einsortiertes Schildchen wuerde eine Aussage machen, die noch
+   niemand getroffen hat. */
+function vennOrt(w){
+  if (!w) return null;
+  const drin = [];
+  for (const k of ['rf', 'aus', 'kat']){
+    if (w[k] === undefined || w[k] === null) return null;
+    if (w[k]) drin.push(k);
+  }
+  return drin.length ? drin.join('-') : 'keine';
+}
 
 /* FEHLERBEHOBEN (2026-09-22, Rikes Befund «wenn ich auf Loesung gehe,
    wird nur die Eisdiele eingeblendet, alles andere nicht»):
 
-   Diese Funktion lieferte NUR die neun Eisdiele-Karten, und
-   loesungAnwenden() ersetzt stand.karten vollstaendig durch das, was
-   hier steht. Die sieben Skriptkarten waren damit an keinem Ort mehr -
-   und wurden beim Neuzeichnen wieder auf den Tisch gestreut. Wer sie
-   eingeordnet hatte, sah seine Arbeit verschwinden, sobald er die
-   Loesung ansah.
+   loesungAnwenden() ersetzt das genannte Standfeld VOLLSTAENDIG durch
+   das, was hier steht. Lieferte die Funktion nur die Eisdiele, waren
+   die Aufgaben aus dem Skript danach ohne Eintrag - die eigene Arbeit
+   daran verschwand, sobald jemand die Loesung ansah.
 
-   Fuer die Skriptaufgaben gibt es keine hinterlegte Loesung, das
-   bleibt so. «Keine Loesung» heisst aber «unveraendert lassen», nicht
-   «vom Brett nehmen». Sie behalten deshalb ihren Platz. */
+   Fuer die Aufgaben aus dem Skript gibt es keine hinterlegte Loesung,
+   das bleibt so. «Keine Loesung» heisst aber «unveraendert lassen»,
+   nicht «wegnehmen». */
 function _loesungStandE2(){
-  const karten = Object.assign({}, stand.karten);
-  Object.entries(KLEEZIEL).forEach(([id, ort]) => {
-    karten[id] = {ort, x: 0, y: 0, rot: 0};
+  const wahl = {};
+  Object.keys(stand.wahl || {}).forEach(id => {
+    wahl[id] = Object.assign({}, stand.wahl[id]);
   });
-  return {karten};
+  Object.entries(SOLLWAHL).forEach(([id, w]) => {
+    wahl[id] = Object.assign({}, w);
+  });
+  return {wahl};
 }
 
-/* Eine Situation als TEXT, nicht als verkleinertes Kartenbild.
+/* Die drei Farbpunkte - gefuellt, blass oder leer.
 
-   Rike, 2026-09-21: «Die Situationen sind so mini klein im
-   Venn-Diagramm, dass man sie praktisch nicht mehr lesen kann. Und
-   auch nicht, wenn man draufgeht und sie groesser macht.»
+   Rike, 2026-09-22: «Die Karten erhalten dann auch farbliche
+   Markierungen nach der Entscheidung.» Dieselbe Ampel sitzt auf der
+   Karte links und auf dem Schildchen im Kleeblatt; daran erkennt man
+   drueben wieder, was man hier entschieden hat. */
+function ampel(w){
+  const s = document.createElement('span');
+  s.className = 'eampel';
+  ['rf', 'aus', 'kat'].forEach(k => {
+    const i = document.createElement('i');
+    const v = w ? w[k] : undefined;
+    i.className = k + (v === true ? ' ja' : v === false ? ' nein' : '');
+    // Die Punkte sind die Entscheidung. Im Bild zum Mitnehmen muessen
+    // sie stehen, sonst nimmt man leere Karten mit.
+    i.dataset.alsbildform = 'kreis';
+    s.appendChild(i);
+  });
+  return s;
+}
 
-   Sie hat recht, und das Vergroessern hilft wirklich nicht: Das
-   Kartenbild ist fuer 186 Punkte Breite gesetzt. Auf 55 Punkte
-   geschrumpft ist seine Schrift rund zwei Punkte gross, und die Lupe
-   macht daraus drei. Ein Bild kann man nicht kleiner setzen, ohne es
-   unleserlich zu machen - Text schon.
+/* Wie heisst der Spezialfall? Die Studierenden haben ihn in Etappe 1
+   selbst benannt; steht dort noch nichts, steht hier ein Platzhalter,
+   der zurueckschickt. */
+function wegname(weg){
+  const eigen = (stand.texte['wegname' + weg] || '').trim();
+  return {text: eigen || 'Spezialfall ' + (weg - 1), eigen: !!eigen};
+}
 
-   Also traegt die Karte im Kleeblatt ihren Text selbst: oben die
-   Herkunft (die Wiederholungszeile bzw. «Skript 3.1»), darunter das
-   Ereignis. Bei 150 Punkten Breite sind das zwei bis drei gut lesbare
-   Zeilen - auf derselben Flaeche, auf der vorher ein unlesbares
-   Bildchen sass.
+/* DIE ENTSCHEIDKARTE - die Karte, die links liegen bleibt.
 
-   `ziehbar()` ist dieselbe Geste wie bei jeder anderen Karte; nur das
-   Innere ist ein anderes. */
-function textkarte(id, herkunft, oben, ereignis, wdh){
+   Sie traegt oben ihre Kurzform (dasselbe Schild wie im Kleeblatt),
+   darunter Wiederholungszeile und Ereignis in voller Groesse - und
+   dann die drei Fragen, je eine pro Kreis, mit «ja» und «nein».
+
+   Nochmal auf dieselbe Antwort tippen nimmt sie zurueck; so kommt man
+   ohne Umweg wieder in den unentschiedenen Zustand. */
+function entscheidkarte(p, setzen){
   const el = document.createElement('div');
-  el.className = 'k textkarte ' + herkunft + (wdh ? ' wdh' + wdh : '');
-  el.dataset.id = id;
-  el._x = 0; el._y = 0; el._rot = 0;
-  /* DIE SITUATION STEHT ALS MARKE AUF DER KARTE, nicht als kleine
-     Zeile darueber.
+  el.className = 'ekarte ' + p.herkunft + (p.marke ? ' wdh' + p.marke : '');
+  el.dataset.id = p.id;
+  /* ALLES, WAS DIE KARTE SAGT, GEHOERT INS BILD ZUM MITNEHMEN.
 
-     Rike, 2026-09-22: «Fuer uns ist ja wichtig, ob Wiederholungen
-     erlaubt sind oder nicht - das unterscheidet die Art der
-     Berechnung. Im Moment ist diese Information nur ganz klein oben
-     geschrieben. Wenn man Sachen uebereinanderlegt, sieht man nur noch
-     das Ereignis, und dann sieht es so aus, als waere es zweimal
-     dasselbe Beispiel - was es nicht ist.»
+     Die Entscheidkarte ist kein `.k` - der Kern zeichnet sie also
+     nicht von selbst. Ohne die Marken stuende im gesicherten Stand
+     nur das Kleeblatt, und die neun Karten waeren eine leere Flaeche:
+     die Figur ohne die Begruendungen, die zu ihr gefuehrt haben. */
+  el.dataset.alsbildform = '';
+  const kopf = document.createElement('div');
+  kopf.className = 'ekopf';
+  kopf.innerHTML =
+      `<span class="kwdh${p.marke ? '' : ' skript'}" data-alsbild>${
+        p.marke ? (p.marke === 'A' ? 'mit Wdh.' : 'ohne Wdh.') : 'Skript'}</span>`
+    + `<span class="ekurz" data-alsbild>${p.kurz}</span>`;
+  kopf.appendChild(ampel(stand.wahl[p.id]));
+  el.appendChild(kopf);
+  const h = document.createElement('div');
+  h.className = 'eherkunft'; h.innerHTML = p.oben; h.dataset.alsbild = '';
+  const e = document.createElement('div');
+  e.className = 'eereignis'; e.innerHTML = p.text; e.dataset.alsbild = '';
+  el.appendChild(h); el.appendChild(e);
 
-     Genau so ist es: «Unter den beiden unteren Kugeln ist Schokolade»
-     steht zweimal im Satz, in A und in B, und die beiden gehoeren in
-     verschiedene Lappen. Was sie unterscheidet, stand in der Zeile,
-     die beim Stapeln als erste verschwindet.
-
-     Jetzt traegt die Karte ein kurzes, farbiges Schild - «mit Wdh.»
-     oder «ohne Wdh.» - und es steht ganz oben, also genau dort, wo
-     eine gestapelte Karte noch sichtbar ist. Die Herkunftszeile bleibt
-     darunter und darf verschwinden; sie sagt dasselbe ausfuehrlich. */
-  el.innerHTML = (wdh
-      ? `<span class="kwdh">${wdh === 'A' ? 'mit Wdh.' : 'ohne Wdh.'}</span>`
-      : '<span class="kwdh skript">Skript</span>')
-    + `<span class="kherkunft">${oben}</span>`
-    + `<span class="kereignis">${ereignis}</span>`;
-  el.ondragstart = () => false;
-  /* Liegen mehr Karten in einem Feld, als Platz ist, ruecken sie
-     uebereinander - siehe zoneOrdnen(). Dann muss man die untere lesen
-     koennen, ohne sie herauszuziehen. Daraufzeigen hebt sie nach vorn.
-     Die Lupe des Kerns gibt es hier nicht: Sie vergroessert ein BILD,
-     und diese Karte traegt Text - der ist schon lesbar, er war nur
-     verdeckt. */
-  el.addEventListener('pointerenter', () => {
-    el._zVorn = el.style.zIndex;
-    el.style.zIndex = 900;
-    el.classList.add('vorn');
+  D.kreise.forEach(k => {
+    const z = document.createElement('div');
+    z.className = 'wahlzeile ' + k.id;
+    z.dataset.menge = k.id;
+    const n = wegname(k.weg);
+    const name = document.createElement('span');
+    name.className = 'wname' + (n.eigen ? '' : ' ohne');
+    name.textContent = n.text;
+    name.title = k.lang;
+    name.dataset.alsbild = '';
+    z.appendChild(name);
+    [['ja', true], ['nein', false]].forEach(([wort, wert]) => {
+      const b = document.createElement('button');
+      b.className = 'jn ' + wort;
+      b.textContent = wort;
+      /* Beide Knoepfe ins Bild, als Kasten UND als Wort - so wie sie
+         auf der Flaeche stehen. Nur den gewaehlten zu zeichnen waere
+         kuerzer, aber sein Wort ist weiss auf weiss, solange der
+         farbige Kasten darunter fehlt. */
+      b.dataset.alsbildform = '';
+      b.dataset.alsbild = '';
+      b.onclick = () => setzen(p.id, k.id, wert);
+      z.appendChild(b);
+    });
+    el.appendChild(z);
   });
-  el.addEventListener('pointerleave', () => {
-    if (el._zieht) return;
-    el.style.zIndex = el._zVorn || '';
-    el.classList.remove('vorn');
-  });
-  ziehbar(el);
   return el;
 }
 
-/* Die Karten eines Ablagefeldes ordnen - OHNE das Feld zu vergroessern.
-
-   FEHLERBEHOBEN (2026-09-21, Rikes Befund «wenn ich dort Sachen
-   reinhuepfe, dann wird das Feld ganz gross»): Der Kern ordnet mit
-   gruppeOrdnen(), und das rechnet mit der VOLLEN Kartenbreite und
-   macht das Feld so hoch, wie es braucht. In einem Sortierbrett ist
-   das richtig. Im Kleeblatt ist es falsch: Die Felder liegen an
-   festen Stellen ueber einer Zeichnung, und ein wachsendes Feld
-   schiebt sich ueber die Kreise und ihre Namen.
-
-   Hier wird deshalb mit der TATSAECHLICHEN Kartenbreite gerechnet, und
-   die Hoehe des Feldes bleibt, wie sie gesetzt wurde. Passen mehr
-   Karten hinein, als Platz ist, ruecken sie enger zusammen und
-   ueberlappen - wie ein Stapel auf dem Tisch. Das ist besser als ein
-   Feld, das die Zeichnung auffrisst.
-
-   ablegen() im Kern ruft gruppeOrdnen() selbst auf; diese Funktion
-   laeuft danach ueber window._nachAblegen und stellt die Hoehe wieder
-   her. */
-function zoneOrdnen(d){
-  const karten = [...d.querySelectorAll(':scope > .k')];
-  d.style.height = d.dataset.hoehe + 'px';
-  if (!karten.length) return;
-  const erste = karten[0].getBoundingClientRect();
-  const kw = erste.width || 50, kh = erste.height || 42;
-  const innen = d.clientWidth - 10, hoch = d.clientHeight - 10;
-  const spalten = Math.max(1, Math.floor(innen / (kw + 4)));
-  const zeilen = Math.max(1, Math.ceil(karten.length / spalten));
-  // Enger ruecken, wenn es sonst unten hinausliefe.
-  const schritt = Math.min(kh + 4, Math.max(14, (hoch - kh) / Math.max(1, zeilen - 1)));
-  karten.forEach((k, i) => {
-    k._rot = 0;
-    k._x = 5 + (i % spalten) * (kw + 4);
-    k._y = 5 + Math.floor(i / spalten) * schritt;
-    k.style.zIndex = 10 + i;
-    pos(k);
-  });
+/* Das Schildchen im Kleeblatt. Eine Zeile, zwei Woerter, dieselbe
+   Ampel. Draufzeigen hebt die zugehoerige Karte links hervor - das
+   ist der Rueckweg von der Figur zur Situation. */
+function kleeChip(p, hervorheben){
+  const el = document.createElement('span');
+  el.className = 'kleechip ' + (p.marke ? 'wdh' + p.marke : 'skript');
+  el.dataset.id = p.id;
+  const m = document.createElement('span');
+  m.className = 'cmarke'; m.dataset.alsbild = '';
+  m.textContent = p.marke || 'S';
+  const t = document.createElement('span');
+  t.className = 'ctext'; t.dataset.alsbild = '';
+  t.textContent = p.kurz;
+  el.appendChild(m); el.appendChild(t);
+  el.appendChild(ampel(stand.wahl[p.id]));
+  el.title = p.klartext;
+  el.addEventListener('pointerenter', () => hervorheben(p.id, true));
+  el.addEventListener('pointerleave', () => hervorheben(p.id, false));
+  return el;
 }
 
 /* ───────── Etappe 2 · Einordnen ─────────
 
-   UMGEBAUT am 2026-09-21 auf Rikes Befunde:
+   UMGEBAUT am 2026-09-22 auf Rikes Entscheidung: Es wird nicht mehr
+   gezogen, es wird entschieden. Siehe den Block ueber KLEE - dort
+   steht, warum drei Anlaeufe mit gezogenen Karten an der Geometrie
+   gescheitert sind und was der Tausch bringt.
+
+   Was bleibt:
 
    «Ich haette gerne, dass sowohl die Situationen aus der Eisdiele als
    auch, wenn man moechte, die Situationen aus dem Skript gleichzeitig
    da liegen koennen. Und ich haette gerne, dass das farblich
-   unterschieden ist.»
+   unterschieden ist.» (2026-09-21) - beide Sorten in EINER Liste,
+   verschieden gefaerbt, die Aufgaben aus dem Skript mit ihrer Marke.
 
-   Die beiden Runden sind damit keine Runden mehr, sondern EIN Brett,
-   zu dem man etwas dazulegt. Das ist auch sachlich richtig: Die
-   Aufgaben aus dem Skript sind kein zweiter Durchgang, sondern die
-   Probe aufs Exempel - und die lebt davon, dass die Eisdiele daneben
-   liegen bleibt.
-
-   «Und bei den Sachen aus dem Skript sollte irgendwie auch stehen,
-   Aufgabe so und so.» Stimmt, das ging beim Umbau verloren: In der
-   alten Etappe 3 trugen die Transferkarten ihre Marke («Skript 3.1»),
-   hier bekamen sie keine. Wieder da. */
+   «Vielleicht auch so, dass man alle einer Kategorie anzeigen lassen
+   kann, um Gemeinsamkeiten zu suchen.» (2026-09-22) - der Klick auf
+   einen Kreisnamen laesst nur stehen, was in dieser Menge liegt. */
 function etappe2(){
   const a = D.etappen[1];
   if (stand.skriptDa === undefined) stand.skriptDa = false;
+  if (!stand.wahl) stand.wahl = {};
   loesungAnwenden(_loesungStandE2);
 
   buehne({rolle:a.rolle, rang:a.rang,
     titel:'Etappe 2 · Einordnen',
-    text:'Drei Erleichterungen, drei Kreise. Legen Sie jede Situation '
-       + 'dorthin, wo sie hingehört — <b>mit Reihenfolge</b> geht immer, '
-       + 'danach wird nicht gefragt. '
-       + '<span class="zart">Passt keine der drei, gibt es unten links '
-       + 'ein Feld dafür. Und schauen Sie, welche Felder leer bleiben.'
+    text:'Drei Erleichterungen, drei Kreise. Entscheiden Sie für jede '
+       + 'Situation dreimal: Geht diese Erleichterung hier — ja oder nein? '
+       + '<b>Mit Reihenfolge</b> geht immer, danach wird nicht gefragt. '
+       + '<span class="zart">Sobald alle drei Antworten stehen, erscheint '
+       + 'die Situation von selbst im Kleeblatt. Passt keine der drei, '
+       + 'landet sie unten links. Und schauen Sie, welche Felder leer '
+       + 'bleiben.'
        + (stand.skriptDa
           ? ' Die grauen Karten kommen aus dem Skript — dort hilft keine '
             + 'hinterlegte Lösung, nur Ihr eigenes Kriterium.'
           : '')
        + '</span>'},
     stand.skriptDa ? 'Eisdiele und Skript' : `Die ${D.zeilen.length} Situationen`,
-    'Was ist hier erlaubt? ' + D.kreise.map(k => {
-      const eigen = (stand.texte['wegname' + k.weg] || '').trim();
-      return `<span class="klegende ${k.id}" title="${k.lang}">${
-        eigen || 'Spezialfall ' + (k.weg - 1)}</span>`;
-    }).join(''),
-    `<button class="knopf leer" id="zurueck" title="Alle Karten zurück">↺</button>
+    'Was ist hier erlaubt? ' + D.kreise.map(k =>
+      `<span class="klegende ${k.id}" title="${k.lang}">${
+        wegname(k.weg).text}</span>`).join(''),
+    `<button class="knopf leer" id="zurueck" title="Alle Entscheidungen zurück">↺</button>
      <button class="knopf" id="pruefen">Prüfen</button>
      ${stand.skriptDa
        ? '<span class="befund zart">Die Aufgaben aus dem Skript liegen dabei.</span>'
@@ -1226,91 +1293,223 @@ function etappe2(){
      <span class="befund" id="befund"></span>
      <span class="befund zart" style="margin-left:auto">Die Lösung gilt nur
        für die Eisdiele — für die Aufgaben aus dem Skript gibt es keine.</span>`,
-    praemissen());
+    praemissen(), null,
+    /* Das Kleeblatt bekommt gut zwei Drittel. Links stehen Karten mit
+       drei Knopfpaaren; schmaler als rund 320 Punkte bricht der Name
+       des Spezialfalls um. */
+    [1.0, 2.05]);
 
   const tisch = document.getElementById('tisch');
   const feld = document.getElementById('feld');
-  const els = {};
-  D.zeilen.forEach(z => {
-    els[z.id] = textkarte(z.id, 'auseisdiele', z.lage, z.text, z.sit);
-  });
-  if (stand.skriptDa) D.transfer.forEach(t => {
-    els[t.id] = textkarte(t.id, 'ausskript', t.marke, t.text, null);
-  });
-  const dabei = Object.keys(els);
 
+  const posten = D.zeilen.map(z => ({
+    id: z.id, herkunft: 'auseisdiele', marke: z.sit,
+    oben: z.lage, text: z.text, kurz: z.kurz,
+    klartext: z.text.replace(/<[^>]*>/g, ''),
+  }));
+  if (stand.skriptDa) D.transfer.forEach(t => posten.push({
+    id: t.id, herkunft: 'ausskript', marke: null,
+    oben: '<b>' + t.marke + '</b>', text: t.text, kurz: t.kurz,
+    klartext: t.text.replace(/<[^>]*>/g, ''),
+  }));
+  const nachId = {};
+  posten.forEach(p => { nachId[p.id] = p; });
+
+  // --- links: die Liste ---
+  const liste = document.createElement('div');
+  liste.className = 'eliste';
+  const karten = {};
+  posten.forEach(p => {
+    karten[p.id] = entscheidkarte(p, wahlSetzen);
+    liste.appendChild(karten[p.id]);
+  });
+  tisch.appendChild(liste);
+
+  function karteAuffrischen(id){
+    const el = karten[id]; if (!el) return;
+    const w = stand.wahl[id] || {};
+    el.querySelector('.eampel').replaceWith(ampel(w));
+    el.querySelectorAll('.wahlzeile').forEach(z => {
+      const v = w[z.dataset.menge];
+      z.classList.remove('ok', 'falsch');
+      z.querySelector('.jn.ja').classList.toggle('an', v === true);
+      z.querySelector('.jn.nein').classList.toggle('an', v === false);
+    });
+    el.classList.toggle('fertig', !!vennOrt(w));
+  }
+  posten.forEach(p => karteAuffrischen(p.id));
+
+  function wahlSetzen(id, menge, wert){
+    const w = stand.wahl[id] || (stand.wahl[id] = {});
+    // Nochmal auf dieselbe Antwort: zurueck in den offenen Zustand.
+    w[menge] = (w[menge] === wert) ? null : wert;
+    sichern();
+    karteAuffrischen(id);
+    chipsZeichnen();
+    document.getElementById('befund').textContent = '';
+  }
+
+  // --- rechts: die Figur ---
   function zonen(){
-    feld.querySelectorAll('.feld').forEach(d => d.remove());
-    feld.querySelectorAll('.kleeblattbild').forEach(d => d.remove());
-    /* FEHLERBEHOBEN (2026-09-21): Der Massstab kam allein aus der
-       BREITE. Bei einem breiten, niedrigen Feld wurde die Zeichnung
-       dann hoeher als das Fenster, und man sah immer nur den halben
-       Klee - bei einem Venn-Diagramm ist das der halbe Sinn, weil die
-       Aussage in den Lagen ZUEINANDER steckt.
-
-       Jetzt entscheidet, was knapper ist. Die Zeichnung steht damit
-       immer ganz da; dafuer werden die Ablagefelder bei niedrigen
-       Fenstern kleiner, und die Karten darin ruecken uebereinander wie
-       ein Stapel. Das ist der bessere Tausch: Ein Stapel laesst sich
-       auseinanderziehen, ein halbes Venn nicht. */
-    const bb = feld.clientWidth || 520;
-    const bh = feld.clientHeight || 420;
-    const f = Math.min(bb / KLEE.breite, Math.max(bh - 12, 260) / KLEE.hoehe);
-    const rand = Math.max(0, (bb - KLEE.breite * f) / 2);
-    const bild = document.createElement('img');
-    bild.className = 'kleeblattbild'; bild.src = kleeblattBild();
-    bild.alt = '';
-    bild.style.left = rand + 'px';
-    bild.style.width = (KLEE.breite * f) + 'px';
-    feld.appendChild(bild);
+    feld.querySelectorAll('.feld,.vform,.kreisname').forEach(d => d.remove());
     const kaesten = lappenKaesten();
+    const bb = (feld.clientWidth || 520) - 12;
+    const platz = (feld.parentElement.clientHeight || 420) - 46;
+    const kb = parseFloat(getComputedStyle(document.documentElement)
+                .getPropertyValue('--kb'));
+    /* Der Massstab: so gross wie moeglich, aber ganz sichtbar - bei
+       einem Venn steckt die Aussage in den Lagen ZUEINANDER, ein
+       halbes nuetzt nichts. Der Regler hebt die Untergrenze, damit er
+       spuerbar bleibt (Rike: «der Zoom macht nur die Kaertchen
+       groesser, nicht das Venndiagramm»). */
+    const f = Math.min(bb / KLEE.breite, platz / KLEE.hoehe)
+            * Math.min(1.3, Math.max(0.8, kb / 186));
+    const rand = Math.max(0, (bb - KLEE.breite * f) / 2) + 6;
+    const px = (v) => rand + v * f;
+    const py = (v) => 6 + v * f;
+
+    Object.entries(KLEE.formen).forEach(([id, o]) => {
+      const d = document.createElement('div');
+      d.className = 'vform ' + id;
+      // Damit der Kreis auch im Bild zum Mitnehmen steht - sonst
+      // schweben dort nur die Schildchen, und die Lage zueinander,
+      // also die ganze Aussage, ist weg.
+      d.dataset.alsbildform = 'kreis';
+      d.style.left = px(o.cx - KLEE.r) + 'px';
+      d.style.top = py(o.cy - KLEE.r) + 'px';
+      d.style.width = d.style.height = (2 * KLEE.r * f) + 'px';
+      feld.appendChild(d);
+    });
+
     KLEE.felder.forEach(z => {
       const [x, y, w, h] = kaesten[z.id];
       const d = document.createElement('div');
-      d.className = 'feld zone'; d.dataset.ort = z.id;
-      d.style.left = (rand + x * f) + 'px'; d.style.top = (y * f) + 'px';
+      d.className = 'feld zone' + (z.in.length ? '' : ' aussen');
+      d.dataset.ort = z.id;
+      // Auf der Flaeche hat der Bereich keinen Rahmen; im Bild soll er
+      // auch keinen bekommen. Acht gestrichelte Kaesten quer durch die
+      // Kreise machten die Figur unlesbar.
+      d.dataset.ohnerahmen = '';
+      d.style.left = px(x) + 'px'; d.style.top = py(y) + 'px';
       d.style.width = (w * f) + 'px'; d.style.height = (h * f) + 'px';
-      // Die gesetzte Hoehe merken - zoneOrdnen stellt sie wieder her,
-      // nachdem der Kern sie beim Ablegen veraendert hat.
-      d.dataset.hoehe = Math.round(h * f);
       feld.appendChild(d);
     });
-    feld.style.minHeight = (KLEE.hoehe * f + 12) + 'px';
-    Object.entries(stand.karten).forEach(([id, s]) => {
-      const el = els[id]; if (!el) return;
-      const ziel = s.ort === 'tisch' ? tisch
-        : (feld.querySelector(`[data-ort="${s.ort}"]`) || tisch);
-      ziel.appendChild(el); el._x = s.x; el._y = s.y; el._rot = s.rot; pos(el);
+
+    const setzen = (id, x, y, breite, text, eigen, klickbar) => {
+      const d = document.createElement('div');
+      d.className = 'kreisname ' + id + (eigen ? '' : ' ohne');
+      d.dataset.alsbild = '';
+      d.textContent = text;
+      d.style.left = x + 'px'; d.style.top = y + 'px';
+      d.style.maxWidth = breite + 'px';
+      if (klickbar){
+        d.style.pointerEvents = 'auto'; d.style.cursor = 'pointer';
+        d.title = 'Anklicken: nur zeigen, was in dieser Menge liegt';
+        d.onclick = () => {
+          stand.hervor = stand.hervor === id ? null : id;
+          sichern();
+          ['rf', 'aus', 'kat'].forEach(m =>
+            feld.classList.toggle('hervor-' + m, stand.hervor === m));
+        };
+      }
+      feld.appendChild(d);
+    };
+    /* Die beiden oberen Kreise stehen nur 190 Punkte auseinander, ihre
+       Namen sind aber laenger als das. Mittig gesetzt schoben sie sich
+       uebereinander (gesehen am 2026-09-22). Der linke haengt deshalb
+       an der linken AUSSENKANTE seines Kreises, der rechte an der
+       rechten - so laufen sie nach aussen auseinander statt
+       gegeneinander. */
+    const NAMENSBREITE = KLEE.r * 1.1;
+    D.kreise.forEach(k => {
+      const o = KLEE.formen[k.id];
+      const n = wegname(k.weg);
+      // Oben aussen bei den beiden oberen, unten aussen bei der unteren.
+      const y = k.id === 'kat' ? py(o.cy + KLEE.r) - 14 : py(o.cy - KLEE.r) - 16;
+      const x = k.id === 'rf'  ? o.cx - KLEE.r
+              : k.id === 'aus' ? o.cx + KLEE.r - NAMENSBREITE
+                               : o.cx - NAMENSBREITE / 2;
+      setzen(k.id, px(x), y, NAMENSBREITE * f, n.text, n.eigen, true);
     });
-    feld.querySelectorAll('.feld.zone').forEach(zoneOrdnen);
+    const kn = kaesten.keine;
+    setzen('keiner', px(kn[0]), py(kn[1]) - 26, kn[2] * f,
+           'keiner der drei', true, false);
+
+    feld.style.minHeight = (KLEE.hoehe * f + 40) + 'px';
+    ['rf', 'aus', 'kat'].forEach(id =>
+      feld.classList.toggle('hervor-' + id, stand.hervor === id));
+    chipsZeichnen();
+  }
+
+  function hervorheben(id, an){
+    const k = karten[id];
+    if (k) k.classList.toggle('hervor', an);
+    if (an && k) k.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+
+  function chipsZeichnen(){
+    feld.querySelectorAll('.kleechip,.kleerest').forEach(c => c.remove());
+    const sammeln = {};
+    posten.forEach(p => {
+      const ort = vennOrt(stand.wahl[p.id]);
+      if (!ort) return;
+      (sammeln[ort] || (sammeln[ort] = [])).push(p);
+    });
+    Object.entries(sammeln).forEach(([ort, liste]) => {
+      const d = feld.querySelector(`.feld.zone[data-ort="${ort}"]`);
+      if (!d) return;
+      /* Mehr Schildchen als Platz: Der Rest wird GEZAEHLT, statt aus
+         dem Kreis zu quellen. Ein Schildchen, das ueber die Linie
+         ragt, laege sichtbar in zwei Mengen zugleich - und das ist
+         genau die Aussage, die hier niemand machen soll. */
+      const hoch = d.clientHeight || 60;
+      d.classList.toggle('eng', d.clientWidth < 112);
+      const passt = Math.max(1, Math.floor((hoch + 3) / 27));
+      liste.slice(0, passt).forEach(p =>
+        d.appendChild(kleeChip(p, hervorheben)));
+      if (liste.length > passt){
+        const r = document.createElement('span');
+        r.className = 'kleerest';
+        r.textContent = '+ ' + (liste.length - passt) + ' weitere';
+        r.title = liste.slice(passt).map(p => p.kurz).join(', ');
+        d.appendChild(r);
+      }
+    });
   }
 
   window._neuzeichnen = zonen;
-  window._nachAblegen = () => {
-    feld.querySelectorAll('.feld.zone').forEach(zoneOrdnen);
-  };
   zonen();
-  const neu = dabei.filter(id => !(id in stand.karten)).map(id => els[id]);
-  if (neu.length){ streuen(neu, tisch); merken(); }
 
   const befund = document.getElementById('befund');
   document.getElementById('pruefen').onclick = () => {
-    document.querySelectorAll('.k').forEach(k =>
-      k.classList.remove('ok', 'falsch'));
-    let gut = 0, schief = 0, offen = 0;
+    feld.querySelectorAll('.kleechip').forEach(c =>
+      c.classList.remove('ok', 'falsch'));
+    let gut = 0, schief = 0, offen = 0, einzeln = 0;
     // NUR die Eisdiele. Fuer die Aufgaben aus dem Skript gibt es keine
     // hinterlegte Loesung - sie kommen aus einer anderen Situation und
     // werden am eigenen Kriterium geprueft, nicht an einer Tabelle.
     D.zeilen.forEach(z => {
-      const s = stand.karten[z.id], el = els[z.id];
-      if (!s || s.ort === 'tisch'){ offen++; return; }
-      if (s.ort === KLEEZIEL[z.id]){ el.classList.add('ok'); gut++; }
-      else { el.classList.add('falsch'); schief++; }
+      const w = stand.wahl[z.id] || {}, soll = SOLLWAHL[z.id];
+      const el = karten[z.id];
+      let ganz = true;
+      el.querySelectorAll('.wahlzeile').forEach(zl => {
+        const m = zl.dataset.menge, v = w[m];
+        zl.classList.remove('ok', 'falsch');
+        if (v === undefined || v === null){ ganz = false; return; }
+        if (v === soll[m]){ zl.classList.add('ok'); einzeln++; }
+        else { zl.classList.add('falsch'); ganz = false; }
+      });
+      if (!vennOrt(w)){ offen++; return; }
+      const chip = feld.querySelector(`.kleechip[data-id="${z.id}"]`);
+      if (ganz){ gut++; if (chip) chip.classList.add('ok'); }
+      else { schief++; if (chip) chip.classList.add('falsch'); }
     });
     const satz = [];
-    if (offen) satz.push(`${offen} aus der Eisdiele liegen noch auf dem Tisch.`);
-    satz.push(`${gut} von ${D.zeilen.length} richtig eingeordnet`
-      + (schief ? `, ${schief} nicht.` : '.'));
+    if (offen) satz.push(`${offen} aus der Eisdiele sind noch nicht fertig `
+      + 'entschieden.');
+    satz.push(`${gut} von ${D.zeilen.length} Situationen ganz richtig`
+      + (schief ? `, ${schief} nicht.` : '.')
+      + ` ${einzeln} von ${D.zeilen.length * 3} Einzelentscheidungen stimmen.`);
     if (stand.skriptDa) satz.push('Die Aufgaben aus dem Skript sind nicht '
       + 'mitgeprüft — dafür gibt es keine hinterlegte Lösung.');
     if (!offen && !schief) satz.push('Und jetzt: Welche Felder sind leer '
@@ -1320,21 +1519,21 @@ function etappe2(){
 
   /* FEHLERBEHOBEN (2026-09-22, Rikes Befund «der Zurueckknopf bewirkt
      beim Venn-Diagramm gar nichts»): Hier stand `merken(); etappe2();`.
-     merken() baut stand.karten AUS DEM DOM neu auf - und im DOM lagen
-     die Karten in diesem Moment noch in ihren Feldern. Das Loeschen
-     wurde also sofort rueckgaengig gemacht, und zwar von der Zeile
-     danach.
+     merken() baut den Kartenstand AUS DEM DOM neu auf - und im DOM lag
+     in diesem Moment noch alles da, wo es war. Das Loeschen wurde also
+     sofort rueckgaengig gemacht, und zwar von der Zeile danach.
 
-     Dieselbe Falle wie am 2026-08-21 in Etappe 1 («Gemessen 19 Karten
-     uebertragen, davon 0 am richtigen Ort»). Wer stand.karten aendert,
-     darf davor nicht merken() rufen: etappe2() legt die Karten neu und
-     merkt selbst, sobald sie liegen. */
+     Der Stand von Etappe 2 haengt seit dem Umbau gar nicht mehr an den
+     Karten im DOM, sondern an stand.wahl - die Falle ist damit weg.
+     Der Hinweis bleibt: Wer stand.* aendert, ruft davor nicht
+     merken(). */
   document.getElementById('zurueck').onclick = () => {
-    dabei.forEach(id => { delete stand.karten[id]; });
+    posten.forEach(p => { delete stand.wahl[p.id]; });
+    sichern();
     etappe2();
   };
   const mehr = document.getElementById('mehr');
-  if (mehr) mehr.onclick = () => { stand.skriptDa = true; merken(); etappe2(); };
+  if (mehr) mehr.onclick = () => { stand.skriptDa = true; sichern(); etappe2(); };
 
   /* NUR loesungsKnopf(). FEHLERBEHOBEN (2026-09-21, im Bild gesehen):
      Hier stand zusaetzlich loesungsHinweis() - und beide haengen einen

@@ -1074,7 +1074,20 @@ function _griffeSetzen(b, schluessel){
   });
 }
 
-function buehne(auftrag, links, rechts, leiste, extra, drittens){
+/* `teilung` NEU (2026-09-22): das Verhaeltnis der Haelften, als
+   [links, rechts]. Bisher stand es fest im Markup (1.15 zu 1.25), und
+   eine Etappe konnte es nicht aendern - der Ziehgriff schon, aber erst
+   von Hand.
+
+   Kapitel 3, Etappe 2 braucht es: Dort steht rechts ein Venn aus drei
+   Spalten, und bei der halben Flaeche bleiben je Spalte rund 145
+   Punkte - zu wenig fuer eine Zeile Text. Rikes Befund war «das
+   Venn-Diagramm ist insgesamt zu klein», und das ist die Stelle.
+
+   Der Griff bleibt: Was hier steht, ist die Voreinstellung, und ein
+   Doppelklick auf den Griff stellt genau sie wieder her. */
+function buehne(auftrag, links, rechts, leiste, extra, drittens, teilung){
+  const [tl, tr] = teilung || [1.15, 1.25];
   const b = document.getElementById('buehne');
   // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
   // weiter und sucht Felder, die es dort nicht mehr gibt. Dasselbe gilt
@@ -1091,9 +1104,9 @@ function buehne(auftrag, links, rechts, leiste, extra, drittens){
       <span class="text">${auftrag.text}</span></div>
     ${extra||''}
     <div class="buehne">
-      <div class="haelfte" id="links" style="flex:1.15"><div class="marke">${links}</div>
+      <div class="haelfte" id="links" style="flex:${tl} 1 0"><div class="marke">${links}</div>
         <div class="blatt" id="tisch" data-ort="tisch"></div></div>
-      <div class="haelfte rechts" id="rechts" style="flex:1.25"><div class="marke">${rechts}</div>
+      <div class="haelfte rechts" id="rechts" style="flex:${tr} 1 0"><div class="marke">${rechts}</div>
         <div class="blatt" id="feld"></div></div>
       ${drittens ? `<div class="haelfte ablageflaeche" id="dritt" style="flex:.72">
         <div class="marke">${drittens}</div>
@@ -1354,8 +1367,16 @@ function standAlsLeinwand(){
   const warte = [];
   document.querySelectorAll('.feld:not(.neu),.paar').forEach(d=>{
     const q = d.getBoundingClientRect();
-    g.save(); g.setLineDash([6,4]); g.strokeStyle='#d8cdb8';
-    g.strokeRect(q.left-r.left, q.top-r.top, q.width, q.height); g.restore();
+    /* NEU (2026-09-22): Ein Feld darf seinen Rahmen abbestellen.
+       Gebraucht vom Kleeblatt in Kapitel 3: Dort liegen die
+       Ablagebereiche IN Kreisen und haben auf der Flaeche selbst
+       keinen Rahmen. Im Bild waeren sie acht gestrichelte Kaesten
+       gewesen, die quer durch die Kreise laufen - die Figur waere
+       unlesbar geworden. Ohne die Marke aendert sich nichts. */
+    if (d.dataset.ohnerahmen === undefined){
+      g.save(); g.setLineDash([6,4]); g.strokeStyle='#d8cdb8';
+      g.strokeRect(q.left-r.left, q.top-r.top, q.width, q.height); g.restore();
+    }
     /* FEHLERBEHOBEN (2026-09-21): Hier stand .slice(0, 44) - eine
        feste Zeichenzahl, unabhaengig davon, wie breit die Zone ist.
        Bei einer schmalen Gruppe war das grosszuegig, bei einer breiten
@@ -1418,6 +1439,37 @@ function standAlsLeinwand(){
      Wer solchen Text mitgezeichnet haben will, markiert ihn mit
      `data-alsbild`. Ohne die Marke aendert sich nichts - keine
      bestehende Flaeche traegt sie. */
+  /* NEU (2026-09-22): Eine FORM mitzeichnen, nicht nur Text.
+
+     Gebraucht vom Kleeblatt in Kapitel 3: Die drei Kreise sind reine
+     Gestaltung (durchscheinende DIVs mit border-radius). Im Bild zum
+     Mitnehmen fehlten sie - uebrig blieben Schildchen, die frei im
+     Raum schweben, und genau die Lage zueinander ist die Aussage.
+
+     Wer eine Form mitgezeichnet haben will, markiert sie mit
+     `data-alsbildform` («kreis» zeichnet eine Ellipse im Kasten des
+     Elements, alles andere ein Rechteck). Farbe und Fuellung kommen
+     aus dem Stil des Elements, es gibt also keine zweite Quelle. */
+  document.querySelectorAll('.buehne [data-alsbildform]').forEach(d=>{
+    const q = d.getBoundingClientRect();
+    if (!q.width || !q.height) return;
+    const st = getComputedStyle(d);
+    g.save();
+    g.beginPath();
+    if (d.dataset.alsbildform === 'kreis')
+      g.ellipse(q.left - r.left + q.width / 2, q.top - r.top + q.height / 2,
+                q.width / 2, q.height / 2, 0, 0, Math.PI * 2);
+    else
+      g.rect(q.left - r.left, q.top - r.top, q.width, q.height);
+    g.fillStyle = st.backgroundColor; g.fill();
+    // Ohne Rand auf der Flaeche auch keiner im Bild. Sonst bekaeme
+    // jede randlose Karte hier eine dunkle Linie, die es nicht gibt.
+    const rand = parseFloat(st.borderTopWidth) || 0;
+    if (rand){ g.lineWidth = rand; g.strokeStyle = st.borderTopColor;
+               g.stroke(); }
+    g.restore();
+  });
+
   document.querySelectorAll('.buehne [data-alsbild]').forEach(t=>{
     const q = t.getBoundingClientRect();
     if (!q.width || !q.height) return;
@@ -1426,8 +1478,25 @@ function standAlsLeinwand(){
     g.fillStyle = st.color;
     g.font = `${st.fontWeight} ${parseFloat(st.fontSize)}px ${st.fontFamily}`;
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(t.textContent, q.left - r.left + q.width / 2,
-                              q.top - r.top + q.height / 2);
+    /* NEU (2026-09-22): Umbrechen statt ueberlaufen. Bisher stand hier
+       eine einzige fillText-Zeile - richtig, solange die Marken kurz
+       waren (Rechenzeichen, Kreisnamen). Die Schildchen im Kleeblatt
+       stehen auf der Flaeche zweizeilig; als eine Zeile gezeichnet
+       ragten sie weit in die Nachbarmenge hinein und behaupteten
+       damit etwas Falsches. Wo der Text passt, aendert sich nichts. */
+    const mitte = q.left - r.left + q.width / 2;
+    const gross = parseFloat(st.fontSize) * 1.15;
+    const zeilen = [];
+    let zeile = '';
+    t.textContent.split(/\s+/).forEach(w => {
+      const probe = zeile ? zeile + ' ' + w : w;
+      if (g.measureText(probe).width > q.width && zeile){
+        zeilen.push(zeile); zeile = w;
+      } else zeile = probe;
+    });
+    if (zeile) zeilen.push(zeile);
+    const y0 = q.top - r.top + q.height / 2 - (zeilen.length - 1) * gross / 2;
+    zeilen.forEach((z, i) => g.fillText(z, mitte, y0 + i * gross));
     g.restore();
   });
 
