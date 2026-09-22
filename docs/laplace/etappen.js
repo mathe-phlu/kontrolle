@@ -657,9 +657,30 @@ function urteilsknoepfe(el, l){
      «findet nicht raus, dass er dort draufklicken muss»). Sie faellt
      deshalb erst, wenn sie nicht mehr passt, und der Titel traegt sie
      weiter. */
+  /* Die Beschriftung faellt erst, wenn sie WIRKLICH nicht mehr passt.
+
+     Sie ist der Grund, warum es die Knoepfe ueberhaupt gibt (Rike,
+     2026-09-21: «findet nicht raus, dass er dort draufklicken muss»).
+     Sie zu kuerzen ist deshalb ein Verlust, kein Gestaltungsmittel.
+
+     FEHLERBEHOBEN (2026-09-22, Rikes Befund «es ueberlappt in
+     bestimmten Groessen mit dem Fragezeichen»): Hier stand eine feste
+     Schwelle, `kb < 160`. Sie war schlicht zu tief. Gemessen ueber den
+     ganzen Regler: Die beschriftete Leiste ist 144 Punkte breit, das
+     Fragezeichen belegt rechts weitere 22, dazu 6 Punkte Einzug -
+     unter rund 176 Punkten Kartenbreite geht das nicht auf. Zwischen
+     160 und 176 schaltete die Leiste also schon auf Text um und
+     schob sich dann unter das Fragezeichen: bei 162 Punkten um 13
+     Punkte, gemessen.
+
+     Die Schwelle ist jetzt nicht mehr geraten, sondern GEMESSEN -
+     siehe urteilBreitePruefen(), das nach dem Aufbau nachsieht, ob
+     Leiste und Fragezeichen einander beruehren. Eine Zahl, die man
+     hinschreibt, geht beim naechsten Schriftgrad wieder daneben, und
+     zwar still. */
   const kb = parseFloat(getComputedStyle(document.documentElement)
               .getPropertyValue('--kb'));
-  const kurz = kb < 160;
+  const kurz = kb < 176;
   if (kurz) leiste.classList.add('kurz');
   [['ja', '✓ stimmt', '✓'], ['nein', '✗ stimmt nicht', '✗']]
       .forEach(([wert, text, zeichen]) => {
@@ -678,6 +699,32 @@ function urteilsknoepfe(el, l){
   });
   el.appendChild(leiste);
   zeichnen();
+}
+
+/* Beruehren sich Leiste und Fragezeichen? Dann faellt die
+   Beschriftung - aber erst dann.
+
+   Das laeuft NACH dem Aufbau, weil vorher nichts gemessen werden kann:
+   Breiten gibt es erst, wenn die Karte in der Tabelle steht. Die
+   Schwelle oben ist der Vorgriff, damit es nicht flackert; diese
+   Pruefung ist das letzte Wort.
+
+   Sie faengt genau die Faelle, die eine hingeschriebene Zahl nicht
+   faengt: einen anderen Schriftgrad, einen laengeren Knopftext, eine
+   andere Schrift auf einem anderen Rechner. */
+function urteilBreitePruefen(){
+  document.querySelectorAll('.tabzelle .k').forEach(k => {
+    const leiste = k.querySelector('.urteilleiste');
+    const frage = k.querySelector('.marke.denkweg');
+    if (!leiste || !frage) return;
+    if (leiste.classList.contains('kurz')) return;
+    const l = leiste.getBoundingClientRect(), f = frage.getBoundingClientRect();
+    if (f.left - l.right >= 4) return;
+    leiste.classList.add('kurz');
+    leiste.querySelectorAll('.urteilknopf').forEach(b => {
+      b.textContent = b.classList.contains('ja') ? '✓' : '✗';
+    });
+  });
 }
 
 /* ───────── Etappe 1 · Vergleichen ─────────
@@ -955,6 +1002,8 @@ function etappe1(){
     stand.etappe = 1; los();
   };
   window._neuzeichnen = () => etappe1();
+  // Jetzt steht die Tabelle, jetzt laesst sich messen.
+  urteilBreitePruefen();
   // Nur in index.html sichtbar - sie nennt die vier Ueberschriften,
   // die auf der Flaeche mit Absicht fehlen.
   loesungsHinweis(D.loesung_e1);
