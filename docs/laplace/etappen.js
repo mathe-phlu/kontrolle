@@ -100,13 +100,21 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    Denkwegs. Das Fragezeichen blieb oben, obwohl es unten stehen
    sollte. Eine Regel, die «alle Marken» sagt und «die obere» meint. */
 .tabzelle .k[data-fest] .marke.sit{top:4px}
-/* Die beiden Haelften der Karte. Unsichtbar, bis man darueberfaehrt -
-   dann hellt sich die auf, zu der die Blase gehoert. */
-.kteil{position:absolute;left:0;right:0;z-index:2;cursor:help;
-   border-radius:7px;transition:background-color .1s}
+/* Die beiden Haelften der Karte. REINE ANZEIGE - sie fangen nichts ab
+   (pointer-events:none), sonst ginge die Blase auf, sobald man ueber
+   die Karte faehrt. Sichtbar werden sie nur, wenn man auf die
+   zugehoerige Marke zeigt oder sie festhaelt.
+
+   Ueber den Geschwisterwaehler (die Tilde): Beide Marken werden VOR
+   den Haelften an die Karte gehaengt, stehen also im Markup davor. */
+.kteil{position:absolute;left:0;right:0;z-index:2;pointer-events:none;
+   border-radius:7px;transition:background-color .12s}
 .kteil.oben{top:0;height:54%}
 .kteil.unten{top:54%;bottom:0}
-.kteil:hover{background:rgba(255,255,255,.42);
+.k .marke.sit:hover ~ .kteil.oben,
+.k .marke.sit.offen ~ .kteil.oben,
+.k .marke.denkweg:hover ~ .kteil.unten,
+.k .marke.denkweg.offen ~ .kteil.unten{background:rgba(255,255,255,.5);
    box-shadow:inset 0 0 0 1.5px var(--akzent)}
 .tabzelle .k[data-fest] .marke.denkweg{top:auto;bottom:5px}
 /* Eine gewaehlte Situation. Kein Haken und kein Rahmen aussen herum -
@@ -430,49 +438,39 @@ function rechenkarte(l){
   zweite.classList.add('denkweg');
   el.appendChild(zweite);
 
-  /* DIE KARTE HAT ZWEI TEILE, und das soll man sehen.
+  /* DIE KARTE HAT ZWEI TEILE, und das soll man SEHEN - aber nicht
+     ungefragt lesen muessen.
 
-     Rike, 2026-09-21: «Wir haben quasi zwei Teile. Das eine ist dieses
-     Notiert - was wird notiert -, und dazu gehört das Omega. Und die
-     Rechnung, und was die Person gedacht hat, sollte Teil dieser
-     Rechnung sein. Im Moment wird nicht sichtbar, dass dieses Omega zu
-     diesem Notiert-wird gehört.»
+     Rike, 2026-09-21: «Das Omega sollte zu dem Notiert-Teil, und das
+     Fragezeichen in den unteren Teil. Im Moment wird nicht sichtbar,
+     dass das Omega zu diesem Notiert-wird gehoert.»
 
-     Eine Marke an die Textzeile zu setzen geht nicht: Der Text steht
-     zentriert im Kartenbild, umbricht je nach Vorschrift auf zwei bis
-     vier Zeilen, und die Marke sässe mal daneben, mal darin.
+     Meine erste Antwort darauf war, die ganze Karte in zwei
+     Schaltflaechen zu teilen - wer oben hinfuhr, bekam die Menge, wer
+     unten hinfuhr, den Denkweg. Rike am 2026-09-22: «Mir gefaellt
+     nicht, dass sich die Hilfe-Buttons sofort oeffnen, sobald man
+     ueber die Karte faehrt. Das will ich nur, wenn man ueber diese
+     Buttons faehrt.»
 
-     Deshalb ueber die FLAECHE statt ueber die Position: Der obere Teil
-     der Karte - die Vorschrift - oeffnet die Omega-Blase, der untere -
-     die Rechnung - den Denkweg. Beim Daraufzeigen hellt sich der Teil
-     auf, zu dem die Blase gehoert. Damit ist die Zugehoerigkeit nicht
-     behauptet, sondern vorgefuehrt: Man faehrt ueber «Notiert wird …»
-     und bekommt die Menge, man faehrt ueber den Bruch und bekommt den
-     Gedanken.
+     Sie hat recht, und der Grund ist mehr als Geschmack: Auf dieser
+     Flaeche faehrt man staendig ueber Karten - beim Vergleichen, beim
+     Suchen, beim Rollen. Eine Blase, die dabei von selbst aufgeht,
+     verdeckt die Nachbarkarte, um die es gerade geht.
 
-     Die Trennung sitzt bei 54 Prozent - dort laeuft im Kartenbild die
-     Linie, die bauen.py unter die Vorschrift zeichnet. Die Marken
-     bleiben als Anker in ihrem Teil stehen. */
-  [['oben', el.querySelector('.marke.sit')],
-   ['unten', zweite]].forEach(([wo, marke]) => {
+     Neu oeffnet NUR die Marke, wie ueberall sonst. Die Zugehoerigkeit
+     bleibt trotzdem sichtbar: Wer auf eine Marke zeigt, sieht die
+     zugehoerige Kartenhaelfte aufleuchten. Die Haelften sind dafuer
+     reine Anzeige - `pointer-events: none` -, sie fangen nichts mehr
+     ab.
+
+     Die Trennung sitzt bei 54 Prozent; dort laeuft im Kartenbild die
+     Linie, die bauen.py unter die Vorschrift zeichnet. */
+  ['oben', 'unten'].forEach(wo => {
     const teil = document.createElement('span');
     teil.className = 'kteil ' + wo;
-    teil.addEventListener('pointerenter', e => {
-      if (e.pointerType === 'touch') return;
-      blaseOeffnen(marke, false);
-    });
-    teil.addEventListener('pointerleave', e => {
-      if (e.pointerType === 'touch') return;
-      if (marke.dataset.fest) return;
-      blasenSchliessen();
-    });
-    teil.addEventListener('click', e => {
-      e.stopPropagation();
-      if (marke.dataset.fest){ blasenSchliessen(); return; }
-      blaseOeffnen(marke, true);
-    });
     el.appendChild(teil);
   });
+
   el.classList.add('spaltenton' + l.spalte);
   /* KEIN Urteilszeichen auf dem Standardweg.
 
