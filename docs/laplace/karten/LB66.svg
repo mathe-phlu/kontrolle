@@ -56,13 +56,13 @@ z
 " clip-path="url(#p677f99e3bf)" style="fill: #fffefb; stroke: #e4d9c7; stroke-linejoin: miter"/>
    </g>
    <g id="line2d_1">
-    <path d="M 25.511811 49.107946 
-L 155.905512 49.107946 
+    <path d="M 25.511811 62.748533 
+L 155.905512 62.748533 
 " clip-path="url(#p677f99e3bf)" style="fill: none; stroke: #e4d9c7; stroke-width: 0.9; stroke-linecap: square"/>
    </g>
    <g id="text_1">
     <!-- Notiert wird nur, wie -->
-    <g style="fill: #6c6357" transform="translate(46.707661 24.566551) scale(0.096 -0.096)">
+    <g style="fill: #6c6357" transform="translate(43.937008 24.566551) scale(0.096 -0.096)">
      <defs>
       <path id="FiraSans-Regular-a5" d="M 3731 4410 
 L 3162 4410 
@@ -256,8 +256,8 @@ z
     </g>
    </g>
    <g id="text_2">
-    <!-- viele Sorbets dabei sind. -->
-    <g style="fill: #6c6357" transform="translate(37.442161 38.207138) scale(0.096 -0.096)">
+    <!-- viele Sorbets dabei -->
+    <g style="fill: #6c6357" transform="translate(43.937008 38.207138) scale(0.096 -0.096)">
      <defs>
       <path id="FiraSans-Regular-2d9" d="M 3085 3373 
 L 2464 3373 
@@ -357,13 +357,6 @@ L 2259 890
 C 2067 538 1811 365 1466 365 
 z
 " transform="scale(0.015625)"/>
-      <path id="FiraSans-Regular-8d6" d="M 762 813 
-C 512 813 320 614 320 371 
-C 320 122 512 -77 762 -77 
-C 1018 -77 1210 122 1210 371 
-C 1210 614 1018 813 762 813 
-z
-" transform="scale(0.015625)"/>
      </defs>
      <use xlink:href="#FiraSans-Regular-2d9"/>
      <use xlink:href="#FiraSans-Regular-1f6" transform="translate(49.203125 0)"/>
@@ -384,17 +377,30 @@ z
      <use xlink:href="#FiraSans-Regular-17f" transform="translate(727.421875 0)"/>
      <use xlink:href="#FiraSans-Regular-1a8" transform="translate(786.015625 0)"/>
      <use xlink:href="#FiraSans-Regular-1f6" transform="translate(840.421875 0)"/>
-     <use xlink:href="#FiraSans-Regular-925" transform="translate(868.015625 0)"/>
-     <use xlink:href="#FiraSans-Regular-28c" transform="translate(894.515625 0)"/>
-     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(941.21875 0)"/>
-     <use xlink:href="#FiraSans-Regular-233" transform="translate(968.8125 0)"/>
-     <use xlink:href="#FiraSans-Regular-195" transform="translate(1026.71875 0)"/>
-     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(1085.71875 0)"/>
     </g>
    </g>
    <g id="text_3">
+    <!-- sind. -->
+    <g style="fill: #6c6357" transform="translate(43.937008 51.847725) scale(0.096 -0.096)">
+     <defs>
+      <path id="FiraSans-Regular-8d6" d="M 762 813 
+C 512 813 320 614 320 371 
+C 320 122 512 -77 762 -77 
+C 1018 -77 1210 122 1210 371 
+C 1210 614 1018 813 762 813 
+z
+" transform="scale(0.015625)"/>
+     </defs>
+     <use xlink:href="#FiraSans-Regular-28c"/>
+     <use xlink:href="#FiraSans-Regular-1f6" transform="translate(46.703125 0)"/>
+     <use xlink:href="#FiraSans-Regular-233" transform="translate(74.296875 0)"/>
+     <use xlink:href="#FiraSans-Regular-195" transform="translate(132.203125 0)"/>
+     <use xlink:href="#FiraSans-Regular-8d6" transform="translate(191.203125 0)"/>
+    </g>
+   </g>
+   <g id="text_4">
     <!-- $\dfrac{1}{4} = 0{,}250$ -->
-    <g style="fill: #2d2924" transform="translate(58.286161 96.234485) scale(0.165 -0.165)">
+    <g style="fill: #2d2924" transform="translate(58.286161 103.054778) scale(0.165 -0.165)">
      <defs>
       <path id="PennstanderMath-ExtraLight-794" d="M 1722 381 
 C 1731 675 1731 979 1731 1286 

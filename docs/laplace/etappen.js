@@ -73,8 +73,13 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
 
    Der Regler in der Leiste geht weiter - wer noch groesser will,
    bekommt es. */
+/* KEIN Streifen mehr ueber dem Text. Das Omega sitzt jetzt IM
+   Kartenbild, in dem Einzug, den bauen.py links neben der Vorschrift
+   freilaesst - es steht damit neben dem Satz, zu dem es gehoert, und
+   nicht darueber. Unten bleibt ein Streifen fuer das Fragezeichen;
+   dort steht der Bruch mittig, und die Marke soll ihn nicht treffen. */
 .tabzelle .k[data-fest]{width:var(--kb);box-sizing:border-box;
-   padding-top:23px;padding-bottom:26px}
+   padding-bottom:26px}
 /* Die Fragekarte ist NICHT groesser als die Rechnungen. Sie war es
    (1.14), und das kostete rund vierzig Punkte Hoehe in der Zeile, die
    am wenigsten davon braucht - oben steht ohnehin immer dieselbe
@@ -99,7 +104,12 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    gewann mit ihrer hoeheren Spezifitaet gegen das top:auto des
    Denkwegs. Das Fragezeichen blieb oben, obwohl es unten stehen
    sollte. Eine Regel, die «alle Marken» sagt und «die obere» meint. */
-.tabzelle .k[data-fest] .marke.sit{top:4px}
+/* Das Omega steht neben der ERSTEN Zeile der Vorschrift. Die Lage
+   kommt aus D.omega_lage und damit aus bauen.py - gerechnet, nicht
+   geschaetzt. Klein gesetzt: Es ist eine Marke am Satz, kein Knopf
+   ueber der Karte. */
+.tabzelle .k[data-fest] .marke.sit{left:3px;padding:0 4px;font-size:10px;
+   line-height:1.5;border-radius:4px}
 /* Die beiden Haelften der Karte. REINE ANZEIGE - sie fangen nichts ab
    (pointer-events:none), sonst ginge die Blase auf, sobald man ueber
    die Karte faehrt. Sichtbar werden sie nur, wenn man auf die
@@ -304,6 +314,32 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
 .k.textkarte b{font-weight:700}
 .k.textkarte.vorn{box-shadow:0 4px 14px rgba(45,41,36,.3),
    inset 0 0 0 2.5px var(--akzent)}
+/* IM ABLAGEFELD wird die Karte KLEINER.
+
+   Rike, 2026-09-22: «Die Kaertchen werden nicht kleiner, wenn ich sie
+   auf die Felder schiebe.» Stimmt - sie waren ueberall gleich breit,
+   und damit lagen im Lappen vier Karten, wo drei Platz hatten.
+
+   Auf dem Tisch werden die Karten GELESEN, im Feld werden sie
+   GEZAEHLT: Dort geht es darum, welche Situationen beieinander liegen,
+   nicht mehr darum, was auf ihnen steht. Deshalb schrumpft die Karte
+   beim Ablegen auf zwei Zeilen Ereignis - und wer doch nachlesen
+   will, zeigt darauf: Dann klappt sie auf ihre volle Groesse auf und
+   kommt nach vorn.
+
+   Die Herkunftszeile faellt im Feld weg. Sie sagt, aus welcher
+   Situation die Karte stammt - das ist beim Einsortieren schon
+   entschieden. */
+#feld .feld.zone .k.textkarte{width:106px;padding:4px 5px 5px;
+   transition:width .12s}
+#feld .feld.zone .k.textkarte .kherkunft{display:none}
+#feld .feld.zone .k.textkarte .kereignis{font-size:10px;line-height:1.25;
+   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+   overflow:hidden}
+#feld .feld.zone .k.textkarte.vorn{width:158px}
+#feld .feld.zone .k.textkarte.vorn .kherkunft{display:block}
+#feld .feld.zone .k.textkarte.vorn .kereignis{font-size:11.5px;
+   -webkit-line-clamp:none;overflow:visible}
 #feld .feld.zone{background:rgba(255,254,251,.55)}
 #feld .feld.zone.ueber{background:#fff}
 /* Woher kommt die Karte? Rike, 2026-09-21: «Ich haette gerne, dass das
@@ -465,6 +501,11 @@ function rechenkarte(l){
 
      Die Trennung sitzt bei 54 Prozent; dort laeuft im Kartenbild die
      Linie, die bauen.py unter die Vorschrift zeichnet. */
+  const omega = el.querySelector('.marke.sit');
+  if (omega && D.omega_lage){
+    omega.style.top = D.omega_lage.oben + '%';
+    omega.style.height = D.omega_lage.hoehe + '%';
+  }
   ['oben', 'unten'].forEach(wo => {
     const teil = document.createElement('span');
     teil.className = 'kteil ' + wo;
