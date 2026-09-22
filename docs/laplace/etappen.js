@@ -79,7 +79,18 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    nicht darueber. Unten bleibt ein Streifen fuer das Fragezeichen;
    dort steht der Bruch mittig, und die Marke soll ihn nicht treffen. */
 .tabzelle .k[data-fest]{width:var(--kb);box-sizing:border-box;
-   padding-bottom:26px}
+   padding-bottom:30px}
+/* Die beiden Urteilsknoepfe im unteren Streifen. Links, damit das
+   Fragezeichen rechts seinen Platz behaelt. */
+.urteilleiste{position:absolute;left:6px;bottom:5px;display:flex;gap:4px;
+   z-index:4}
+.urteilleiste.kurz .urteilknopf{padding:5px 8px;font-size:11px}
+.urteilknopf{font:600 10px/1 var(--druck);padding:5px 7px;cursor:pointer;
+   border:1.4px solid var(--linie);border-radius:6px;background:var(--karte);
+   color:var(--matt);white-space:nowrap}
+.urteilknopf:hover{border-color:var(--akzent);color:var(--akzent)}
+.urteilknopf.ja.an{background:#2E7D32;border-color:#2E7D32;color:#fff}
+.urteilknopf.nein.an{background:#8a5a12;border-color:#8a5a12;color:#fff}
 /* Die Fragekarte ist NICHT groesser als die Rechnungen. Sie war es
    (1.14), und das kostete rund vierzig Punkte Hoehe in der Zeile, die
    am wenigsten davon braucht - oben steht ohnehin immer dieselbe
@@ -108,106 +119,18 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    kommt aus D.omega_lage und damit aus bauen.py - gerechnet, nicht
    geschaetzt. Klein gesetzt: Es ist eine Marke am Satz, kein Knopf
    ueber der Karte. */
-.tabzelle .k[data-fest] .marke.sit{left:3px;padding:0 4px;font-size:10px;
+.tabzelle .k[data-fest] .marke.sit{left:7px;padding:0 4px;font-size:10px;
    line-height:1.5;border-radius:4px}
-/* Die beiden Haelften der Karte. REINE ANZEIGE - sie fangen nichts ab
-   (pointer-events:none), sonst ginge die Blase auf, sobald man ueber
-   die Karte faehrt. Sichtbar werden sie nur, wenn man auf die
-   zugehoerige Marke zeigt oder sie festhaelt.
+/* FEHLERBEHOBEN (2026-09-22, gemessen): Diese zwei Zeilen standen im
+   Block mit den Kartenhaelften und sind beim Aufraeumen mit
+   verschwunden. Folge: Das Fragezeichen fiel auf die Vorgabe des
+   Kerns zurueck - oben links, genau auf das Omega. Gemessen: beide
+   Marken bei y 4, die eine bei x 4, die andere bei x 7.
 
-   Ueber den Geschwisterwaehler (die Tilde): Beide Marken werden VOR
-   den Haelften an die Karte gehaengt, stehen also im Markup davor. */
-.kteil{position:absolute;left:0;right:0;z-index:2;pointer-events:none;
-   border-radius:7px;transition:background-color .12s}
-.kteil.oben{top:0;height:54%}
-.kteil.unten{top:54%;bottom:0}
-.k .marke.sit:hover ~ .kteil.oben,
-.k .marke.sit.offen ~ .kteil.oben,
-.k .marke.denkweg:hover ~ .kteil.unten,
-.k .marke.denkweg.offen ~ .kteil.unten{background:rgba(255,255,255,.5);
-   box-shadow:inset 0 0 0 1.5px var(--akzent)}
-.tabzelle .k[data-fest] .marke.denkweg{top:auto;bottom:5px}
-/* Eine gewaehlte Situation. Kein Haken und kein Rahmen aussen herum -
-   die Karte selbst hebt sich, wie eine, die man in die Hand genommen
-   hat. */
-.k.gewaehlt{box-shadow:0 0 0 3px var(--akzent), 0 6px 14px rgba(45,41,36,.22);
-   transform:translateY(-3px)}
-.leiste .knopf[disabled]{opacity:.45;cursor:default}
-/* WO die beiden Marken sitzen, ist Rikes Entscheidung vom 2026-09-21
-   und keine Anordnungsfrage:
-
-   «Die Information mit dem Omega, die oben steht, die sollte zu dem
-   Notiert-Teil. Und das Fragezeichen, so hat die Person gedacht,
-   müsste in den unteren Teil. Man müsste einfach unterscheiden, dass
-   das Omega die Information ist zu dem, was notiert wird, und dass das
-   Fragezeichen etwas anderes ist.»
-
-   Also: Omega OBEN, wo die Vorschrift steht - es zeigt dieselbe Sache
-   ausgeschrieben. Das Fragezeichen UNTEN, bei der Rechnung - es
-   erzaehlt, wie sie zustande kam. Die Marke sitzt damit jeweils an
-   dem, worueber sie spricht.
-
-   Beide bekommen einen freien Streifen, oben und unten. Der obere
-   traegt die Wegfarbe und ist Rike ausdruecklich recht: «Prinzipiell
-   finde ich es gut mit diesem oberen, dass wir diese gruene Leiste
-   oben haben, dass das deutlich wird.» */
+   Eine geloeschte Regel ist so still wie eine tote: Der Bau lief
+   durch, die Seite lud, und zwei Marken lagen uebereinander. */
 .k .marke.denkweg{top:auto;bottom:5px;left:auto;right:5px}
-/* VIER Wegfarben. Rike, 2026-09-21: «Vielleicht nehmen wir vier
-   Farben. Die erste Farbe ist einfach der Standardweg. Die zweite,
-   wenn die Reihenfolge keine Rolle spielt. Die dritte, wenn man nur
-   einen Ausschnitt anschaut. Die vierte, wenn man mit einer
-   Vergroeberung arbeitet. Und diese drei Farben sollten sich im
-   Venn-Diagramm in den Kreisfarben widerspiegeln.»
-
-   Sie tun es: Dieselben drei Hexwerte stehen im Kleeblatt (siehe
-   kleeblattBild) und in der Legende. Derselbe Ton fuer dieselbe Sache,
-   ueber beide Etappen.
-
-   Weg 1 bekommt einen eigenen, STUMPFEN Ton - Sand. Er muss sich von
-   den drei unterscheiden und darf ihnen zugleich nicht die Stimme
-   nehmen: Er ist der Vergleichspunkt, keine Wahl. Nicht das Ocker -
-   das ist die Kapitelfarbe und redete als fuenfte Bedeutung dazwischen.
-
-   UEBERHOLT: Weg 1 war bis eben ungefaerbt. Das war lesbar, machte ihn
-   aber zum Hintergrund statt zu einem der vier - und im Kleeblatt
-   fehlte dann der Bezug, warum genau DREI Kreise dastehen und nicht
-   vier. */
-.k.spaltenton1{background:color-mix(in srgb, #b8a888 20%, #fff);
-   box-shadow:inset 0 0 0 2.5px #b8a888, 0 2px 6px rgba(0,0,0,.14)}
-.k.spaltenton2{background:color-mix(in srgb, var(--zugang) 22%, #fff);
-   box-shadow:inset 0 0 0 2.5px #7FB069, 0 2px 6px rgba(0,0,0,.14)}
-.k.spaltenton3{background:color-mix(in srgb, var(--fach) 22%, #fff);
-   box-shadow:inset 0 0 0 2.5px #6C9BD1, 0 2px 6px rgba(0,0,0,.14)}
-.k.spaltenton4{background:color-mix(in srgb, var(--aktion) 22%, #fff);
-   box-shadow:inset 0 0 0 2.5px #C99BC0, 0 2px 6px rgba(0,0,0,.14)}
-/* Durchgestrichen heisst «traegt nicht» - und zwar SICHTBAR.
-
-   Rike, 2026-09-21: «Das Durchstreichen finde ich noch nicht
-   ueberzeugend genug. Vielleicht wuerden wir in beide Richtungen
-   durchstreichen, so wie ein Kreuz, dass klar wird: komplett
-   durchgestrichen.»
-
-   Der Kern zieht einen fast waagrechten Strich (-9 Grad) ueber die
-   Kartenmitte. Auf einer Karte, die selbst waagrechte Linien traegt -
-   den Bruchstrich, die Trennlinie unter der Vorschrift -, geht er
-   darin unter. Zwei Diagonalen von Ecke zu Ecke tun das nicht.
-
-   Gezeichnet mit zwei Farbverlaeufen statt mit gedrehten Balken: Ein
-   gedrehter Balken braucht die Diagonale als Laenge, und die haengt an
-   der Kartengroesse, die der Regler verstellt. Ein Verlauf «nach
-   unten rechts» trifft die Ecke immer. */
-.tabzelle .k.traegtnicht{opacity:.62}
-.tabzelle .k.traegtnicht::after{
-   content:'';position:absolute;left:0;right:0;top:0;bottom:0;
-   width:auto;height:auto;transform:none;background-color:transparent;
-   pointer-events:none;z-index:3;border-radius:8px;
-   background-image:
-     linear-gradient(to bottom right, transparent calc(50% - 1.6px),
-       #8a5a12 calc(50% - 1.6px), #8a5a12 calc(50% + 1.6px),
-       transparent calc(50% + 1.6px)),
-     linear-gradient(to bottom left, transparent calc(50% - 1.6px),
-       #8a5a12 calc(50% - 1.6px), #8a5a12 calc(50% + 1.6px),
-       transparent calc(50% + 1.6px))}
+.tabzelle .k[data-fest] .marke.denkweg{top:auto;bottom:5px}
 /* ── der Zeilenkopf: Nummer, Name, zwei Fragen ─────────────── */
 .wegnr{display:block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
    text-transform:uppercase;color:var(--matt);margin-bottom:4px;
@@ -302,14 +225,34 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
 .kleeblattbild{position:absolute;top:0;pointer-events:none;z-index:0}
 #feld .feld.zone{z-index:2}
 #feld .feld.zone > .kopf{font-size:10.5px;padding:3px 5px 0;color:var(--matt)}
-/* Die Textkarte. Feste Breite in Punkten, nicht als Bruchteil der
-   Kartengroesse: Sie traegt Text, und Text hat eine Lesbarkeitsgrenze,
-   die mit dem Regler nichts zu tun hat. */
-.k.textkarte{width:132px;padding:5px 7px 6px;box-sizing:border-box;
-   background:#fffefb;display:block}
-.k.textkarte .kherkunft{display:block;font-size:9.5px;line-height:1.3;
+/* FEHLERBEHOBEN (2026-09-22, Rikes Befund «der Groesser-kleiner-Knopf
+   bewirkt beim Venn-Diagramm gar nichts»): Die Textkarte hatte eine
+   FESTE Breite in Punkten. Der Regler stellt --kb, und daran hing hier
+   nichts - er drehte ins Leere, waehrend er in Etappe 1 wirkte. Ein
+   Knopf, der auf einer Seite wirkt und auf der anderen nicht, ist
+   schlimmer als keiner.
+
+   Die urspruengliche Begruendung («Text hat eine Lesbarkeitsgrenze,
+   die mit dem Regler nichts zu tun hat») stimmt fuer die SCHRIFT, aber
+   nicht fuer die Breite: Breiter heisst weniger Umbrueche, und die
+   Schrift waechst mit, nur langsamer. Beides haengt jetzt an --kb, die
+   Schrift gedaempft und nach unten begrenzt. */
+.k.textkarte{width:calc(var(--kb) * .74);padding:5px 7px 6px;
+   box-sizing:border-box;background:#fffefb;display:block}
+.k.textkarte .kwdh{display:inline-block;font-weight:700;
+   font-size:clamp(8px, calc(var(--kb) * .046), 10px);line-height:1.25;
+   padding:1px 5px;border-radius:4px;margin-bottom:3px}
+.k.textkarte.wdhA .kwdh{background:#f4e3cf;color:#8a5a12;
+   border:1px solid #d9b789}
+.k.textkarte.wdhB .kwdh{background:#dfe9f4;color:#3c5f86;
+   border:1px solid #9cb7d6}
+.k.textkarte .kwdh.skript{background:#ebe9e4;color:#6b655c;
+   border:1px solid #bdb7ac}
+.k.textkarte .kherkunft{display:block;
+   font-size:clamp(8px, calc(var(--kb) * .052), 10.5px);line-height:1.3;
    color:var(--matt);margin-bottom:3px}
-.k.textkarte .kereignis{display:block;font-size:11.5px;line-height:1.3;
+.k.textkarte .kereignis{display:block;
+   font-size:clamp(10px, calc(var(--kb) * .064), 13px);line-height:1.3;
    color:var(--tinte);font-weight:600}
 .k.textkarte b{font-weight:700}
 .k.textkarte.vorn{box-shadow:0 4px 14px rgba(45,41,36,.3),
@@ -330,15 +273,17 @@ document.head.insertAdjacentHTML('beforeend', '<style>' + `
    Die Herkunftszeile faellt im Feld weg. Sie sagt, aus welcher
    Situation die Karte stammt - das ist beim Einsortieren schon
    entschieden. */
-#feld .feld.zone .k.textkarte{width:106px;padding:4px 5px 5px;
-   transition:width .12s}
+#feld .feld.zone .k.textkarte{width:calc(var(--kb) * .58);
+   padding:4px 5px 5px;transition:width .12s}
 #feld .feld.zone .k.textkarte .kherkunft{display:none}
-#feld .feld.zone .k.textkarte .kereignis{font-size:10px;line-height:1.25;
+#feld .feld.zone .k.textkarte .kereignis{
+   font-size:clamp(9px, calc(var(--kb) * .056), 11.5px);line-height:1.25;
    display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
    overflow:hidden}
-#feld .feld.zone .k.textkarte.vorn{width:158px}
+#feld .feld.zone .k.textkarte.vorn{width:calc(var(--kb) * .88)}
 #feld .feld.zone .k.textkarte.vorn .kherkunft{display:block}
-#feld .feld.zone .k.textkarte.vorn .kereignis{font-size:11.5px;
+#feld .feld.zone .k.textkarte.vorn .kereignis{
+   font-size:clamp(10px, calc(var(--kb) * .064), 13px);
    -webkit-line-clamp:none;overflow:visible}
 #feld .feld.zone{background:rgba(255,254,251,.55)}
 #feld .feld.zone.ueber{background:#fff}
@@ -448,7 +393,20 @@ if (!stand.kbGesetzt){
    ist richtig, der Zeilenkopf sagt, welcher Weg das ist. */
 function festkarte(id, marke){
   const el = karte(id, marke || null, {fest:true});
-  el.addEventListener('pointerenter', () => { el.style.zIndex = 3; });
+  /* GEAENDERT (2026-09-22, Rikes Befund): Hier stand 3 - unter der
+     klebenden ersten Spalte (4). Das war richtig gegen das Wandern
+     beim Rollen, aber falsch fuer die erste Kartenspalte: Dort waechst
+     die Karte beim Zeigen unter den Zeilenkopf, und man kommt an ihr
+     Omega nicht mehr heran.
+
+     «Fuer den Fall des Aufploppens sollte sie vorne dran liegen, damit
+     ich das dann sehen kann.»
+
+     Jetzt 20, also DARUEBER. Das geht nur, weil die Hebung beim
+     Weggehen wieder faellt (Zeile darunter) - ohne das waere es
+     genau der Fehler von gestern. Eine einzige gehobene Karte stoert
+     das Rollen nicht; neun gehobene taten es. */
+  el.addEventListener('pointerenter', () => { el.style.zIndex = 20; });
   /* FEHLERBEHOBEN (2026-09-21, Maurus' Befund «Rollover-Zoom ist z.T.
      hinter den benachbarten Karten»): Die Hebung wurde nie
      zurueckgenommen. Der Kern setzt sie beim Weggehen auf `_z0`
@@ -474,44 +432,25 @@ function rechenkarte(l){
   zweite.classList.add('denkweg');
   el.appendChild(zweite);
 
-  /* DIE KARTE HAT ZWEI TEILE, und das soll man SEHEN - aber nicht
-     ungefragt lesen muessen.
+  /* UEBERHOLT (2026-09-22): Hier wurden zwei unsichtbare Haelften auf
+     die Karte gelegt, die beim Zeigen auf eine Marke aufleuchteten -
+     mein dritter Versuch, die Zugehoerigkeit des Omegas zur Vorschrift
+     zu zeigen.
 
-     Rike, 2026-09-21: «Das Omega sollte zu dem Notiert-Teil, und das
-     Fragezeichen in den unteren Teil. Im Moment wird nicht sichtbar,
-     dass das Omega zu diesem Notiert-wird gehoert.»
+     Rike: «Diesen Rahmen, der ueber die Haelfte der Karte geht, finde
+     ich seltsam und irritierend - er rutscht in den Zaehler der
+     Rechnung hinein. Ich verstehe gar nicht, warum es diesen Rahmen
+     ueberhaupt braucht. Wenn ich ueber das Omega fahre, sollte einfach
+     dieses Pop-up kommen.»
 
-     Meine erste Antwort darauf war, die ganze Karte in zwei
-     Schaltflaechen zu teilen - wer oben hinfuhr, bekam die Menge, wer
-     unten hinfuhr, den Denkweg. Rike am 2026-09-22: «Mir gefaellt
-     nicht, dass sich die Hilfe-Buttons sofort oeffnen, sobald man
-     ueber die Karte faehrt. Das will ich nur, wenn man ueber diese
-     Buttons faehrt.»
+     Sie hat recht, und der Grund ist, dass die eigentliche Frage
+     inzwischen anders geloest ist: Das Omega STEHT neben seiner Zeile,
+     seit das Kartenbild ihm den Einzug freilaesst. Damit ist die
+     Zugehoerigkeit gezeigt, und der Rahmen sagt dasselbe ein zweites
+     Mal - nur an der falschen Stelle, weil die Haelfte bei 54 Prozent
+     mitten durch die Rechnung laeuft.
 
-     Sie hat recht, und der Grund ist mehr als Geschmack: Auf dieser
-     Flaeche faehrt man staendig ueber Karten - beim Vergleichen, beim
-     Suchen, beim Rollen. Eine Blase, die dabei von selbst aufgeht,
-     verdeckt die Nachbarkarte, um die es gerade geht.
-
-     Neu oeffnet NUR die Marke, wie ueberall sonst. Die Zugehoerigkeit
-     bleibt trotzdem sichtbar: Wer auf eine Marke zeigt, sieht die
-     zugehoerige Kartenhaelfte aufleuchten. Die Haelften sind dafuer
-     reine Anzeige - `pointer-events: none` -, sie fangen nichts mehr
-     ab.
-
-     Die Trennung sitzt bei 54 Prozent; dort laeuft im Kartenbild die
-     Linie, die bauen.py unter die Vorschrift zeichnet. */
-  const omega = el.querySelector('.marke.sit');
-  if (omega && D.omega_lage){
-    omega.style.top = D.omega_lage.oben + '%';
-    omega.style.height = D.omega_lage.hoehe + '%';
-  }
-  ['oben', 'unten'].forEach(wo => {
-    const teil = document.createElement('span');
-    teil.className = 'kteil ' + wo;
-    el.appendChild(teil);
-  });
-
+     Entfernt statt totgelegt; die Fassung steht in Git. */
   el.classList.add('spaltenton' + l.spalte);
   /* KEIN Urteilszeichen auf dem Standardweg.
 
@@ -524,43 +463,74 @@ function rechenkarte(l){
      wuerde die drei echten Entscheidungen darunter entwerten - wer
      neunmal «trägt» anklickt, bevor die erste Frage kommt, hat
      gelernt, dass der Knopf nichts bedeutet. */
-  if (l.spalte > 1) urteilsmarke(el, l);
+  if (l.spalte > 1) urteilsknoepfe(el, l);
   return el;
 }
 
-/* Das Urteil auf der Karte — unveraendert aus der alten Etappe 1
-   uebernommen, weil es sich dort bewaehrt hat:
-       leer  →  ✓ traegt  →  ✗ traegt nicht  →  leer
-   und was nicht traegt, wird DURCHGESTRICHEN (Rikes Vorschlag).
+/* Das Urteil auf der Karte - ZWEI BESCHRIFTETE KNOEPFE.
 
-   Neu ist nur, wozu es dient: Rike will die falschen Rechnungen am
-   Ende AUSSORTIERT haben, «sodass am Ende nur noch richtige Loesungen
-   dastehen». Der Strich leistet genau das, ohne die Karte zu
-   entfernen — wer sie wegnaehme, koennte nicht mehr zeigen, WARUM sie
-   weg ist. */
-function urteilsmarke(el, l){
-  const FOLGE = [null, 'ja', 'nein'];
-  const m = document.createElement('div');
-  m.className = 'urteil';
-  const zeichen = () => {
+   UEBERHOLT (2026-09-22, Rikes Befund): Hier stand EIN kleines Zeichen
+   in der Ecke, das durchschaltete: leer, dann Haken, dann Kreuz. Es
+   war platzsparend und hat sich seit dem 22.08. bewaehrt - aber nur
+   bei Leuten, die wussten, dass es das gibt.
+
+   Rike: «Dieser Kreis, wo man ein Haekchen oder ein Kreuz einfuegt,
+   ist nicht sehr intuitiv. Jemand, der nicht weiss, wie es gebaut
+   ist, findet nicht raus, dass er dort draufklicken muss.»
+
+   Das ist derselbe Befund wie am 2026-08-22, nur andersherum. Damals
+   hiess er «da gibt's zwar diese Buttons, aber die tun nichts» - die
+   beschrifteten Knoepfe deckten die Karte zu, und man sah nicht,
+   worueber man urteilt. Die Antwort damals war, sie zu einem Zeichen
+   zu schrumpfen. Jetzt ist die Karte 186 statt 132 Punkte breit und
+   hat unten einen eigenen Streifen: Beschriftete Knoepfe passen
+   hinein, ohne etwas zuzudecken. Die Loesung von damals war fuer die
+   Karte von damals richtig.
+
+   Zwei Knoepfe statt eines Durchschalters, weil ein Durchschalter
+   seinen naechsten Zustand nicht zeigt: «stimmt» und «stimmt nicht»
+   sagen, was passiert, bevor man drueckt. Wer den aktiven Knopf noch
+   einmal drueckt, nimmt sein Urteil zurueck. */
+function urteilsknoepfe(el, l){
+  const leiste = document.createElement('div');
+  leiste.className = 'urteilleiste';
+  const knoepfe = {};
+  const zeichnen = () => {
     const u = stand.urteil[l.id];
-    m.textContent = u === 'ja' ? '✓' : u === 'nein' ? '✗' : '·';
-    m.title = u === 'ja' ? 'trägt' : u === 'nein' ? 'trägt nicht'
-                                   : 'noch kein Urteil';
-    m.classList.toggle('ja', u === 'ja');
-    m.classList.toggle('nein', u === 'nein');
+    Object.entries(knoepfe).forEach(([wert, k]) =>
+      k.classList.toggle('an', u === wert));
     el.classList.toggle('traegtnicht', u === 'nein');
   };
-  m.onclick = ev => {
-    ev.stopPropagation();
-    const jetzt = FOLGE.indexOf(stand.urteil[l.id] || null);
-    stand.urteil[l.id] = FOLGE[(jetzt + 1) % FOLGE.length];
-    el.classList.remove('ok', 'falsch');
-    zeichen(); merken();
-  };
-  m.addEventListener('pointerdown', ev => ev.stopPropagation());
-  el.appendChild(m);
-  zeichen();
+  /* Bei kleiner Karte nur die Zeichen. Die beiden beschrifteten
+     Knoepfe brauchen rund 150 Punkte; der Regler geht bis auf 96
+     hinunter, und dann liefen sie aus der Karte - sichtbar erst, wenn
+     jemand den Regler benutzt, also vermutlich vor Publikum.
+
+     Die Beschriftung ist der Grund, warum es die Knoepfe gibt (Rike:
+     «findet nicht raus, dass er dort draufklicken muss»). Sie faellt
+     deshalb erst, wenn sie nicht mehr passt, und der Titel traegt sie
+     weiter. */
+  const kb = parseFloat(getComputedStyle(document.documentElement)
+              .getPropertyValue('--kb'));
+  const kurz = kb < 160;
+  if (kurz) leiste.classList.add('kurz');
+  [['ja', '✓ stimmt', '✓'], ['nein', '✗ stimmt nicht', '✗']]
+      .forEach(([wert, text, zeichen]) => {
+    const k = document.createElement('button');
+    k.className = 'urteilknopf ' + wert;
+    k.textContent = kurz ? zeichen : text;
+    k.title = text;
+    k.onclick = ev => {
+      ev.stopPropagation();
+      stand.urteil[l.id] = (stand.urteil[l.id] === wert) ? null : wert;
+      zeichnen(); merken();
+    };
+    k.addEventListener('pointerdown', ev => ev.stopPropagation());
+    knoepfe[wert] = k;
+    leiste.appendChild(k);
+  });
+  el.appendChild(leiste);
+  zeichnen();
 }
 
 /* ───────── Etappe 1 · Vergleichen ─────────
@@ -866,42 +836,123 @@ function etappe1(){
 
 // Die Geometrie des Kleeblatts. EINE Quelle: Das Hintergrundbild und
 // die Ablagefelder rechnen beide daraus.
-/* GROESSER, und die Ablageflaechen fuellen die Lappen.
+/* Das Kleeblatt - und die Ablagefelder werden GERECHNET, nicht
+   hingeschrieben.
 
-   Rike, 2026-09-21: «Wir haben ja so viel Platz in diesen
-   Kreisdiagrammen, nicht nur diese rechten Winkel. Da ist das einfach
-   noch nicht optimal geloest.»
+   Rike, 2026-09-22: «Das Venn-Diagramm ist insgesamt zu klein.
+   Zweitens sind die Boxen insgesamt zu klein. Ich frage mich, ob es
+   wirklich notwendig ist, dass wir diese Boxen machen - wir haetten
+   ja dort noch mehr Platz aussenrum.»
 
-   Stimmt: Die erste Fassung setzte acht Briefmarken in eine grosse
-   Zeichnung. Jetzt sind die Kreise groesser (r 178 statt 160, weiter
-   auseinander), und die drei EINZELLAPPEN bekommen grosszuegige
-   Felder - dort landet fast alles. Die Schnittfelder bleiben klein;
-   drei von ihnen koennen nach Befund (2) ohnehin nie etwas enthalten,
-   und sie stehen da, damit man das sieht.
+   Noetig sind sie: Etwas muss sagen, wohin eine Karte faellt, und ein
+   Kreisabschnitt ist kein Ziel, das man treffen kann. ZU KLEIN waren
+   sie, weil ich sie von Hand in Koordinaten hingeschrieben habe - acht
+   Rechtecke, nach Augenmass in die Lappen gesetzt und aus Vorsicht zu
+   knapp bemessen.
 
-   Die Ecken eines Rechtecks liegen nicht immer vollstaendig im
-   Lappen - ein Kreisabschnitt ist nun einmal kein Rechteck. Die MITTE
-   jedes Feldes liegt tief darin, und die Kreise sind durchscheinend
-   gezeichnet, also ist die Zugehoerigkeit lesbar. */
+   Jetzt rechnet `lappenKaesten()` je Lappen das GROESSTE Rechteck aus,
+   das ganz hineinpasst. Damit ist jedes Feld so gross, wie die
+   Geometrie es zulaesst, und wer die Kreise verschiebt, bekommt die
+   neuen Felder von selbst.
+
+   Die Kreise sind ausserdem groesser geworden und ruecken enger
+   zusammen: Bei d = 1.22 r sind die Einzellappen breiter als bei
+   1.29 r, und dort landet fast alles. */
 const KLEE = {
-  breite: 640, hoehe: 610, r: 178,
-  mitte: {rf: [205, 205], aus: [435, 205], kat: [320, 405]},
-  // Je Feld: Kuerzel, welche Kreise, Rechteck [x, y, b, h].
+  breite: 640, hoehe: 610, r: 190,
+  mitte: {rf: [212, 210], aus: [428, 210], kat: [320, 397]},
+  /* Je Feld: in welchen Kreisen es liegt. Die Reihenfolge bestimmt,
+     welches Feld bei gleich grossen Moeglichkeiten zuerst bedient
+     wird - die Einzellappen zuerst, sie tragen die Last. */
   felder: [
-    {id:'rf',        in:['rf'],              kasten:[ 52, 118, 166, 152]},
-    {id:'aus',       in:['aus'],             kasten:[422, 118, 166, 152]},
-    {id:'rf-aus',    in:['rf','aus'],        kasten:[268, 140, 104,  84]},
-    {id:'rf-kat',    in:['rf','kat'],        kasten:[152, 302, 116,  92]},
-    {id:'aus-kat',   in:['aus','kat'],       kasten:[372, 302, 116,  92]},
-    {id:'rf-aus-kat',in:['rf','aus','kat'],  kasten:[268, 252, 104,  86]},
-    {id:'kat',       in:['kat'],             kasten:[233, 418, 174, 148]},
-    {id:'keine',     in:[],                  kasten:[ 16, 452, 176, 140]},
+    {id:'rf',         in:['rf']},
+    {id:'aus',        in:['aus']},
+    {id:'kat',        in:['kat']},
+    {id:'rf-aus',     in:['rf','aus']},
+    {id:'rf-kat',     in:['rf','kat']},
+    {id:'aus-kat',    in:['aus','kat']},
+    {id:'rf-aus-kat', in:['rf','aus','kat']},
+    {id:'keine',      in:[]},
   ],
 };
 
+/* Das groesste achsenparallele Rechteck in jedem Lappen.
+
+   Gerastert wird auf ein Gitter von RASTER Punkten je Achse; je Punkt
+   steht fest, in welchen Kreisen er liegt. Danach je Lappen das
+   groesste Rechteck aus lauter Treffern - das ist das bekannte
+   «groesstes Rechteck im Histogramm», Zeile fuer Zeile, in linearer
+   Zeit. Bei 128 mal 122 Punkten laeuft das in wenigen Millisekunden
+   und wird nur beim Aufbau gebraucht.
+
+   «keine» ist der Bereich AUSSERHALB aller drei Kreise. Dort ist das
+   groesste Rechteck eine der vier Ecken - genommen wird die linke
+   untere, weil dort auch die Beschriftung steht. */
+let _kaesten = null;
+function lappenKaesten(){
+  if (_kaesten) return _kaesten;
+  const RASTER = 128;
+  const sx = KLEE.breite / RASTER, sy = KLEE.hoehe / RASTER;
+  const drin = (x, y, k) => {
+    const [cx, cy] = KLEE.mitte[k];
+    return (x - cx) * (x - cx) + (y - cy) * (y - cy) < KLEE.r * KLEE.r;
+  };
+  // Je Gitterpunkt: welche Kreise decken ihn?
+  const lage = [];
+  for (let j = 0; j < RASTER; j++){
+    const zeile = [];
+    const y = (j + 0.5) * sy;
+    for (let i = 0; i < RASTER; i++){
+      const x = (i + 0.5) * sx;
+      zeile.push(['rf', 'aus', 'kat'].filter(k => drin(x, y, k)).join('-'));
+    }
+    lage.push(zeile);
+  }
+  _kaesten = {};
+  KLEE.felder.forEach(f => {
+    const soll = f.in.join('-');
+    // Fuer «keine» nur die linke untere Ecke zulassen - sonst gewinnt
+    // irgendein Zipfel am Rand, und das Feld liegt, wo niemand es
+    // sucht.
+    const erlaubt = (i, j) => lage[j][i] === soll
+      && (f.in.length || (i < RASTER * 0.42 && j > RASTER * 0.55));
+    const hoehen = new Array(RASTER).fill(0);
+    let best = {flaeche: 0};
+    for (let j = 0; j < RASTER; j++){
+      for (let i = 0; i < RASTER; i++)
+        hoehen[i] = erlaubt(i, j) ? hoehen[i] + 1 : 0;
+      // groesstes Rechteck im Histogramm `hoehen`, Unterkante j
+      const stapel = [];
+      for (let i = 0; i <= RASTER; i++){
+        const h = i === RASTER ? 0 : hoehen[i];
+        let start = i;
+        while (stapel.length && stapel[stapel.length - 1].h >= h){
+          const o = stapel.pop();
+          const flaeche = o.h * (i - o.i);
+          if (flaeche > best.flaeche)
+            best = {flaeche, i: o.i, breite: i - o.i, hoehe: o.h, j};
+          start = o.i;
+        }
+        stapel.push({i: start, h});
+      }
+    }
+    _kaesten[f.id] = best.flaeche
+      ? [best.i * sx, (best.j - best.hoehe + 1) * sy,
+         best.breite * sx, best.hoehe * sy]
+      : [0, 0, 0, 0];
+  });
+  return _kaesten;
+}
+
 /* Umbruch auf hoechstens `breit` Zeichen je Zeile, hoechstens drei
    Zeilen. Ein SVG bricht Text nicht von selbst um - und ein
-   selbstgeschriebener Name kann lang sein. */
+   selbstgeschriebener Name kann lang sein.
+
+   WIEDER DA (2026-09-22): Diese beiden Helfer standen im Block mit der
+   alten Geometrie und sind beim Ersetzen mit verschwunden. Die Seite
+   brach danach beim Zeichnen des Kleeblatts ab - gefunden sofort, weil
+   Etappe 2 gar nicht mehr aufging. Zweimal an einem Tag dasselbe:
+   Wer einen Block ersetzt, prueft, was SONST noch darin stand. */
 function _umbruch(text, breit){
   const zeilen = [];
   let zeile = '';
@@ -915,8 +966,7 @@ function _umbruch(text, breit){
 }
 
 /* Was in ein SVG geschrieben wird, muss maskiert sein - der Name kommt
-   aus einem Textfeld, in dem ein & oder ein < stehen darf. Ohne das
-   waere die Zeichnung ab dort kaputt, und zwar stumm. */
+   aus einem Textfeld, in dem ein & oder ein < stehen darf. */
 function _roh(s){
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
                   .replace(/>/g, '&gt;');
@@ -929,7 +979,7 @@ function kleeblattBild(){
   D.kreise.forEach(k => {
     const [x, y] = g.mitte[k.id];
     t.push(`<circle cx="${x}" cy="${y}" r="${g.r}" fill="${toene[k.id]}" `
-      + `fill-opacity=".13" stroke="${toene[k.id]}" stroke-width="2"/>`);
+      + `fill-opacity=".12" stroke="${toene[k.id]}" stroke-width="2.5"/>`);
   });
   /* An den Kreisen stehen DIE SELBST GESCHRIEBENEN NAMEN.
 
@@ -946,21 +996,44 @@ function kleeblattBild(){
      «Ohne Reihenfolge geht auchEin Ausschnitt genuegt» stand als ein
      Wort da. Der Name sitzt jetzt im aeusseren Zipfel des eigenen
      Kreises, wo kein Ablagefeld liegt, und wird bei Bedarf umbrochen. */
-  const wo = {rf:[135, 82], aus:[505, 82], kat:[320, 596]};
+  /* Die Namen sitzen AM RECHTECK, nicht an einer hingeschriebenen
+     Stelle: ueber dem Feld bei den beiden oberen Lappen, darunter beim
+     unteren. Vorher standen sie fest bei y 62 - und seit die Felder
+     gerechnet werden und bis y 71 hinaufreichen, lagen sie auf den
+     Karten. Wer die Kreise verschiebt, verschiebt jetzt die Namen mit. */
+  const kaesten = lappenKaesten();
+  const wo = {
+    rf:  [kaesten.rf[0] + kaesten.rf[2] / 2,  kaesten.rf[1] - 20],
+    aus: [kaesten.aus[0] + kaesten.aus[2] / 2, kaesten.aus[1] - 20],
+    kat: [kaesten.kat[0] + kaesten.kat[2] / 2,
+          kaesten.kat[1] + kaesten.kat[3] + 26],
+  };
+  /* WIEDER DA (2026-09-22): Beim Umstellen auf die gerechneten
+     Rechtecke ist die Schleife, die die Namen ZEICHNET, mit
+     weggefallen - stehen geblieben war nur ihre Begruendung. Die
+     Kreise standen danach ohne Beschriftung da.
+     Dritter Fall an einem Tag: Wer einen Block ersetzt, prueft, was
+     sonst noch darin stand. */
   D.kreise.forEach(k => {
     const [x, y] = wo[k.id];
     const eigen = (stand.texte['wegname' + k.weg] || '').trim();
-    const zeilen = eigen ? _umbruch(eigen, 20)
+    const zeilen = eigen ? _umbruch(eigen, 22)
                          : ['Spezialfall ' + (k.weg - 1), '(noch ohne Namen)'];
+    // Oberhalb des Feldes nach OBEN wachsen, unterhalb nach unten -
+    // sonst laeuft die zweite Zeile ins Feld hinein.
+    const hoch = k.id !== 'kat';
     zeilen.forEach((z, i) => {
-      t.push(`<text x="${x}" y="${y + i * 17}" text-anchor="middle" `
-        + `font-family="sans-serif" font-size="14" `
+      const dy = hoch ? (i - (zeilen.length - 1)) * 17 : i * 17;
+      t.push(`<text x="${x}" y="${y + dy}" text-anchor="middle" `
+        + `font-family="sans-serif" font-size="14.5" `
         + `font-weight="${eigen ? 600 : 400}" `
         + `fill="${eigen ? '#5a5349' : '#a09786'}">${_roh(z)}</text>`);
     });
   });
-  t.push(`<text x="104" y="443" text-anchor="middle" font-family="sans-serif" `
-    + `font-size="14" fill="#8a8279">keiner der drei</text>`);
+  t.push(`<text x="${kaesten.keine[0] + kaesten.keine[2] / 2}" `
+    + `y="${kaesten.keine[1] - 12}" text-anchor="middle" `
+    + `font-family="sans-serif" font-size="14" `
+    + `fill="#8a8279">keiner der drei</text>`);
   t.push('</svg>');
   return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(t.join(''));
 }
@@ -973,8 +1046,21 @@ D.kleeblatt.forEach(z => {
                                     : 'keine';
 });
 
+/* FEHLERBEHOBEN (2026-09-22, Rikes Befund «wenn ich auf Loesung gehe,
+   wird nur die Eisdiele eingeblendet, alles andere nicht»):
+
+   Diese Funktion lieferte NUR die neun Eisdiele-Karten, und
+   loesungAnwenden() ersetzt stand.karten vollstaendig durch das, was
+   hier steht. Die sieben Skriptkarten waren damit an keinem Ort mehr -
+   und wurden beim Neuzeichnen wieder auf den Tisch gestreut. Wer sie
+   eingeordnet hatte, sah seine Arbeit verschwinden, sobald er die
+   Loesung ansah.
+
+   Fuer die Skriptaufgaben gibt es keine hinterlegte Loesung, das
+   bleibt so. «Keine Loesung» heisst aber «unveraendert lassen», nicht
+   «vom Brett nehmen». Sie behalten deshalb ihren Platz. */
 function _loesungStandE2(){
-  const karten = {};
+  const karten = Object.assign({}, stand.karten);
   Object.entries(KLEEZIEL).forEach(([id, ort]) => {
     karten[id] = {ort, x: 0, y: 0, rot: 0};
   });
@@ -1001,13 +1087,35 @@ function _loesungStandE2(){
 
    `ziehbar()` ist dieselbe Geste wie bei jeder anderen Karte; nur das
    Innere ist ein anderes. */
-function textkarte(id, herkunft, oben, ereignis){
+function textkarte(id, herkunft, oben, ereignis, wdh){
   const el = document.createElement('div');
-  el.className = 'k textkarte ' + herkunft;
+  el.className = 'k textkarte ' + herkunft + (wdh ? ' wdh' + wdh : '');
   el.dataset.id = id;
   el._x = 0; el._y = 0; el._rot = 0;
-  el.innerHTML = `<span class="kherkunft">${oben}</span>`
-               + `<span class="kereignis">${ereignis}</span>`;
+  /* DIE SITUATION STEHT ALS MARKE AUF DER KARTE, nicht als kleine
+     Zeile darueber.
+
+     Rike, 2026-09-22: «Fuer uns ist ja wichtig, ob Wiederholungen
+     erlaubt sind oder nicht - das unterscheidet die Art der
+     Berechnung. Im Moment ist diese Information nur ganz klein oben
+     geschrieben. Wenn man Sachen uebereinanderlegt, sieht man nur noch
+     das Ereignis, und dann sieht es so aus, als waere es zweimal
+     dasselbe Beispiel - was es nicht ist.»
+
+     Genau so ist es: «Unter den beiden unteren Kugeln ist Schokolade»
+     steht zweimal im Satz, in A und in B, und die beiden gehoeren in
+     verschiedene Lappen. Was sie unterscheidet, stand in der Zeile,
+     die beim Stapeln als erste verschwindet.
+
+     Jetzt traegt die Karte ein kurzes, farbiges Schild - «mit Wdh.»
+     oder «ohne Wdh.» - und es steht ganz oben, also genau dort, wo
+     eine gestapelte Karte noch sichtbar ist. Die Herkunftszeile bleibt
+     darunter und darf verschwinden; sie sagt dasselbe ausfuehrlich. */
+  el.innerHTML = (wdh
+      ? `<span class="kwdh">${wdh === 'A' ? 'mit Wdh.' : 'ohne Wdh.'}</span>`
+      : '<span class="kwdh skript">Skript</span>')
+    + `<span class="kherkunft">${oben}</span>`
+    + `<span class="kereignis">${ereignis}</span>`;
   el.ondragstart = () => false;
   /* Liegen mehr Karten in einem Feld, als Platz ist, ruecken sie
      uebereinander - siehe zoneOrdnen(). Dann muss man die untere lesen
@@ -1124,10 +1232,10 @@ function etappe2(){
   const feld = document.getElementById('feld');
   const els = {};
   D.zeilen.forEach(z => {
-    els[z.id] = textkarte(z.id, 'auseisdiele', z.lage, z.text);
+    els[z.id] = textkarte(z.id, 'auseisdiele', z.lage, z.text, z.sit);
   });
   if (stand.skriptDa) D.transfer.forEach(t => {
-    els[t.id] = textkarte(t.id, 'ausskript', t.marke, t.text);
+    els[t.id] = textkarte(t.id, 'ausskript', t.marke, t.text, null);
   });
   const dabei = Object.keys(els);
 
@@ -1155,8 +1263,9 @@ function etappe2(){
     bild.style.left = rand + 'px';
     bild.style.width = (KLEE.breite * f) + 'px';
     feld.appendChild(bild);
+    const kaesten = lappenKaesten();
     KLEE.felder.forEach(z => {
-      const [x, y, w, h] = z.kasten;
+      const [x, y, w, h] = kaesten[z.id];
       const d = document.createElement('div');
       d.className = 'feld zone'; d.dataset.ort = z.id;
       d.style.left = (rand + x * f) + 'px'; d.style.top = (y * f) + 'px';
@@ -1209,9 +1318,20 @@ function etappe2(){
     befund.textContent = satz.join(' ');
   };
 
+  /* FEHLERBEHOBEN (2026-09-22, Rikes Befund «der Zurueckknopf bewirkt
+     beim Venn-Diagramm gar nichts»): Hier stand `merken(); etappe2();`.
+     merken() baut stand.karten AUS DEM DOM neu auf - und im DOM lagen
+     die Karten in diesem Moment noch in ihren Feldern. Das Loeschen
+     wurde also sofort rueckgaengig gemacht, und zwar von der Zeile
+     danach.
+
+     Dieselbe Falle wie am 2026-08-21 in Etappe 1 («Gemessen 19 Karten
+     uebertragen, davon 0 am richtigen Ort»). Wer stand.karten aendert,
+     darf davor nicht merken() rufen: etappe2() legt die Karten neu und
+     merkt selbst, sobald sie liegen. */
   document.getElementById('zurueck').onclick = () => {
     dabei.forEach(id => { delete stand.karten[id]; });
-    merken(); etappe2();
+    etappe2();
   };
   const mehr = document.getElementById('mehr');
   if (mehr) mehr.onclick = () => { stand.skriptDa = true; merken(); etappe2(); };
