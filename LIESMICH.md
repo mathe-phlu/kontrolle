@@ -41,23 +41,26 @@ Adresse kennt, kann hineinsehen. Verlinkt ist sie nirgends.
 dürfte. Rückmeldungen werden **nicht** hier gespeichert — sie gehen an
 eine Ablage, die nur Rike sieht.
 
-## `start/` — Rikes Einstieg, seit 2026-09-20
+## `start/` ist weg, seit 2026-09-23
 
-`start/index.html` ist **keine Durchsichtsseite**, sondern Rikes eigener
-Einstieg: drei Karten mit Wimmelbild, je Modul ein Knopf zum Material
-und einer in den Moodle-Kursraum. Ihr Auftrag vom 20.09.2026 — ein Weg
-zum Material, der nicht durch Moodle führt.
+Hier lagen Rikes eigener Einstieg und die Liste der vier Meilensteine.
+**Sie sind entfernt und laufen seither als lokale Dateien auf ihrem
+Rechner.**
 
-`start/meilensteine.html` listet die vier Meilensteine von MA02.02. Sie
-sind **absichtlich nirgends aus der Lernlandschaft verlinkt** (Rikes
-Entscheid vom 09.09.2026, bestätigt am 20.09.2026); Rike gibt die Links
-im Zoomraum weiter.
+Rike, 23.09.2026: «Wir können diese Seiten dann vom Netz nehmen, wir
+brauchen sie nicht mehr.»
 
-**Achtung beim Eintragen einer Meilenstein-Adresse.** Solange dort
-matte Knöpfe stehen, steht hier keine Adresse, die niemand haben soll.
-Wer eine einträgt, macht sie an diesem Ort öffentlich lesbar — siehe
-den Abschnitt zur Adresse oben. Das ist bewusst zu tun, nicht im
-Vorbeigehen.
+Der Grund ist der Abschnitt oben: Die Adresse war nicht verlinkt, aber
+erreichbar — und Rike will dort Namen von Studierenden und Termine
+führen. Das darf hier nicht stehen. Dazu kommt ein technischer Zwang:
+Ein Verweis von einer `https`-Seite auf eine lokale Datei wird vom
+Browser blockiert, also musste die ganze kleine Insel lokal werden,
+nicht nur die Buchhaltung.
+
+**Öffentlich geblieben sind die Ziele**, auf die sie zeigte: das
+Material der drei Module, die Moodle-Kursräume und die Meilenstein-
+flächen unter `mathe-phlu/komplexe_zahlen`. Die Studierenden bekommen
+weiterhin nur die Flächenlinks.
 
 ## Erzeugt, nicht von Hand gepflegt
 
@@ -66,4 +69,3 @@ Alles hier kommt aus einem Agenten und wird dort geändert, nie hier:
 | Ordner | Agent | Werkzeug |
 |---|---|---|
 | `ergebnismengen/`, `festigung/`, `kombinatorik/`, `laplace/`, `wahrscheinlichkeitsbegriff/`, `index.html`, `teil_b.html` | **KASPER** | dessen Bauer |
-| `start/` | **LARS** | `werkzeuge/startseite.py` |
