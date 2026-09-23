@@ -60,8 +60,56 @@ function pos(el){
     : `translate3d(${el._x}px,${el._y}px,0)`;
   el.style.transform = schub
     + (el._rot ? ` rotate(${el._rot}deg)` : '') + (l!==1 ? ` scale(${l})` : '');
+  // Nur unter der Lupe gilt ein eigener Ursprung - siehe
+  // lupenUrsprung(). Sonst zurueck auf die Mitte, damit das Drehen
+  // einer gezogenen Karte davon nichts merkt.
+  el.style.transformOrigin = (l !== 1 && el._ursprung) ? el._ursprung : '';
 }
 const LUPE = 1.5;
+
+/* WOHIN soll die Karte wachsen?
+
+   FEHLERBEHOBEN (2026-09-23, Maurus' Befund: «Rolloverzoom der ersten
+   Zeile funktioniert nicht, oberste Zeile verschwindet beim Rollover»
+   und «in der untersten Zeile funktioniert er zwar, aber aeusserst
+   knapp»).
+
+   Die Lupe wuchs immer aus der MITTE - also nach allen Seiten
+   gleichzeitig. In der Tabelle von Kapitel 3 rollt der Rahmen um die
+   Tabelle (overflow:auto). Eine Karte in der obersten Zeile wuchs
+   deshalb zur Haelfte ueber den oberen Rand hinaus und wurde dort
+   abgeschnitten; in der untersten Zeile dasselbe nach unten, nur
+   knapper.
+
+   Das ist keine Eigenheit von Kapitel 3: Es trifft jede Karte, die am
+   Rand eines rollenden Bereichs liegt. Behoben wird es deshalb hier
+   und nicht dort.
+
+   Die Karte waechst jetzt VOM RAND WEG: Wer oben klebt, waechst nach
+   unten, wer unten klebt, nach oben, und wer in der Mitte liegt,
+   waechst wie bisher nach beiden Seiten. Gemessen wird am naechsten
+   Vorfahren, der wirklich beschneidet - gibt es keinen, ist es das
+   Fenster. */
+function lupenUrsprung(el, mass){
+  const r = el.getBoundingClientRect();
+  let c = {top: 0, left: 0, bottom: innerHeight, right: innerWidth};
+  for (let e = el.parentElement; e && e !== document.body; e = e.parentElement){
+    const st = getComputedStyle(e);
+    if (st.overflowX !== 'visible' || st.overflowY !== 'visible'){
+      c = e.getBoundingClientRect(); break;
+    }
+  }
+  const wachstY = (mass - 1) * r.height / 2;
+  const wachstX = (mass - 1) * r.width / 2;
+  const luft = 4;
+  const senkrecht = r.top - wachstY < c.top + luft ? 'top'
+                  : r.bottom + wachstY > c.bottom - luft ? 'bottom'
+                  : 'center';
+  const waagrecht = r.left - wachstX < c.left + luft ? 'left'
+                  : r.right + wachstX > c.right - luft ? 'right'
+                  : 'center';
+  return waagrecht + ' ' + senkrecht;
+}
 /* Eine Marke auf einer Karte - die kleine farbige Zahl oben links.
 
    Herausgeloest am 2026-08-21: Sie steckte fest in karte() und liess
@@ -166,6 +214,9 @@ function karte(id, marke, art){
     // mitwachsen und aus der Flaeche laufen. Und nie auf einer
     // beschreibbaren Karte: Dort springt sonst der Text beim Tippen.
     if (el._zieht || art.schreibbar || el.querySelector('.marke.offen')) return;
+    // Erst den Ursprung bestimmen, dann vergroessern - gemessen wird
+    // die Karte in ihrer NORMALEN Groesse.
+    el._ursprung = lupenUrsprung(el, LUPE);
     el._lupe = LUPE; el._z0 = el.style.zIndex; el.style.zIndex = 99999; pos(el); });
   el.addEventListener('pointerleave', ()=>{ el._lupe = 1;
     el.style.zIndex = el._z0 || el.style.zIndex; pos(el); });
