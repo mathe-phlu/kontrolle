@@ -1344,6 +1344,30 @@ function _aufklappen(wurzel){
     e.style.width = 'auto';  e.style.maxWidth = 'none';
     e.style.flex = 'none';
   });
+  /* FEHLERBEHOBEN (2026-09-22, in Maurus' gesichertem Bild gesehen):
+     Von den neun Situationen der Tabelle standen nur fuenf im Bild.
+
+     `width:auto` klappt NICHT auf. Bei einem Block heisst auto «so
+     breit wie der Platz», nicht «so breit wie der Inhalt» - die Hoehe
+     oben wurde richtig frei, die Breite blieb am Fenster haengen. Der
+     Fehler fiel neun Monate nicht auf, weil vorher keine Flaeche
+     seitlich ueberhing; Kapitel 3 ist die erste mit einer Tabelle, die
+     breiter ist als der Bildschirm.
+
+     `max-content` waere die naheliegende Antwort und WAERE FALSCH: Ein
+     Sortierblatt traegt seine Karten absolut positioniert, hat also
+     keinen Inhalt, an dem sich eine Breite messen liesse - es fiele
+     auf null zusammen. Gesetzt wird deshalb die gemessene
+     `scrollWidth`, und nur dort, wo wirklich etwas ueberhaengt.
+
+     Zwei Durchgaenge, weil das Breiterwerden nach aussen wandert: Erst
+     wenn die Tabelle steht, weiss die Haelfte um sie herum, wie breit
+     sie sein muss. */
+  for (let runde = 0; runde < 2; runde++)
+    gerollt.slice().reverse().forEach(e => {
+      if (e.scrollWidth > e.clientWidth + 1)
+        e.style.width = e.scrollWidth + 'px';
+    });
   return () => sicherung.forEach(k => {
     k.e.style.overflow = k.overflow; k.e.style.height = k.height;
     k.e.style.maxHeight = k.maxHeight; k.e.style.width = k.width;
@@ -1391,14 +1415,36 @@ function standAlsLeinwand(){
        Faelle - aendert sich nichts. */
     const t = d.querySelector('.gname,.kopf');
     if (t){
-      g.fillStyle = '#2d2924'; g.font = '13px sans-serif';
-      const x = q.left - r.left + 8;
-      let zeile = '', zy = q.top - r.top + 18, n = 0;
-      const schreiben = () => { g.fillText(zeile, x, zy); zy += 16; n++; };
+      /* FEHLERBEHOBEN (2026-09-22, in Maurus' gesichertem Bild
+         gesehen): Der Kopf lief in das Geschriebene darunter hinein.
+
+         Hier standen zwei feste Zahlen - 13px Schrift und 16px
+         Zeilenabstand -, waehrend der Kopf auf der Flaeche kleiner
+         gesetzt ist. Auf dem Bildschirm passte die Frage in zwei
+         Zeilen, im Bild brauchte sie drei, und die dritte lag auf der
+         Antwort. Ein Bild, in dem Frage und Antwort uebereinander
+         liegen, ist als Notiz wertlos - und der Fehler war stumm.
+
+         Gezeichnet wird jetzt mit der SCHRIFT DES ELEMENTS und in
+         SEINEM eigenen Kasten. Damit kann der Kopf gar nicht mehr
+         weiter reichen als auf der Flaeche. */
+      const st = getComputedStyle(t);
+      const qt = t.getBoundingClientRect();
+      const eigen = qt.width > 4 && qt.height > 4;
+      g.fillStyle = st.color || '#2d2924';
+      g.font = `${st.fontWeight} ${parseFloat(st.fontSize) || 13}px `
+             + (st.fontFamily || 'sans-serif');
+      const breit = eigen ? qt.width : q.width - 16;
+      const x = eigen ? qt.left - r.left : q.left - r.left + 8;
+      const schrittH = parseFloat(st.lineHeight)
+                    || (parseFloat(st.fontSize) || 13) * 1.3;
+      let zeile = '', zy = (eigen ? qt.top - r.top + schrittH * 0.8
+                                  : q.top - r.top + 18), n = 0;
+      const schreiben = () => { g.fillText(zeile, x, zy); zy += schrittH; n++; };
       (t.value || t.textContent || '').split(/\s+/).forEach(w => {
         if (n >= 3) return;
         const probe = zeile ? zeile + ' ' + w : w;
-        if (g.measureText(probe).width > q.width - 16 && zeile){
+        if (g.measureText(probe).width > breit && zeile){
           schreiben(); zeile = (n >= 3 ? '' : w);
         } else zeile = probe;
       });
@@ -1518,12 +1564,18 @@ function standAlsLeinwand(){
     const q = t.getBoundingClientRect();
     if (!q.width || !q.height || !(t.value || '').trim()) return;
     g.save();
-    g.fillStyle = '#2d2924'; g.font = '12px sans-serif';
-    let zeile = '', zy = q.top - r.top + 13;
+    // Auch hier die eigene Schrift statt einer festen Zahl - aus
+    // demselben Grund wie beim Kopf oben.
+    const st = getComputedStyle(t);
+    const hoch = parseFloat(st.fontSize) || 12;
+    const schrittH = parseFloat(st.lineHeight) || hoch * 1.25;
+    g.fillStyle = st.color || '#2d2924';
+    g.font = `${hoch}px ` + (st.fontFamily || 'sans-serif');
+    let zeile = '', zy = q.top - r.top + hoch;
     (t.value || '').split(/\s+/).forEach(w=>{
       const probe = zeile ? zeile + ' ' + w : w;
       if (g.measureText(probe).width > q.width - 8 && zeile){
-        g.fillText(zeile, q.left - r.left, zy); zy += 15; zeile = w;
+        g.fillText(zeile, q.left - r.left, zy); zy += schrittH; zeile = w;
       } else zeile = probe;
     });
     if (zeile) g.fillText(zeile, q.left - r.left, zy);
