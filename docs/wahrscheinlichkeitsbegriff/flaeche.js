@@ -36,12 +36,92 @@ let stand = { aufnahme:null, weg:null, etappe:0, karten:{}, gruppen:[], e3gezeig
 let zmax = 10;
 
 /* ───────── Karten: setzen, ziehen, Lupe ───────── */
+/* FEHLERBEHOBEN (2026-09-21, Maurus' Befund «Rollover-Zoom ist
+   unscharf»): Hier stand IMMER translate3d(). Das schiebt das Element
+   auf eine eigene Ebene der Grafikkarte - beim Ziehen genau richtig,
+   es macht die Bewegung fluessig. Fuer die Lupe ist es falsch: Die
+   Ebene wird in der Groesse gerastert, die das Element im Layout hat,
+   und danach vergroessert. Man sieht also ein hochskaliertes Bild
+   statt einer neu gezeichneten Karte - und die Kartenbilder sind SVG,
+   koennten also beliebig scharf sein.
+
+   Neu: translate3d nur ohne Lupe. Sobald vergroessert wird, eine
+   gewoehnliche 2D-Verschiebung; dann zeichnet der Browser die Karte in
+   der neuen Groesse. Gezogen wird nie mit Lupe (ziehbar() setzt
+   _lupe = 1), die Fluessigkeit bleibt also erhalten.
+
+   PRUEFEN: Ob es auf Maurus' Rechner wirklich scharf ist, kann Kasper
+   nicht messen - Schaerfe ist kein Wert, den man auslesen kann. Die
+   Ursache ist begruendet, die Wirkung muss jemand SEHEN.
+
+   FEHLERBEHOBEN (2026-10-13, Maurus' Befund in Kapitel 4: «Der
+   Rolloverzoom ist teilweise hinter einer anderen Karte»): Seit dem
+   21.09. lag jede RUHENDE Karte auf einer eigenen Grafikebene
+   (translate3d), die vergroesserte aber nicht mehr. Safari zeichnet
+   solche Ebenen ueber gewoehnliche Elemente, auch gegen den z-index -
+   die Nachbarkarte schob sich also ueber die Lupe. Chrome tut das nicht,
+   deshalb war es hier nicht zu sehen. Jetzt bekommt nur die Karte eine
+   eigene Ebene, die gerade GEZOGEN wird; nur dort braucht es die
+   Fluessigkeit.
+
+   PRUEFEN: In Safari nachsehen - Kasper hat hier nur Chrome. */
 function pos(el){
   const l = el._lupe || 1;
-  el.style.transform = `translate3d(${el._x}px,${el._y}px,0)`
+  const schub = (l !== 1 || !el._zieht)
+    ? `translate(${el._x}px,${el._y}px)`
+    : `translate3d(${el._x}px,${el._y}px,0)`;
+  el.style.transform = schub
     + (el._rot ? ` rotate(${el._rot}deg)` : '') + (l!==1 ? ` scale(${l})` : '');
+  // Nur unter der Lupe gilt ein eigener Ursprung - siehe
+  // lupenUrsprung(). Sonst zurueck auf die Mitte, damit das Drehen
+  // einer gezogenen Karte davon nichts merkt.
+  el.style.transformOrigin = (l !== 1 && el._ursprung) ? el._ursprung : '';
 }
 const LUPE = 1.5;
+
+/* WOHIN soll die Karte wachsen?
+
+   FEHLERBEHOBEN (2026-09-23, Maurus' Befund: «Rolloverzoom der ersten
+   Zeile funktioniert nicht, oberste Zeile verschwindet beim Rollover»
+   und «in der untersten Zeile funktioniert er zwar, aber aeusserst
+   knapp»).
+
+   Die Lupe wuchs immer aus der MITTE - also nach allen Seiten
+   gleichzeitig. In der Tabelle von Kapitel 3 rollt der Rahmen um die
+   Tabelle (overflow:auto). Eine Karte in der obersten Zeile wuchs
+   deshalb zur Haelfte ueber den oberen Rand hinaus und wurde dort
+   abgeschnitten; in der untersten Zeile dasselbe nach unten, nur
+   knapper.
+
+   Das ist keine Eigenheit von Kapitel 3: Es trifft jede Karte, die am
+   Rand eines rollenden Bereichs liegt. Behoben wird es deshalb hier
+   und nicht dort.
+
+   Die Karte waechst jetzt VOM RAND WEG: Wer oben klebt, waechst nach
+   unten, wer unten klebt, nach oben, und wer in der Mitte liegt,
+   waechst wie bisher nach beiden Seiten. Gemessen wird am naechsten
+   Vorfahren, der wirklich beschneidet - gibt es keinen, ist es das
+   Fenster. */
+function lupenUrsprung(el, mass){
+  const r = el.getBoundingClientRect();
+  let c = {top: 0, left: 0, bottom: innerHeight, right: innerWidth};
+  for (let e = el.parentElement; e && e !== document.body; e = e.parentElement){
+    const st = getComputedStyle(e);
+    if (st.overflowX !== 'visible' || st.overflowY !== 'visible'){
+      c = e.getBoundingClientRect(); break;
+    }
+  }
+  const wachstY = (mass - 1) * r.height / 2;
+  const wachstX = (mass - 1) * r.width / 2;
+  const luft = 4;
+  const senkrecht = r.top - wachstY < c.top + luft ? 'top'
+                  : r.bottom + wachstY > c.bottom - luft ? 'bottom'
+                  : 'center';
+  const waagrecht = r.left - wachstX < c.left + luft ? 'left'
+                  : r.right + wachstX > c.right - luft ? 'right'
+                  : 'center';
+  return waagrecht + ' ' + senkrecht;
+}
 /* Eine Marke auf einer Karte - die kleine farbige Zahl oben links.
 
    Herausgeloest am 2026-08-21: Sie steckte fest in karte() und liess
@@ -137,19 +217,40 @@ function karte(id, marke, art){
     el.innerHTML = `<img src="${bild(id.split('#')[0])}" alt="" draggable="false">`;
   }
   el.ondragstart = () => false;
+  // Siehe ziehbar(): MUSS vor ziehbar(el) stehen, sonst haengt der
+  // Zuhoerer schon.
+  if (art.fest) el.dataset.fest = '1';
   if (marke) el.appendChild(mkMarke(marke, el));
   el.addEventListener('pointerenter', ()=>{
     // Nicht vergroessern, solange eine Blase offen ist - sie wuerde
     // mitwachsen und aus der Flaeche laufen. Und nie auf einer
     // beschreibbaren Karte: Dort springt sonst der Text beim Tippen.
     if (el._zieht || art.schreibbar || el.querySelector('.marke.offen')) return;
+    // Erst den Ursprung bestimmen, dann vergroessern - gemessen wird
+    // die Karte in ihrer NORMALEN Groesse.
+    el._ursprung = lupenUrsprung(el, LUPE);
     el._lupe = LUPE; el._z0 = el.style.zIndex; el.style.zIndex = 99999; pos(el); });
   el.addEventListener('pointerleave', ()=>{ el._lupe = 1;
     el.style.zIndex = el._z0 || el.style.zIndex; pos(el); });
   ziehbar(el);
   return el;
 }
+/* NEU (2026-09-21, fuer die Tabelle in Kapitel 3): Eine Karte kann
+   FEST liegen. Sie behaelt Lupe, Marken und Blase, laesst sich aber
+   nicht ziehen - `karte(id, marke, {fest:true})`.
+
+   Gebraucht, wo Karten nicht sortiert, sondern GELESEN werden: In der
+   neuen Etappe 1 steht jede Rechnung schon in ihrer Zelle, und die
+   Zuordnung ist nicht mehr die Aufgabe. Ohne den Ausstieg liesse sich
+   die Tabelle zerziehen, ohne dass irgendetwas davon gewertet wuerde -
+   eine Geste, die etwas verspricht und nichts einloest.
+
+   Der Ausstieg sitzt HIER und nicht als abgefangenes Ereignis im
+   Kapitel: Am Ziel laufen Zuhoerer in der Reihenfolge ihrer Anmeldung,
+   ein spaeter angemeldeter kann den von ziehbar() also gar nicht mehr
+   anhalten. */
 function ziehbar(el){
+  if (el.dataset.fest) return;
   el.addEventListener('pointerdown', e=>{
     // Waehrend die Loesung offen ist, wird nicht gezogen - sonst
     // verschiebt ein Klick beim Anschauen die gerade gezeigte Loesung.
@@ -775,7 +876,22 @@ function merken(){
   const gesehen = new Set();
   document.querySelectorAll('.k').forEach(k=>{
     const p = k.parentElement;
+    /* FEHLERBEHOBEN (2026-09-21, gemessen): Eine FESTE Karte hat keinen
+       Platz, den zu merken sich lohnte - sie liegt, wo die Etappe sie
+       hingeschrieben hat. Gemerkt wurde sie trotzdem, mit x 0, y 0 und
+       Ort «tisch».
+
+       Die Folge traf die NAECHSTE Etappe: Kapitel 3 zeigt dieselben
+       acht Situationen erst in der Tabelle (fest) und dann im
+       Kleeblatt (beweglich). Im Kleeblatt galten sie als «schon
+       bekannt», also wurden sie nicht gestreut - und lagen alle acht
+       punktgenau uebereinander in der linken oberen Ecke. Es sah aus
+       wie EINE Karte.
+
+       Sie wird trotzdem als `gesehen` gefuehrt: Was hier liegt, ist
+       nicht verschwunden und darf unten nicht geloescht werden. */
     gesehen.add(k.dataset.id);
+    if (k.dataset.fest) return;
     /* Eine GELIEHENE Karte: Sie liegt in einer anderen Etappe an einem
        Platz, den es hier nicht gibt, und wird hier nur zum Aufnehmen
        hingelegt (siehe `fremdlage`, gesetzt beim Ortsrueckfall).
@@ -884,12 +1000,21 @@ function _leisteChrome(b){
   const g = document.createElement('span');
   g.className = 'groesse';
   g.innerHTML = `<button class="stufe" data-s="-1">−</button>`
-    + `<input type="range" min="96" max="210" step="6" value="${
+    /* GEAENDERT (2026-09-21, Rikes Befund an Kapitel 3: «Ich finde es
+       immer noch sehr, sehr klein»): Die Obergrenze lag bei 210. Auf
+       einer Flaeche, auf der die KARTE das Lesbare traegt - Vorschrift
+       und Bruch stehen darauf, nicht daneben -, ist das zu wenig. Die
+       Untergrenze bleibt: Darunter faellt der Kartentext unter die
+       Lesbarkeitsschwelle aus agent/05, und das Feld mehr zu sehen
+       lohnt den Verlust nicht.
+       Additiv: Kein Kapitel aendert sich davon, nur der Regler geht
+       weiter. */
+    + `<input type="range" min="96" max="300" step="6" value="${
         parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kb'))}">`
     + `<button class="stufe" data-s="1">+</button>`;
   const regler = g.querySelector('input');
   const setzen2 = v => {
-    v = Math.min(210, Math.max(96, v));
+    v = Math.min(300, Math.max(96, v));
     regler.value = v;
     document.documentElement.style.setProperty('--kb', v+'px');
     if (window._neuzeichnen) window._neuzeichnen();
@@ -1012,7 +1137,20 @@ function _griffeSetzen(b, schluessel){
   });
 }
 
-function buehne(auftrag, links, rechts, leiste, extra, drittens){
+/* `teilung` NEU (2026-09-22): das Verhaeltnis der Haelften, als
+   [links, rechts]. Bisher stand es fest im Markup (1.15 zu 1.25), und
+   eine Etappe konnte es nicht aendern - der Ziehgriff schon, aber erst
+   von Hand.
+
+   Kapitel 3, Etappe 2 braucht es: Dort steht rechts ein Venn aus drei
+   Spalten, und bei der halben Flaeche bleiben je Spalte rund 145
+   Punkte - zu wenig fuer eine Zeile Text. Rikes Befund war «das
+   Venn-Diagramm ist insgesamt zu klein», und das ist die Stelle.
+
+   Der Griff bleibt: Was hier steht, ist die Voreinstellung, und ein
+   Doppelklick auf den Griff stellt genau sie wieder her. */
+function buehne(auftrag, links, rechts, leiste, extra, drittens, teilung){
+  const [tl, tr] = teilung || [1.15, 1.25];
   const b = document.getElementById('buehne');
   // Haken der vorigen Etappe loesen, sonst laeuft er in der naechsten
   // weiter und sucht Felder, die es dort nicht mehr gibt. Dasselbe gilt
@@ -1029,9 +1167,9 @@ function buehne(auftrag, links, rechts, leiste, extra, drittens){
       <span class="text">${auftrag.text}</span></div>
     ${extra||''}
     <div class="buehne">
-      <div class="haelfte" id="links" style="flex:1.15"><div class="marke">${links}</div>
+      <div class="haelfte" id="links" style="flex:${tl} 1 0"><div class="marke">${links}</div>
         <div class="blatt" id="tisch" data-ort="tisch"></div></div>
-      <div class="haelfte rechts" id="rechts" style="flex:1.25"><div class="marke">${rechts}</div>
+      <div class="haelfte rechts" id="rechts" style="flex:${tr} 1 0"><div class="marke">${rechts}</div>
         <div class="blatt" id="feld"></div></div>
       ${drittens ? `<div class="haelfte ablageflaeche" id="dritt" style="flex:.72">
         <div class="marke">${drittens}</div>
@@ -1269,6 +1407,30 @@ function _aufklappen(wurzel){
     e.style.width = 'auto';  e.style.maxWidth = 'none';
     e.style.flex = 'none';
   });
+  /* FEHLERBEHOBEN (2026-09-22, in Maurus' gesichertem Bild gesehen):
+     Von den neun Situationen der Tabelle standen nur fuenf im Bild.
+
+     `width:auto` klappt NICHT auf. Bei einem Block heisst auto «so
+     breit wie der Platz», nicht «so breit wie der Inhalt» - die Hoehe
+     oben wurde richtig frei, die Breite blieb am Fenster haengen. Der
+     Fehler fiel neun Monate nicht auf, weil vorher keine Flaeche
+     seitlich ueberhing; Kapitel 3 ist die erste mit einer Tabelle, die
+     breiter ist als der Bildschirm.
+
+     `max-content` waere die naheliegende Antwort und WAERE FALSCH: Ein
+     Sortierblatt traegt seine Karten absolut positioniert, hat also
+     keinen Inhalt, an dem sich eine Breite messen liesse - es fiele
+     auf null zusammen. Gesetzt wird deshalb die gemessene
+     `scrollWidth`, und nur dort, wo wirklich etwas ueberhaengt.
+
+     Zwei Durchgaenge, weil das Breiterwerden nach aussen wandert: Erst
+     wenn die Tabelle steht, weiss die Haelfte um sie herum, wie breit
+     sie sein muss. */
+  for (let runde = 0; runde < 2; runde++)
+    gerollt.slice().reverse().forEach(e => {
+      if (e.scrollWidth > e.clientWidth + 1)
+        e.style.width = e.scrollWidth + 'px';
+    });
   return () => sicherung.forEach(k => {
     k.e.style.overflow = k.overflow; k.e.style.height = k.height;
     k.e.style.maxHeight = k.maxHeight; k.e.style.width = k.width;
@@ -1292,12 +1454,65 @@ function standAlsLeinwand(){
   const warte = [];
   document.querySelectorAll('.feld:not(.neu),.paar').forEach(d=>{
     const q = d.getBoundingClientRect();
-    g.save(); g.setLineDash([6,4]); g.strokeStyle='#d8cdb8';
-    g.strokeRect(q.left-r.left, q.top-r.top, q.width, q.height); g.restore();
+    /* NEU (2026-09-22): Ein Feld darf seinen Rahmen abbestellen.
+       Gebraucht vom Kleeblatt in Kapitel 3: Dort liegen die
+       Ablagebereiche IN Kreisen und haben auf der Flaeche selbst
+       keinen Rahmen. Im Bild waeren sie acht gestrichelte Kaesten
+       gewesen, die quer durch die Kreise laufen - die Figur waere
+       unlesbar geworden. Ohne die Marke aendert sich nichts. */
+    if (d.dataset.ohnerahmen === undefined){
+      g.save(); g.setLineDash([6,4]); g.strokeStyle='#d8cdb8';
+      g.strokeRect(q.left-r.left, q.top-r.top, q.width, q.height); g.restore();
+    }
+    /* FEHLERBEHOBEN (2026-09-21): Hier stand .slice(0, 44) - eine
+       feste Zeichenzahl, unabhaengig davon, wie breit die Zone ist.
+       Bei einer schmalen Gruppe war das grosszuegig, bei einer breiten
+       zu wenig. In Kapitel 3 traegt seit heute eine FRAGE diesen Kopf
+       («Warum liegt in manchen Zeilen nur eine Rechnung und in anderen
+       zwei?»), und im Bild zum Mitnehmen stand «1Warum liegt in
+       manchen Zeilen nur eine Rech». Ein abgeschnittenes Fragezeichen
+       ist keine Frage mehr.
+
+       Jetzt wird umgebrochen, bis zu drei Zeilen, und gemessen wird an
+       der Breite der Zone. Wo der Kopf kurz ist - alle bisherigen
+       Faelle - aendert sich nichts. */
     const t = d.querySelector('.gname,.kopf');
-    if (t){ g.fillStyle='#2d2924'; g.font='13px sans-serif';
-      g.fillText((t.value||t.textContent||'').slice(0,44),
-                 q.left-r.left+8, q.top-r.top+18); }
+    if (t){
+      /* FEHLERBEHOBEN (2026-09-22, in Maurus' gesichertem Bild
+         gesehen): Der Kopf lief in das Geschriebene darunter hinein.
+
+         Hier standen zwei feste Zahlen - 13px Schrift und 16px
+         Zeilenabstand -, waehrend der Kopf auf der Flaeche kleiner
+         gesetzt ist. Auf dem Bildschirm passte die Frage in zwei
+         Zeilen, im Bild brauchte sie drei, und die dritte lag auf der
+         Antwort. Ein Bild, in dem Frage und Antwort uebereinander
+         liegen, ist als Notiz wertlos - und der Fehler war stumm.
+
+         Gezeichnet wird jetzt mit der SCHRIFT DES ELEMENTS und in
+         SEINEM eigenen Kasten. Damit kann der Kopf gar nicht mehr
+         weiter reichen als auf der Flaeche. */
+      const st = getComputedStyle(t);
+      const qt = t.getBoundingClientRect();
+      const eigen = qt.width > 4 && qt.height > 4;
+      g.fillStyle = st.color || '#2d2924';
+      g.font = `${st.fontWeight} ${parseFloat(st.fontSize) || 13}px `
+             + (st.fontFamily || 'sans-serif');
+      const breit = eigen ? qt.width : q.width - 16;
+      const x = eigen ? qt.left - r.left : q.left - r.left + 8;
+      const schrittH = parseFloat(st.lineHeight)
+                    || (parseFloat(st.fontSize) || 13) * 1.3;
+      let zeile = '', zy = (eigen ? qt.top - r.top + schrittH * 0.8
+                                  : q.top - r.top + 18), n = 0;
+      const schreiben = () => { g.fillText(zeile, x, zy); zy += schrittH; n++; };
+      (t.value || t.textContent || '').split(/\s+/).forEach(w => {
+        if (n >= 3) return;
+        const probe = zeile ? zeile + ' ' + w : w;
+        if (g.measureText(probe).width > breit && zeile){
+          schreiben(); zeile = (n >= 3 ? '' : w);
+        } else zeile = probe;
+      });
+      if (zeile && n < 3) schreiben();
+    }
   });
   /* FEHLERBEHOBEN (2026-09-08): Bilder, die zur ZONE gehoeren und nicht
      zu einer Karte, fehlten im gesicherten Stand. Bei «Komplexe Zahlen»
@@ -1333,6 +1548,37 @@ function standAlsLeinwand(){
      Wer solchen Text mitgezeichnet haben will, markiert ihn mit
      `data-alsbild`. Ohne die Marke aendert sich nichts - keine
      bestehende Flaeche traegt sie. */
+  /* NEU (2026-09-22): Eine FORM mitzeichnen, nicht nur Text.
+
+     Gebraucht vom Kleeblatt in Kapitel 3: Die drei Kreise sind reine
+     Gestaltung (durchscheinende DIVs mit border-radius). Im Bild zum
+     Mitnehmen fehlten sie - uebrig blieben Schildchen, die frei im
+     Raum schweben, und genau die Lage zueinander ist die Aussage.
+
+     Wer eine Form mitgezeichnet haben will, markiert sie mit
+     `data-alsbildform` («kreis» zeichnet eine Ellipse im Kasten des
+     Elements, alles andere ein Rechteck). Farbe und Fuellung kommen
+     aus dem Stil des Elements, es gibt also keine zweite Quelle. */
+  document.querySelectorAll('.buehne [data-alsbildform]').forEach(d=>{
+    const q = d.getBoundingClientRect();
+    if (!q.width || !q.height) return;
+    const st = getComputedStyle(d);
+    g.save();
+    g.beginPath();
+    if (d.dataset.alsbildform === 'kreis')
+      g.ellipse(q.left - r.left + q.width / 2, q.top - r.top + q.height / 2,
+                q.width / 2, q.height / 2, 0, 0, Math.PI * 2);
+    else
+      g.rect(q.left - r.left, q.top - r.top, q.width, q.height);
+    g.fillStyle = st.backgroundColor; g.fill();
+    // Ohne Rand auf der Flaeche auch keiner im Bild. Sonst bekaeme
+    // jede randlose Karte hier eine dunkle Linie, die es nicht gibt.
+    const rand = parseFloat(st.borderTopWidth) || 0;
+    if (rand){ g.lineWidth = rand; g.strokeStyle = st.borderTopColor;
+               g.stroke(); }
+    g.restore();
+  });
+
   document.querySelectorAll('.buehne [data-alsbild]').forEach(t=>{
     const q = t.getBoundingClientRect();
     if (!q.width || !q.height) return;
@@ -1341,8 +1587,61 @@ function standAlsLeinwand(){
     g.fillStyle = st.color;
     g.font = `${st.fontWeight} ${parseFloat(st.fontSize)}px ${st.fontFamily}`;
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.fillText(t.textContent, q.left - r.left + q.width / 2,
-                              q.top - r.top + q.height / 2);
+    /* NEU (2026-09-22): Umbrechen statt ueberlaufen. Bisher stand hier
+       eine einzige fillText-Zeile - richtig, solange die Marken kurz
+       waren (Rechenzeichen, Kreisnamen). Die Schildchen im Kleeblatt
+       stehen auf der Flaeche zweizeilig; als eine Zeile gezeichnet
+       ragten sie weit in die Nachbarmenge hinein und behaupteten
+       damit etwas Falsches. Wo der Text passt, aendert sich nichts. */
+    const mitte = q.left - r.left + q.width / 2;
+    const gross = parseFloat(st.fontSize) * 1.15;
+    const zeilen = [];
+    let zeile = '';
+    t.textContent.split(/\s+/).forEach(w => {
+      const probe = zeile ? zeile + ' ' + w : w;
+      if (g.measureText(probe).width > q.width && zeile){
+        zeilen.push(zeile); zeile = w;
+      } else zeile = probe;
+    });
+    if (zeile) zeilen.push(zeile);
+    const y0 = q.top - r.top + q.height / 2 - (zeilen.length - 1) * gross / 2;
+    zeilen.forEach((z, i) => g.fillText(z, mitte, y0 + i * gross));
+    g.restore();
+  });
+
+  /* FEHLERBEHOBEN (2026-09-21, dritter Fall derselben Sorte): Was in
+     einem SCHREIBFELD einer Zone steht, fehlte im Bild. Die Schleife
+     ueber `.feld` oben zeichnet nur den Kopf (`.gname,.kopf`); ein
+     `<textarea class="schreibfeld">` kam nirgends vor.
+
+     Das traf schon bisher: Die drei Prueffragen von Kapitel 3, Etappe 2,
+     sind genau solche Felder - das Bild zum Mitnehmen zeigte ihre
+     Ueberschriften und nicht eine Zeile des Geschriebenen. Gefunden
+     erst, als dieselbe Bauart in der neuen Etappe 1 die SIEBEN
+     Antworten tragen sollte, die das eigentliche Ergebnis sind.
+
+     Auf einer KARTE wurde derselbe Text laengst gezeichnet (unten, der
+     Zweig ohne <img>) - hier ist es dieselbe Zeichnung, nur fuer das
+     Feld. */
+  document.querySelectorAll('.feld > .schreibfeld').forEach(t=>{
+    const q = t.getBoundingClientRect();
+    if (!q.width || !q.height || !(t.value || '').trim()) return;
+    g.save();
+    // Auch hier die eigene Schrift statt einer festen Zahl - aus
+    // demselben Grund wie beim Kopf oben.
+    const st = getComputedStyle(t);
+    const hoch = parseFloat(st.fontSize) || 12;
+    const schrittH = parseFloat(st.lineHeight) || hoch * 1.25;
+    g.fillStyle = st.color || '#2d2924';
+    g.font = `${hoch}px ` + (st.fontFamily || 'sans-serif');
+    let zeile = '', zy = q.top - r.top + hoch;
+    (t.value || '').split(/\s+/).forEach(w=>{
+      const probe = zeile ? zeile + ' ' + w : w;
+      if (g.measureText(probe).width > q.width - 8 && zeile){
+        g.fillText(zeile, q.left - r.left, zy); zy += schrittH; zeile = w;
+      } else zeile = probe;
+    });
+    if (zeile) g.fillText(zeile, q.left - r.left, zy);
     g.restore();
   });
 
@@ -1353,6 +1652,13 @@ function standAlsLeinwand(){
     // Die alte Fassung griff blind auf im.src zu - mit einer solchen
     // Karte auf dem Tisch brach die Bildsicherung ab, und zwar still.
     if (!im){
+      /* NEU (2026-09-21): Eine Karte ohne Bild muss kein Schreibfeld
+         sein - sie kann ihren Text auch selbst tragen. Kapitel 3 setzt
+         im Kleeblatt die Situationen als TEXT statt als verkleinertes
+         Kartenbild; bei 55 Punkten Breite ist die Schrift eines
+         Kartenbildes nicht mehr zu lesen, auch mit der Lupe nicht.
+         Ohne diesen Rueckfall stuenden im Bild zum Mitnehmen leere
+         Kaestchen. */
       const feld = k.querySelector('textarea');
       const x = q.left-r.left, y = q.top-r.top;
       g.save();
@@ -1360,7 +1666,8 @@ function standAlsLeinwand(){
       g.beginPath(); g.roundRect(x, y, q.width, q.height, 8);
       g.fill(); g.stroke();
       g.fillStyle = '#2d2924'; g.font = '12px sans-serif';
-      const worte = ((feld && feld.value) || '').split(/\s+/);
+      const worte = ((feld && feld.value) || k.innerText || '')
+                      .trim().split(/\s+/);
       let zeile = '', zy = y + 26;
       worte.forEach(w=>{
         const probe = zeile ? zeile + ' ' + w : w;

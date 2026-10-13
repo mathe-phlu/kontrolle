@@ -508,6 +508,14 @@ svg.venn .vwert{font-size:5.4px}
 svg.venn .vklein{font-size:5px}
 svg.venn .vselbst{fill:var(--akzent);font-weight:600}
 svg.venn .vrand{font-size:4.2px;fill:var(--matt)}
+/* NEU (2026-10-13, Kapitel 4): Rahmen, Striche und Kaesten der
+   Gesamtwerte. Die Farben je Kreis kommen aus den Daten. */
+svg.venn .vrahmen{fill:none;stroke:#c9c1b4;stroke-width:.5}
+svg.venn .vkreis[style]{stroke-width:1.1}
+svg.venn .vstrich{stroke-width:.6}
+svg.venn .vkasten{fill:#fff;stroke-width:.7}
+svg.venn .vlinks{text-anchor:start}
+svg.venn .vname.vlinks{font-size:5.6px}
 /* FEHLERBEHOBEN (2026-08-21, beim Pruefen im Browser): Das Feld hatte
    weissen Grund und eine Linie in var(--linie) - hellbeige auf weiss.
    Es war vorhanden, anklickbar und vollstaendig unsichtbar; die Luecke
@@ -528,8 +536,14 @@ svg.venn input.vfeld:focus{border-style:solid;background:#fffdf6}
 
 /* Zug 1: die acht Erhebungen nebeneinander, nicht als Stapel. Sie
    werden hier nicht gezogen - es wird nur gerechnet. */
-.vennraster{display:grid;gap:10px;padding:8px;
-   grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+/* FEHLERBEHOBEN (2026-10-13, Rikes Befund «der Groesser-Knopf reagiert
+   nicht»): Die Mindestbreite stand fest auf 190 px. Der Regler setzt
+   --kb, und darauf hoerte das Raster nicht. Jetzt haengt sie an --kb
+   Seit Zug 1 die ganze Breite hat, steht der Faktor bei 2: rund 260 px
+   bei --kb 132, vier Venns in einer Zeile auf dem Laptop (Rike: «koennen
+   wir die Karten schon von Anfang an groesser machen?»). */
+.vennraster{display:grid;gap:12px;padding:8px;
+   grid-template-columns:repeat(auto-fill,minmax(calc(var(--kb) * 2),1fr))}
 .vennplatz{background:var(--karte);border:1px solid var(--linie);
    border-radius:10px;padding:8px 8px 6px}
 .vennplatz.stimmt{border-color:#2E7D32;box-shadow:inset 0 0 0 1px #2E7D32}
@@ -554,6 +568,50 @@ svg.venn input.vfeld:focus{border-style:solid;background:#fffdf6}
 
 /* Die Karte in Zug 2 traegt das Venn statt eines Bildes. */
 .k.vennkarte{padding:3px}
+/* NEU (2026-10-13, Maurus' Rueckmeldung zu Kapitel 4): Das Venn hat
+   keinen Platz fuer den Namen, das Kartenbild trug ihn. Ohne ihn laesst
+   sich in Etappe 2 nicht sagen, WELCHE der drei man meint. */
+/* Seit dem neuen Venn (Kaesten in den Ecken) steht der Name UEBER der
+   Zeichnung, nicht mehr darin - sonst laege er auf dem Kasten von M. */
+.k.vennkarte:has(.vennid){padding-top:19px}
+.k.vennkarte .vennn{position:absolute;top:3px;left:34px;z-index:2;
+   font-size:11px;line-height:15px;color:var(--tinte);font-weight:600}
+.k.vennkarte .vennid{position:absolute;top:3px;left:6px;z-index:2;
+   background:var(--akzent);color:#fff;border-radius:5px;padding:0 5px;
+   font-size:10px;font-weight:600;line-height:15px}
+
+/* NEU (2026-10-13, Maurus: «Wenn ich nachrechnen lasse, weiss ich nicht,
+   ob die angegebenen Zahlen meine waren oder ob das die Loesung ist»).
+   Nach dem Nachrechnen traegt jedes eigene Feld sein Urteil, und unter
+   dem Venn stehen eigene und richtige Zahl nebeneinander. */
+svg.venn input.vfeld.vrichtig{border:.9px solid var(--richtig);color:var(--richtig)}
+svg.venn input.vfeld.vfalsch{border:.9px solid var(--falsch);color:var(--falsch);
+   background:#fdf1ef}
+.vennbefund .gegen{display:grid;grid-template-columns:auto auto auto;
+   column-gap:8px;margin:3px 0 4px;color:var(--tinte)}
+.vennbefund .gegen span:nth-child(-n+3){color:var(--matt);font-size:9.5px}
+.vennbefund .gegen .eig{color:var(--falsch);text-decoration:line-through}
+.vennbefund .gegen .soll{color:var(--richtig);font-weight:600}
+.vennbefund .titel{font-weight:600}
+.vennbefund details.weg{margin:2px 0 5px;color:var(--tinte)}
+.vennbefund details.weg summary{cursor:pointer;color:var(--akzent);font-weight:600}
+.vennbefund details.weg div{padding-left:8px;text-indent:-8px;margin-top:2px}
+.vennbefund details.weg .zart{color:var(--matt)}
+/* Kapitel 4, Zug 2: Die Erhebung ist das Feld, ihr Venn der Kopf. */
+.feld.erhfeld .kopf{display:block}
+/* Die Karten rechnen ihre Verschiebung vom Feldrand aus. Ohne festen
+   Ursprung nahmen sie ihn hinter dem Kopf - und der ist hier ein ganzes
+   Venn hoch: Die Karte lag doppelt so tief, wie gruppeOrdnen() dachte. */
+.feld.erhfeld > .k{top:0;left:0}
+.k .satzkarte{height:calc(var(--kb) * .845);box-sizing:border-box;padding:8px 9px;
+   display:flex;flex-direction:column;justify-content:center;gap:6px;
+   font-size:calc(var(--kb) * .095);line-height:1.3;text-align:center;
+   border:1px solid var(--linie);border-radius:8px;pointer-events:none}
+.k .satzkarte .nr{align-self:flex-start;background:var(--akzent);color:#fff;
+   border-radius:5px;padding:0 6px;font-size:11px;font-weight:600}
+.k .satzkarte.folgerung .nr{background:var(--matt)}
+.feld.erhfeld .kopf .zart{margin-left:6px;color:var(--matt);font-size:11px}
+.feld.erhfeld .kopf svg.venn{max-width:calc(var(--kb) * 1.5);margin:4px auto 0}
 
 /* ───────── Die Bernoulli-Ungleichung (Kapitel 4, Etappe 2) ─────────
    Erscheint erst NACH der Aufloesung «die Axiome entscheiden es nicht».
@@ -581,6 +639,54 @@ svg.venn input.vfeld:focus{border-style:solid;background:#fffdf6}
    Bernstein wie «richtig gerechnet, traegt aber nicht», nicht Rot. */
 .bernoulli .ergebnis.leer{background:#fdf4e4;border:1px solid var(--fast)}
 .bernoulli .quelle{margin-top:9px;font-size:11px;color:var(--matt)}
+/* NEU (2026-10-13, Kapitel 4): Der Rechner ist ein Werkzeug geworden -
+   Erhebung waehlen, n und eps auf Schiebereglern, Zahlenstrahl. */
+.bernoulli .modell{font-size:13px;margin:0 0 10px;color:var(--tinte)}
+.bernoulli .zeile{display:flex;align-items:center;gap:8px;margin:0 0 8px;flex-wrap:wrap}
+.bernoulli .zeile .lab{min-width:62px;font-size:13px;color:var(--matt)}
+.bernoulli .zeile input[type=range]{flex:1;min-width:120px;accent-color:var(--akzent)}
+.bernoulli .zeile .wert{font-size:12.5px;min-width:150px;color:var(--tinte)}
+.bernoulli .bwahl .knopf{padding:3px 11px}
+.bernoulli .bwahl .knopf.an{background:var(--akzent);color:#fff;border-color:var(--akzent)}
+.bernoulli svg.strahl{display:block;width:100%;height:auto;margin:4px 0 8px}
+.bernoulli svg.strahl .band{fill:var(--akzent);opacity:.16}
+.bernoulli svg.strahl .achse{stroke:#8a8279;stroke-width:1}
+.bernoulli svg.strahl .p{stroke:var(--akzent);stroke-width:2}
+.bernoulli svg.strahl .h{fill:#C0392B}
+.bernoulli svg.strahl text{font:10px var(--druck);text-anchor:middle;fill:var(--matt)}
+.bernoulli svg.strahl .pt{fill:var(--akzent);font-weight:600}
+.bernoulli svg.strahl .ht{fill:#C0392B;font-weight:600}
+/* Kapitel 4, Etappe 2 (2026-10-13): Schritte links, Werkzeug rechts. */
+.pruefen2{display:flex;gap:14px;align-items:flex-start;padding:10px 8px;flex-wrap:wrap}
+.pruefen2 .schritte{flex:1 1 300px;min-width:260px}
+.pruefen2 .bernoulli{flex:1.2 1 360px;margin:0}
+.schritt{background:var(--karte);border:1px solid var(--linie);border-radius:10px;
+   padding:10px 12px;margin-bottom:8px;font-size:13.5px;line-height:1.45}
+.schritt.jetzt{border-color:var(--akzent);box-shadow:inset 3px 0 0 var(--akzent)}
+.schritt.erledigt{opacity:.78}
+.schritt .skopf{font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.schritt .skopf .nr{display:inline-block;background:var(--akzent);color:#fff;
+   border-radius:5px;padding:0 6px;font-size:11px}
+.schritt .haken{margin-left:auto;color:var(--richtig);font-size:15px}
+.schritt textarea.schreibfeld{display:block;width:100%;box-sizing:border-box;
+   min-height:58px;margin:7px 0 4px;border:1px solid var(--linie);border-radius:7px;
+   padding:6px 8px;font:13px var(--druck);background:#fff;resize:vertical}
+.schritt .knopf{margin-top:4px}
+.bernoulli .bwahl .knopf[data-ereignis]{color:var(--kfarbe);border-color:var(--kfarbe);font-weight:600}
+.bernoulli .bwahl .knopf[data-ereignis].an{background:var(--kfarbe);color:#fff}
+.k.vennkarte.gewaehlt{outline:2.5px solid var(--akzent);outline-offset:2px}
+/* Zweite Fassung (2026-10-13, Rike): Schritte als Reihe, Werkzeug darunter
+   in zwei Spalten - so passt alles ohne Hin-und-her-Rollen. */
+.pruefen3{padding:10px 8px}
+.schritte.reihe{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+   margin-bottom:10px;align-items:start}
+.schritte.reihe .schritt{margin:0;font-size:12.5px}
+.schritt.kommt{opacity:.5;background:transparent;border-style:dashed}
+.schritte.reihe textarea.schreibfeld{min-height:44px}
+.bernoulli.breit{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+   gap:18px;margin:0;align-items:start}
+.bernoulli.breit .formel{margin:8px 0 8px}
+svg.venn .vkasten[data-feld]{cursor:default}
 
 /* Die Kopfkarte einer Reihe - sie wurde selbst hergezogen und liegt
    links, wo sonst ein festes Bild steht (Kapitel 3, Zug 1). Sie ist
