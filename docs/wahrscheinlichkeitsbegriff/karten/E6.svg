@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-10-13T21:20:41.803080</dc:date>
+    <dc:date>2026-10-15T08:44:27.004133</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -453,29 +453,27 @@ z
     </g>
    </g>
    <g id="text_9">
-    <!-- M -->
+    <!-- A -->
     <g style="fill: #9867a5" transform="translate(36.620079 23.072709) scale(0.052 -0.052)">
      <defs>
-      <path id="FiraSans-Regular-a1" d="M 4218 4410 
-L 3392 4410 
-L 2509 1203 
-L 1581 4410 
-L 762 4410 
-L 397 0 
-L 973 0 
-L 1120 1946 
-C 1171 2592 1203 3277 1203 3795 
-L 2208 499 
-L 2778 499 
-L 3731 3789 
-C 3738 3424 3782 2682 3840 1990 
-L 3994 0 
-L 4582 0 
-L 4218 4410 
+      <path id="FiraSans-Regular-1" d="M 2989 0 
+L 3629 0 
+L 2221 4410 
+L 1453 4410 
+L 38 0 
+L 653 0 
+L 986 1107 
+L 2656 1107 
+L 2989 0 
+z
+M 1133 1600 
+L 1824 3904 
+L 2509 1600 
+L 1133 1600 
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#FiraSans-Regular-a1"/>
+     <use xlink:href="#FiraSans-Regular-1"/>
     </g>
    </g>
    <g id="text_10">
@@ -506,21 +504,35 @@ z
     </g>
    </g>
    <g id="text_11">
-    <!-- V -->
+    <!-- B -->
     <g style="fill: #007d57" transform="translate(123.360236 23.072709) scale(0.052 -0.052)">
      <defs>
-      <path id="FiraSans-Regular-12c" d="M 3520 4410 
-L 2906 4410 
-L 1798 659 
-L 691 4410 
-L 38 4410 
-L 1459 0 
-L 2112 0 
-L 3520 4410 
+      <path id="FiraSans-Regular-24" d="M 2586 2330 
+C 3014 2419 3411 2752 3411 3296 
+C 3411 4064 2771 4410 1683 4410 
+L 640 4410 
+L 640 0 
+L 1856 0 
+C 2880 0 3603 320 3603 1254 
+C 3603 2003 3098 2240 2586 2330 
+z
+M 1747 3930 
+C 2400 3930 2790 3795 2790 3251 
+C 2790 2784 2406 2541 1914 2541 
+L 1248 2541 
+L 1248 3930 
+L 1747 3930 
+z
+M 1856 486 
+L 1248 486 
+L 1248 2074 
+L 1971 2074 
+C 2502 2074 2963 1875 2963 1254 
+C 2963 614 2496 486 1856 486 
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#FiraSans-Regular-12c"/>
+     <use xlink:href="#FiraSans-Regular-24"/>
     </g>
    </g>
    <g id="text_12">
@@ -530,27 +542,24 @@ z
     </g>
    </g>
    <g id="text_13">
-    <!-- W -->
+    <!-- C -->
     <g style="fill: #c77a2e" transform="translate(123.360236 127.671134) scale(0.052 -0.052)">
      <defs>
-      <path id="FiraSans-Regular-130" d="M 5126 4410 
-L 4570 4410 
-L 3834 531 
-L 2963 4410 
-L 2317 4410 
-L 1466 531 
-L 755 4410 
-L 160 4410 
-L 1056 0 
-L 1818 0 
-L 2637 3693 
-L 3450 0 
-L 4230 0 
-L 5126 4410 
+      <path id="FiraSans-Regular-2c" d="M 2182 4486 
+C 1184 4486 352 3699 352 2208 
+C 352 723 1126 -77 2195 -77 
+C 2790 -77 3213 166 3456 416 
+L 3155 800 
+C 2906 614 2630 435 2214 435 
+C 1530 435 998 934 998 2208 
+C 998 3539 1555 3987 2221 3987 
+C 2528 3987 2797 3885 3072 3661 
+L 3405 4051 
+C 3053 4333 2739 4486 2182 4486 
 z
 " transform="scale(0.015625)"/>
      </defs>
-     <use xlink:href="#FiraSans-Regular-130"/>
+     <use xlink:href="#FiraSans-Regular-2c"/>
     </g>
    </g>
    <g id="text_14">

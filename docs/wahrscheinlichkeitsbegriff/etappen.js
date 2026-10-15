@@ -29,6 +29,10 @@
    Die Geometrie rechnet in matplotlib-Richtung - y waechst nach OBEN.
    SVG rechnet umgekehrt. Deshalb die eine Spiegelung in Y(). */
 const VH = 100;                        // Hoehe des Zeichenfeldes
+/* Angezeigt als A, B, C, intern M, V, W - siehe zeichnen.NAMEN. */
+const NAME = f => (D.venn.beschriftung || {})[f] || f;
+/* Die Legende ueber den Venns, siehe flaeche.legende(). */
+const LEGENDE = () => `<div class="legendezeile">${D.legende || ''}</div>`;
 const Y = y => VH - y;
 
 /* Was der Nutzer in eine Luecke geschrieben hat. */
@@ -134,7 +138,7 @@ function vennBild(e, editierbar, richtig){
              + `style="stroke:${farbe}"/>`);
     teile.push(`<text x="${mx - k.b/2 + k.h*0.25}" y="${Y(my)}" `
              + `class="${feld === 'aus' ? 'vrand' : 'vname'} vlinks" `
-             + `style="fill:${farbe}">${feld === 'aus' ? 'aussen' : feld}</text>`);
+             + `style="fill:${farbe}">${feld === 'aus' ? 'aussen' : NAME(feld)}</text>`);
     teile.push(zelle(feld, mx + k.b/2 - k.h*0.92, my, 'imkasten'));
   });
 
@@ -210,7 +214,7 @@ function nachrechnen(e, richtig){
     if (w[rand] === null || fs.some(f => w[f] === null)) return;
     const summe = fs.reduce((s,f) => s + w[f], 0);
     if (Math.abs(summe - w[rand]) > TOLERANZ)
-      verstoss.push(`${rand} ist mit ${w[rand].toString().replace('.',',')} % `
+      verstoss.push(`${NAME(rand)} ist mit ${w[rand].toString().replace('.',',')} % `
         + `angegeben, die Felder darin ergeben ${summe.toFixed(1)
         .replace('.',',')} %.`);
   });
@@ -260,7 +264,8 @@ function etappe1(){
     `<button class="knopf leer" id="leeren" title="Alle Eingaben löschen">↺</button>
      <button class="knopf" id="nachrechnen">Nachrechnen</button>
      <span class="befund" id="befund"></span>
-     <button class="knopf leer" id="weiter" style="margin-left:auto">Weiter: Was ist nicht erfüllt? →</button>`);
+     <button class="knopf leer" id="weiter" style="margin-left:auto">Weiter: Was ist nicht erfüllt? →</button>`,
+    LEGENDE());
 
   const tisch = document.getElementById('tisch');
   tisch.innerHTML = '';
@@ -427,7 +432,7 @@ function etappe1einordnen(){
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 2 →</button>`,
-    '', '', [0.62, 1.6]);
+    LEGENDE(), '', [0.62, 1.6]);
 
   const feld = document.getElementById('feld'), tisch = document.getElementById('tisch');
   const els = {};
@@ -604,9 +609,9 @@ function etappe2(){
        + 'Erhebungen passt: In Kapitel 1 bis 3 galt jede Sorte als gleich '
        + 'beliebt.'},
     'Die drei möglichen Erhebungen', 'Das Modell prüfen',
-    `<span class="zart">Ein Klick auf M, V oder W in einer Erhebung wählt das Ereignis.</span>
+    `<span class="zart">Ein Klick auf A, B oder C in einer Erhebung wählt das Ereignis.</span>
      <button class="knopf leer" id="weiter" style="margin-left:auto">Etappe 3 →</button>`,
-    '', '', [0.42, 1.7]);
+    LEGENDE(), '', [0.42, 1.7]);
 
   const B = D.e2.bernoulli, MO = D.e2.modell;
   const st = stand.bern = Object.assign(
@@ -656,7 +661,7 @@ function etappe2(){
     + `</span></div>`
     + `<div class="zeile"><span class="lab">Ereignis</span><span class="bwahl" id="bwa">`
     + ['M','V','W'].map(f => `<button class="knopf leer" data-ereignis="${f}" `
-        + `style="--kfarbe:${D.venn.farben[f]}">${f}</button>`).join(' ')
+        + `style="--kfarbe:${D.venn.farben[f]}">${NAME(f)}</button>`).join(' ')
     + `</span><span class="zart" id="bh"></span></div>`
     + `<div class="zeile"><span class="lab">n</span>`
     + `<input type="range" id="bn" min="0" max="${NWERTE.length - 1}" step="1">`
@@ -673,7 +678,7 @@ function etappe2(){
   const X = v => 10 + v * 2.8;
   const erh = () => D.e2.drei.find(d => d.id === st.erh);
   const k1 = (z, d) => z.toFixed(d === undefined ? 1 : d).replace('.', ',');
-  const hn = f => `h<sub>n</sub>(${f})`;
+  const hn = f => `h<sub>n</sub>(${NAME(f)})`;
 
   /* Die vier Schritte.
 
@@ -684,11 +689,11 @@ function etappe2(){
      der naechsten Erhebung von vorn an. Die Antworten in Schritt 2 und 3
      werden je Erhebung und Ereignis gemerkt - sonst ueberschriebe E7, was
      man zu E2 geschrieben hat. */
-  const wahl = () => `${st.erh}, ${st.ereignis}`;
+  const wahl = () => `${st.erh}, ${NAME(st.ereignis)}`;
   const SCHRITTE = [
     {titel: 'Erhebung und Ereignis wählen',
      text: () => `Wählen Sie links eine der drei Erhebungen und darin ein `
-       + `Ereignis: ein Klick auf <b>M</b>, <b>V</b> oder <b>W</b>. Stellen Sie `
+       + `Ereignis: ein Klick auf <b>A</b>, <b>B</b> oder <b>C</b>. Stellen Sie `
        + `dann n auf die Zahl ihrer Beobachtungen.`,
      erfuellt: () => NWERTE[st.stufe] === erh().n},
     {titel: 'Wie wahrscheinlich?',
@@ -696,7 +701,7 @@ function etappe2(){
        + `ein, dass ${hn(st.ereignis)} gerade <b>ausserhalb</b> des Bandes `
        + `liegt. <b>Wenn das Modell stimmt:</b> Mit welcher Wahrscheinlichkeit `
        + `liegt ${hn(st.ereignis)} bei so vielen Beobachtungen näher als &#949; `
-       + `an p(${st.ereignis})? Was heisst das für das Modell?`,
+       + `an p(${NAME(st.ereignis)})? Was heisst das für das Modell?`,
      schreib: () => `e2s2_${st.erh}_${st.ereignis}`},
     {titel: 'Wie gross müsste die Erhebung sein?',
      text: () => `<span class="zart">${wahl()}</span><br>Angenommen, die `
@@ -795,7 +800,7 @@ function etappe2(){
     st.eps = +document.getElementById('be').value;
     const n = NWERTE[st.stufe], eps = st.eps;
     document.getElementById('bmodell').innerHTML =
-      `Modell «alle Sorten gleich beliebt»: p(${f}) = ${MO.herleitung[f]} `
+      `Modell «alle Sorten gleich beliebt»: p(${NAME(f)}) = ${MO.herleitung[f]} `
       + `≈ <b>${pz(p)}</b>`;
     document.getElementById('bh').innerHTML = `${hn(f)} von ${d.id} = ${pz(h)}`;
     document.getElementById('bnw').textContent = n.toLocaleString('de-CH')
@@ -812,9 +817,9 @@ function etappe2(){
           + `${v === 0 ? 'start' : v === 100 ? 'end' : 'middle'}">${v} %</text>`;
     });
     sv += `<line x1="${X(p)}" y1="9" x2="${X(p)}" y2="35" class="p"/>`
-        + `<text x="${X(p)}" y="7" class="pt">p(${f})</text>`
+        + `<text x="${X(p)}" y="7" class="pt">p(${NAME(f)})</text>`
         + `<circle cx="${X(h)}" cy="22" r="4.5" class="h"/>`
-        + `<text x="${X(h)}" y="43" class="ht">h(${f})</text>`;
+        + `<text x="${X(h)}" y="43" class="ht">h(${NAME(f)})</text>`;
     document.getElementById('bstrahl').innerHTML = sv;
 
     const schranke = 1 - 1 / (4 * n * eps * eps);

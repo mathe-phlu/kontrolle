@@ -598,6 +598,13 @@ svg.venn input.vfeld.vfalsch{border:.9px solid var(--falsch);color:var(--falsch)
 .vennbefund details.weg div{padding-left:8px;text-indent:-8px;margin-top:2px}
 .vennbefund details.weg .zart{color:var(--matt)}
 /* Kapitel 4, Zug 2: Die Erhebung ist das Feld, ihr Venn der Kopf. */
+/* Kapitel 4 (2026-10-15): Legende - was A, B und C bedeuten. */
+.legendezeile{margin:0 0 8px;padding:6px 12px;background:var(--karte);
+   border:1px solid var(--linie);border-radius:9px;font-size:13px;line-height:1.5}
+.legende{display:block}
+.legende .lgbecher{display:block;color:var(--matt)}
+.legende .lgereignisse{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:2px}
+.legende .lgeintrag b{font-size:15px;margin-right:3px}
 .feld.erhfeld .kopf{display:block}
 /* Die Karten rechnen ihre Verschiebung vom Feldrand aus. Ohne festen
    Ursprung nahmen sie ihn hinter dem Kopf - und der ist hier ein ganzes
