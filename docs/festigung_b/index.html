@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Cache-Control" content="no-cache">
+<title>Festigung Teil B — Daten und Zufall</title>
+<style>
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:400;src:url('schriften/FiraSans-Regular.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:italic;font-weight:400;src:url('schriften/FiraSans-Italic.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:600;src:url('schriften/FiraSans-SemiBold.woff') format('woff')}
+@font-face{font-family:'Fira Sans';font-style:normal;font-weight:700;src:url('schriften/FiraSans-Bold.woff') format('woff')}
+@font-face{font-family:'Patrick Hand';font-style:normal;font-weight:400;src:url('schriften/PatrickHand-Regular.woff') format('woff')}
+</style>
+
+<style>
+:root{ --papier:#f8f4ec; --creme:#f6ecdf; --karte:#fffefb;
+       --tinte:#2d2924; --matt:#6c6357; --linie:#e4d9c7;
+       --blase:#efe2cd;
+       --druck:'Fira Sans','Segoe UI',-apple-system,sans-serif;
+       --hand:'Patrick Hand',cursive;
+       --akzent:#007D57; --akzentblass:#007D5714; }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font:15px/1.6 var(--druck);color:var(--tinte);
+     background:var(--papier);display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:14px;padding:9px 18px;
+       border-bottom:1px solid var(--linie);background:var(--karte);flex:0 0 auto}
+header .streifen{width:5px;height:26px;background:var(--akzent);border-radius:3px;
+                 transition:background .2s}
+header h1{font-family:var(--hand);font-size:21px;margin:0;font-weight:400;white-space:nowrap}
+header .zart{color:var(--matt);font-size:13px;margin-left:auto}
+header .zurueck{font-size:13px;color:var(--matt);text-decoration:none;
+                border:1px solid var(--linie);border-radius:7px;padding:3px 10px;white-space:nowrap}
+header .zurueck:hover{color:var(--akzent);border-color:var(--akzent)}
+
+.buehne{flex:1 1 auto;display:flex;gap:0;min-height:0}
+
+/* ---- die Landkarte, immer sichtbar ---- */
+.karte-links{flex:0 0 auto;width:330px;overflow:auto;padding:12px 10px 16px 14px;
+             border-right:1px solid var(--linie);background:var(--creme)}
+.karte-links h2{font-family:var(--hand);font-size:18px;font-weight:400;
+                margin:0 0 3px;color:var(--matt)}
+.karte-links .hinweis{font-size:12px;color:var(--matt);margin:0 0 10px}
+table.matrix{border-collapse:separate;border-spacing:3px;width:100%}
+table.matrix th{font-size:10.5px;font-weight:600;color:var(--matt);
+                padding:0 0 3px;text-align:center;line-height:1.25}
+table.matrix th.welt{text-align:left;padding-right:5px;font-size:11.5px}
+table.matrix td{padding:0}
+.zelle{display:block;width:100%;height:30px;border-radius:7px;border:1.5px solid;
+       background:var(--karte);cursor:pointer;font:inherit;font-size:11px;
+       color:var(--matt);transition:transform .1s}
+.zelle:hover:not(:disabled){transform:scale(1.06)}
+.zelle:disabled{cursor:default;font-size:10px;font-style:italic;opacity:.75}
+.zelle[aria-current=true]{color:#fff;font-weight:600}
+
+/* ---- die Aufgabe ---- */
+.aufgabe{flex:1 1 auto;overflow:auto;padding:16px 22px 40px}
+.kopfzeile{display:flex;gap:16px;align-items:flex-start;
+           background:var(--karte);border:1px solid var(--linie);
+           border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.kopfzeile .welt{font-family:var(--hand);font-size:24px;margin:0 0 2px}
+.kopfzeile .kurz{color:var(--matt);font-size:13px;margin:0 0 8px}
+.kopfzeile .kontext{font-size:14.5px}
+
+.schwerpunkt{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+.schwerpunkt .nr{background:var(--akzent);color:#fff;border-radius:6px;
+                 padding:2px 10px;font-size:13px;font-weight:600}
+.schwerpunkt h3{font-family:var(--hand);font-size:22px;font-weight:400;margin:0;
+                color:var(--akzent)}
+
+.einleitung{margin:0 0 12px;font-size:15px}
+ol.auftraege{margin:0;padding-left:26px}
+ol.auftraege > li{margin:0 0 16px;padding-left:3px}
+ol.auftraege > li::marker{color:var(--akzent);font-weight:600}
+
+/* Loesung je Teilaufgabe - derselbe Knopf und dieselbe Blase wie in
+   Teil A, nur kleiner und unter jeder Teilaufgabe. */
+.loesung{margin-top:6px}
+.loesung button{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:8px;
+   border:1px solid var(--linie);background:var(--karte);color:var(--tinte);
+   cursor:pointer}
+.loesung button:hover{border-color:var(--akzent);color:var(--akzent)}
+.loesung .inhalt p{margin:0 0 9px}
+.loesung .inhalt p:last-child{margin-bottom:0}
+.loesung .inhalt{display:none;margin-top:8px;background:var(--blase);
+   border-left:4px solid var(--akzent);border-radius:7px;padding:11px 14px;
+   font-size:14px;overflow-x:auto}
+.loesung.offen .inhalt{display:block}
+.matt{color:var(--matt)}
+
+/* Vierfeldertafel und Baum in den Loesungen */
+table.tafel{border-collapse:collapse;margin:6px 0 10px;font-size:13.5px;
+   background:var(--karte)}
+table.tafel th,table.tafel td{border:1px solid var(--linie);padding:4px 10px;
+   text-align:center;white-space:nowrap}
+table.tafel th{font-weight:600;color:var(--matt);background:var(--creme)}
+table.tafel tr:last-child td,table.tafel td:last-child{font-weight:600}
+svg.baum{display:block;width:100%;max-width:400px;height:auto;margin:4px 0 10px}
+svg.baum line{stroke:var(--matt);stroke-width:1.2}
+svg.baum .knoten{fill:var(--matt)}
+svg.baum text{font-family:var(--druck);fill:var(--tinte)}
+svg.baum text.e{font-size:15px;font-weight:600;text-anchor:middle}
+svg.baum text.p{font-size:12.5px;fill:var(--akzent);text-anchor:middle}
+svg.baum text.pfad{font-size:12.5px;fill:var(--matt);text-anchor:start}
+
+.weiter{display:flex;gap:10px;margin-top:26px;padding-top:16px;
+        border-top:1px solid var(--linie);flex-wrap:wrap}
+.weiter button{font:inherit;font-size:13.5px;padding:8px 15px;border-radius:8px;
+   border:1px solid var(--linie);background:var(--karte);cursor:pointer;
+   text-align:left;line-height:1.35}
+.weiter button:hover{border-color:var(--akzent)}
+.weiter button b{display:block;font-weight:600;font-size:12px;color:var(--matt)}
+/* Fehlerkasten in der Farbe des Kapitels, wie in Teil A. */
+.fehlerkasten{margin:8px 0 4px;padding:9px 13px;border-radius:8px;
+   background:var(--akzentblass);border-left:4px solid var(--akzent);
+   font-style:italic;font-size:14px;color:var(--tinte)}
+.knacknuss{display:inline-block;background:var(--akzent);color:#fff;
+   border-radius:5px;padding:1px 8px;font-size:11px;font-weight:600;
+   margin-right:5px;font-style:normal}
+b{font-weight:600}
+/* ───────── Die Notizleiste (auf allen Seiten gleich) ─────────
+   Sie steht unten und ist zugeklappt eine Zeile hoch. Aufgeklappt
+   nimmt sie hoechstens die halbe Seite - man soll noch sehen, worueber
+   man schreibt. */
+.notizleiste{position:fixed;left:0;right:0;bottom:0;z-index:100001;
+   background:var(--karte);border-top:2px solid var(--akzent);
+   box-shadow:0 -3px 14px rgba(45,41,36,.13);font:14px var(--druck)}
+.notizgriff{display:block;width:100%;text-align:left;border:none;
+   background:none;font:inherit;font-size:13.5px;color:var(--tinte);
+   padding:7px 18px;cursor:pointer}
+.notizgriff:hover{background:var(--creme)}
+.notizgriff .stift{color:var(--akzent);font-size:15px;margin-right:5px}
+.notizgriff .zart{color:var(--matt)}
+.notizinhalt{display:none;padding:0 18px 12px;max-height:46vh;overflow:auto}
+.notizleiste.offen .notizinhalt{display:block}
+.notizwo{font-size:12px;color:var(--matt);margin-bottom:6px}
+.notiztext{width:100%;min-height:62px;box-sizing:border-box;font:14px var(--druck);
+   padding:8px 10px;border:1px solid var(--linie);border-radius:8px;
+   background:#fff;color:var(--tinte);resize:vertical}
+.notiztext:focus{outline:none;border-color:var(--akzent)}
+.notizmalen{position:relative;margin-top:8px}
+.notizblatt{display:block;width:100%;height:120px;background:#fff;
+   border:1px dashed var(--akzent);border-radius:8px;cursor:crosshair;
+   touch-action:none}
+.notizhinweis{position:absolute;left:10px;top:6px;font-size:12px;
+   color:var(--matt);pointer-events:none}
+.notizknoepfe{display:flex;gap:8px;align-items:center;margin-top:8px}
+.notizknoepfe button{font:inherit;font-size:13px;padding:6px 12px;
+   border-radius:8px;border:1px solid var(--linie);background:var(--karte);
+   color:var(--tinte);cursor:pointer}
+.notizknoepfe button:hover{border-color:var(--akzent);color:var(--akzent)}
+.notizstand{font-size:12px;color:#2E7D32}
+
+/* ───────── Gemeinsames Brett (2026-09-08) ─────────
+   Nur sichtbar, wenn gemeinsam.js geladen ist. Ohne das Modul
+   erzeugt niemand diese Klassen, und die Regeln greifen ins Leere. */
+.gemeinsam{display:inline-flex;align-items:center;gap:6px;margin-left:12px;
+  font-size:12.5px;color:var(--matt)}
+.gemeinsam i{width:8px;height:8px;border-radius:50%;background:#c9c2b5;
+  display:inline-block}
+.gemeinsam.gut i{background:#3f8f4f}
+.gemeinsam.warten i{background:#d6a531}
+.gemeinsam.fehler i{background:#b4442f}
+.gemeinsam.fehler{color:#b4442f}
+
+/* Eine Karte, die jemand anders gerade haelt. Kein Sperren - man
+   koennte sie wegnehmen. Aber man sieht, dass es gerade jemand tut,
+   und das genuegt, damit es niemand tut. */
+.k.fremdehand{outline:2.5px solid var(--hand,#888);outline-offset:2px;
+  box-shadow:0 0 0 6px color-mix(in srgb, var(--hand,#888) 18%, transparent)}
+
+/* ───────── Der Ziehgriff zwischen den Flächen ─────────
+   NEU (2026-09-10, Rückmeldung der Studierenden zum ersten Einsatz):
+   «Manchmal wäre es cool, wenn man den unsortierten und den sortierten
+   Bereich etwas anpassen kann.» Siehe _griffeSetzen() in flaeche.js.
+
+   Der Griff ist schmal, aber sein TASTBEREICH ist breiter als das, was
+   man sieht (::before) — dieselbe Überlegung wie beim Einrasten: Wer
+   knapp danebentrifft, soll trotzdem treffen. Sichtbar wird er erst
+   unter dem Zeiger; ständig sichtbar wäre er ein dritter Strich
+   zwischen zwei Flächen, die schon Rahmen haben. */
+/* WICHTIG - der Griff nimmt KEINE Breite ein (`flex:0 0 0`). Er sitzt
+   in der Lücke, die `.buehne` mit ihrem `gap` ohnehin lässt. Als
+   eigenes Flex-Item mit 8 Punkten Breite hätte er die Lücke zwischen
+   den Flächen von 10 auf 28 Punkte verbreitert - und damit dieselbe
+   tote Zone geschaffen, die oben gerade beseitigt wurde, nur genau auf
+   dem Weg, den jede Karte nimmt. */
+.teiler{position:relative;flex:0 0 0;width:0;align-self:stretch;
+        cursor:col-resize;touch-action:none;
+        /* Der Griff ist ein eigenes Flex-Kind und erzeugt damit ZWEI
+           `gap`-Lücken statt einer. Die negativen Ränder heben die
+           zweite auf: Der Abstand zwischen den Flächen bleibt genau
+           der, den er ohne Griff hatte. */
+        margin:0 -5px}
+.teiler::before{content:'';position:absolute;left:-7px;right:-7px;
+        top:0;bottom:0;border-radius:4px;
+        background:transparent;transition:background .12s}
+.teiler::after{content:'';position:absolute;left:50%;top:50%;
+        width:3px;height:34px;margin:-17px 0 0 -1.5px;border-radius:2px;
+        background:var(--linie);opacity:.55;transition:opacity .12s}
+.teiler:hover::before{background:rgba(0,0,0,.05)}
+.teiler.zieht::before{background:rgba(0,0,0,.08)}
+.teiler:hover::after,.teiler.zieht::after{opacity:1}
+.teiler.quer{cursor:row-resize;width:auto;height:0;align-self:auto;
+        margin:-5px 0}
+.teiler.quer::before{left:0;right:0;top:-7px;bottom:-7px}
+.teiler.quer::after{width:34px;height:3px;margin:-1.5px 0 0 -17px}
+/* Solange eine Karte in der Luft ist, fängt der Griff nichts ab —
+   er liegt genau auf dem Weg zwischen Tisch und Feld. Siehe ziehbar(). */
+.kartezieht .teiler{pointer-events:none}
+
+/* ───────── «Alles mitnehmen» — die Bilder selbst zeigen ─────────
+   NEU (2026-09-10, Rikes Auftrag): «Es reicht keine Liste, denn sie
+   haben das Bild in jeder Etappe im Kopf.» Die Bilder stehen
+   untereinander, in voller Breite, mit derselben gestrichelten
+   Anmutung wie die Felder auf der Fläche. */
+.start.mitnehmen{max-width:none}
+.schau{margin-top:22px;display:flex;flex-direction:column;gap:26px}
+.schau figure{margin:0}
+.schau figcaption{font-family:var(--hand);font-size:16px;color:var(--matt);
+   margin-bottom:6px}
+.schau img{display:block;width:100%;height:auto;border:1px solid var(--linie);
+   border-radius:10px;background:var(--papier)}
+.schau .platz{border:1px dashed var(--linie);border-radius:10px;
+   padding:26px;color:var(--matt);font-size:13px;text-align:center}
+
+.formel{font-family:'Pennstander Math','Cambria Math',Georgia,serif;white-space:nowrap}
+.formel sub{font-size:.72em;line-height:0}
+.bruch{display:inline-flex;flex-direction:column;vertical-align:middle;
+   text-align:center;line-height:1.06;margin:0 .15em;font-style:normal}
+.bruch i:first-child{border-bottom:1px solid currentColor}
+.bruch i{font-style:normal;padding:0 .18em}
+.quer{border-top:1px solid currentColor;padding-top:1px}
+</style></head><body>
+
+<header><a class="zurueck" href="../teil_b.html">← Teil B</a>
+  <div class="streifen" id="streifen"></div>
+  <h1>Festigung · Teil B · Kapitel 5–8</h1>
+  <span class="zart" id="wostehe"></span>
+</header>
+
+<div class="buehne">
+  <div class="karte-links">
+    <h2>Landkarte</h2>
+    <p class="hinweis">Vier Welten, vier Kapitel. Jedes Feld ist eine Aufgabe.</p>
+    <table class="matrix" id="matrix"></table>
+  </div>
+  <div class="aufgabe" id="aufgabe"></div>
+</div>
+
+<script>
+const D = {"welten": [{"kuerzel": "B.1", "welt": "Würfel", "kurz": "abzählbar — die Referenzwelt", "bild": "", "kontext": "Zwei Würfel werden geworfen.", "kapitel": {"5": {"name": "Bedingte Wahrscheinlichkeit", "einleitung": "A: «Augensumme mindestens 9», B: «der erste Würfel zeigt eine 6».", "teile": [{"text": "Füllen Sie die Vierfeldertafel durch Abzählen der 36 Ergebnisse aus, mit Anzahlen und mit Wahrscheinlichkeiten. Übertragen Sie danach in einen Baum, der zuerst nach B fragt.", "loesung": "<p>Anzahlen, in Klammern die Wahrscheinlichkeiten:</p><table class='tafel'><tr><th></th><th><span class='formel'>B</span></th><th><span class='formel'><span class='quer'>B</span></span></th><th>gesamt</th></tr><tr><th><span class='formel'>A</span></th><td>4 <span class='matt'>(<span class='bruch'><i>4</i><i>36</i></span>)</span></td><td>6 <span class='matt'>(<span class='bruch'><i>6</i><i>36</i></span>)</span></td><td>10 <span class='matt'>(<span class='bruch'><i>10</i><i>36</i></span>)</span></td></tr><tr><th><span class='formel'><span class='quer'>A</span></span></th><td>2 <span class='matt'>(<span class='bruch'><i>2</i><i>36</i></span>)</span></td><td>24 <span class='matt'>(<span class='bruch'><i>24</i><i>36</i></span>)</span></td><td>26 <span class='matt'>(<span class='bruch'><i>26</i><i>36</i></span>)</span></td></tr><tr><th>gesamt</th><td>6 <span class='matt'>(<span class='bruch'><i>6</i><i>36</i></span>)</span></td><td>30 <span class='matt'>(<span class='bruch'><i>30</i><i>36</i></span>)</span></td><td>36 <span class='matt'>(<span class='bruch'><i>36</i><i>36</i></span>)</span></td></tr></table><p>Also <span class='formel'>P(A) = <span class='bruch'><i>10</i><i>36</i></span></span> und <span class='formel'>P(B) = <span class='bruch'><i>6</i><i>36</i></span></span>. Im Baum stehen auf der zweiten Stufe die Anteile <i>innerhalb</i> der Spalte: von den 6 Ergebnissen in B liegen 4 in A, von den 30 in <span class='formel'><span class='quer'>B</span></span> liegen 6 in A.</p><svg class='baum' viewBox='0 0 400 186' role='img' aria-label='Baumdiagramm'><circle cx='14' cy='93' r='3.5' class='knoten'/><line x1='18' y1='93' x2='138' y2='48'/><text x='70' y='63.5' class='p'>1/6</text><text x='152' y='53' class='e'>B</text><line x1='166' y1='48' x2='278' y2='18'/><text x='214' y='27.0' class='p'>4/6</text><text x='292' y='23' class='e'>A</text><text x='328' y='23' class='pfad'>4/36</text><line x1='166' y1='48' x2='278' y2='74'/><text x='214' y='76.0' class='p'>2/6</text><text x='292' y='79' class='e'><tspan style='text-decoration:overline'>A</tspan></text><text x='328' y='79' class='pfad'>2/36</text><line x1='18' y1='93' x2='138' y2='138'/><text x='70' y='131.5' class='p'>5/6</text><text x='152' y='143' class='e'><tspan style='text-decoration:overline'>B</tspan></text><line x1='166' y1='138' x2='278' y2='112'/><text x='214' y='119.0' class='p'>6/30</text><text x='292' y='117' class='e'>A</text><text x='328' y='117' class='pfad'>6/36</text><line x1='166' y1='138' x2='278' y2='168'/><text x='214' y='168.0' class='p'>24/30</text><text x='292' y='173' class='e'><tspan style='text-decoration:overline'>A</tspan></text><text x='328' y='173' class='pfad'>24/36</text></svg>"}, {"text": "Der erste Würfel zeigt eine 6. Wie wahrscheinlich ist die Summe mindestens 9? Und umgekehrt: Die Summe ist mindestens 9. Wie wahrscheinlich zeigte der erste Würfel eine 6? Geben Sie an, wo Sie beides in Baum und Tafel ablesen.", "loesung": "<p><span class='formel'>P<sub>B</sub>(A) = <span class='bruch'><i>4</i><i>6</i></span> = <span class='bruch'><i>2</i><i>3</i></span></span>. Im Baum steht der Wert direkt auf dem Ast von B nach A. In der Tafel: Spalte B, also 6 Ergebnisse, davon 4 im Feld A∩B.</p><p><span class='formel'>P<sub>A</sub>(B) = <span class='bruch'><i>4</i><i>10</i></span> = 0.4</span>. In der Tafel: Zeile A, also 10 Ergebnisse, davon 4 in der Spalte B. Im Baum steht dieser Wert auf keinem Ast. Man teilt den Pfad B–A (<span class='bruch'><i>4</i><i>36</i></span>) durch alle Pfade, die in A enden (<span class='bruch'><i>4</i><i>36</i></span> + <span class='bruch'><i>6</i><i>36</i></span> = <span class='bruch'><i>10</i><i>36</i></span>).</p>"}, {"text": "<b>Fehlerkasten.</b> Jemand schreibt:<div class='fehlerkasten'>«<span class='formel'>P<sub>B</sub>(A) = <span class='bruch'><i>2</i><i>3</i></span></span>, also ist auch <span class='formel'>P<sub>A</sub>(B) = <span class='bruch'><i>2</i><i>3</i></span></span>.»</div>Was ist falsch?", "loesung": "<p>Die beiden Anteile haben verschiedene Bezugsgruppen. <span class='formel'>P<sub>B</sub>(A)</span> zählt unter den 6 Ergebnissen mit einer 6 vorne, <span class='formel'>P<sub>A</sub>(B)</span> unter den 10 Ergebnissen mit Summe mindestens 9. Der Zähler ist beide Male 4, der Nenner nicht: <span class='formel'><span class='bruch'><i>4</i><i>6</i></span> ≠ <span class='bruch'><i>4</i><i>10</i></span></span>.</p>"}, {"text": "<span class='knacknuss'>Knacknuss</span> Sind A und B unabhängig? Finden Sie ein Ereignis C zum zweiten Würfel, das von B unabhängig ist, und begründen Sie es mit der Tafel.", "loesung": "<p>A und B sind abhängig: <span class='formel'>P(A∩B) = <span class='bruch'><i>4</i><i>36</i></span></span>, aber <span class='formel'>P(A)·P(B) = <span class='bruch'><i>10</i><i>36</i></span>·<span class='bruch'><i>6</i><i>36</i></span> = <span class='bruch'><i>60</i><i>1296</i></span></span>. Gleichwertig: <span class='formel'>P<sub>B</sub>(A) = <span class='bruch'><i>2</i><i>3</i></span></span> ist grösser als <span class='formel'>P(A) = <span class='bruch'><i>10</i><i>36</i></span> ≈ 0.278</span>. Eine 6 vorne macht eine hohe Summe wahrscheinlicher.</p><p>Ein mögliches C: «der zweite Würfel zeigt eine gerade Zahl». In der Tafel zu B und C stehen 3, 3, 15 und 15 Ergebnisse. <span class='formel'>P(B∩C) = <span class='bruch'><i>3</i><i>36</i></span> = <span class='bruch'><i>1</i><i>6</i></span>·<span class='bruch'><i>1</i><i>2</i></span> = P(B)·P(C)</span>. An der Tafel sieht man es auch so: In der Spalte B ist der Anteil von C <span class='bruch'><i>3</i><i>6</i></span>, in der Spalte <span class='formel'><span class='quer'>B</span></span> ist er <span class='bruch'><i>15</i><i>30</i></span>, also gleich gross.</p>"}]}}}, {"kuerzel": "B.2", "welt": "Schnelltest", "kurz": "selten krank, guter Test", "bild": "", "kontext": "Ein Schnelltest auf eine Krankheit.", "kapitel": {"5": {"name": "Bedingte Wahrscheinlichkeit", "einleitung": "Eine Krankheit hat einen Anteil von 0.05 an der Bevölkerung. Der Schnelltest erkennt Erkrankte mit Wahrscheinlichkeit 0.9. Bei Gesunden fällt er mit Wahrscheinlichkeit 0.05 trotzdem positiv aus.", "teile": [{"text": "Tragen Sie die Angaben in Baum und Vierfeldertafel ein. Nennen Sie je einen Vor- und einen Nachteil der beiden Darstellungen.", "loesung": "<p>K: «erkrankt», T: «Test positiv».</p><svg class='baum' viewBox='0 0 400 186' role='img' aria-label='Baumdiagramm'><circle cx='14' cy='93' r='3.5' class='knoten'/><line x1='18' y1='93' x2='138' y2='48'/><text x='70' y='63.5' class='p'>0.05</text><text x='152' y='53' class='e'>K</text><line x1='166' y1='48' x2='278' y2='18'/><text x='214' y='27.0' class='p'>0.9</text><text x='292' y='23' class='e'>T</text><text x='328' y='23' class='pfad'>0.045</text><line x1='166' y1='48' x2='278' y2='74'/><text x='214' y='76.0' class='p'>0.1</text><text x='292' y='79' class='e'><tspan style='text-decoration:overline'>T</tspan></text><text x='328' y='79' class='pfad'>0.005</text><line x1='18' y1='93' x2='138' y2='138'/><text x='70' y='131.5' class='p'>0.95</text><text x='152' y='143' class='e'><tspan style='text-decoration:overline'>K</tspan></text><line x1='166' y1='138' x2='278' y2='112'/><text x='214' y='119.0' class='p'>0.05</text><text x='292' y='117' class='e'>T</text><text x='328' y='117' class='pfad'>0.0475</text><line x1='166' y1='138' x2='278' y2='168'/><text x='214' y='168.0' class='p'>0.95</text><text x='292' y='173' class='e'><tspan style='text-decoration:overline'>T</tspan></text><text x='328' y='173' class='pfad'>0.9025</text></svg><table class='tafel'><tr><th></th><th><span class='formel'>T</span></th><th><span class='formel'><span class='quer'>T</span></span></th><th>gesamt</th></tr><tr><th><span class='formel'>K</span></th><td>0.045</td><td>0.005</td><td>0.05</td></tr><tr><th><span class='formel'><span class='quer'>K</span></span></th><td>0.0475</td><td>0.9025</td><td>0.95</td></tr><tr><th>gesamt</th><td>0.0925</td><td>0.9075</td><td>1</td></tr></table><p><b>Baum.</b> Vorteil: Die gegebenen Angaben (0.05, 0.9, 0.05) stehen unverändert auf den Ästen, die Pfadregel liefert die Felder. Nachteil: Die Rückfrage «positiv, also krank?» steht auf keinem Ast.</p><p><b>Tafel.</b> Vorteil: Alle Und-Wahrscheinlichkeiten und die Ränder stehen nebeneinander, man kann in beide Richtungen bedingen. Nachteil: Die bedingten Anteile aus der Aufgabe sieht man nicht mehr, man muss sie erst ausrechnen.</p>"}, {"text": "Mit welcher Wahrscheinlichkeit ist ein Test positiv? Ein Test ist positiv. Wie wahrscheinlich ist die Person erkrankt? Beschreiben Sie den Weg im Baum und in der Tafel.", "loesung": "<p><span class='formel'>P(T) = 0.045 + 0.0475 = 0.0925</span>. Im Baum: die beiden Pfade, die in T enden, addieren. In der Tafel: die Spaltensumme unter T.</p><p><span class='formel'>P<sub>T</sub>(K) = <span class='bruch'><i>0.045</i><i>0.0925</i></span> = <span class='bruch'><i>18</i><i>37</i></span> ≈ 0.486</span>. Im Baum: den Pfad K–T durch alle T-Pfade teilen. In der Tafel: das Feld K∩T durch die Spaltensumme T teilen.</p><p>Weniger als die Hälfte der positiv Getesteten ist krank. Die vielen Gesunden liefern mehr falsch positive Tests (0.0475) als die wenigen Kranken richtig positive (0.045).</p>"}, {"text": "<b>Fehlerkasten.</b> Jemand schreibt:<div class='fehlerkasten'>«Der Test erkennt 90&nbsp;% der Kranken. Wer positiv getestet ist, ist also zu 90&nbsp;% krank.»</div>Was ist falsch?", "loesung": "<p>Die 90&nbsp;% sind <span class='formel'>P<sub>K</sub>(T) = 0.9</span>: der Anteil der Positiven unter den Kranken. Gefragt ist <span class='formel'>P<sub>T</sub>(K)</span>: der Anteil der Kranken unter den Positiven, und der beträgt nur <span class='formel'>≈ 0.486</span>. Der Satz verwechselt Bedingung und Ereignis.</p>"}, {"text": "<span class='knacknuss'>Knacknuss</span> Wie gross müsste der Anteil der Erkrankten mindestens sein, damit ein positiver Test mit Wahrscheinlichkeit mindestens 0.9 Erkrankung bedeutet?", "loesung": "<p>Mit dem Anteil p der Erkrankten: <span class='formel'><span class='bruch'><i>0.9p</i><i>0.9p + 0.05(1 − p)</i></span> ≥ 0.9</span>. Umgeformt: 0.9p ≥ 0.81p + 0.045 − 0.045p, also 0.135p ≥ 0.045 und <span class='formel'>p ≥ <span class='bruch'><i>1</i><i>3</i></span></span>. Erst wenn ein Drittel der Getesteten erkrankt ist, sagt ein positiver Test so viel, wie die 90&nbsp;% vermuten lassen.</p><p>Zum Vergleich der negative Test bei p = 0.05: <span class='formel'>P<sub><span class='quer'>T</span></sub>(<span class='quer'>K</span>) = <span class='bruch'><i>0.9025</i><i>0.9075</i></span> ≈ 0.994</span>. Ein negativer Test ist fast sicher richtig.</p>"}]}}}, {"kuerzel": "B.3", "welt": "Umfrage", "kurz": "Angaben als Anzahlen", "bild": "", "kontext": "Eine Befragung zu einem Vorschlag.", "kapitel": {"5": {"name": "Bedingte Wahrscheinlichkeit", "einleitung": "500 Personen werden zu einem Vorschlag befragt. 200 sind unter 30, 300 sind 30 oder älter. 120 der Jüngeren und 135 der Älteren stimmen zu.", "teile": [{"text": "Füllen Sie die Vierfeldertafel mit Anzahlen und mit Wahrscheinlichkeiten aus. Welche Baumdiagramme lassen sich daraus zeichnen? Zeichnen Sie beide.", "loesung": "<p>J: «unter 30», Z: «stimmt zu». Anzahlen, in Klammern die Wahrscheinlichkeiten:</p><table class='tafel'><tr><th></th><th><span class='formel'>Z</span></th><th><span class='formel'><span class='quer'>Z</span></span></th><th>gesamt</th></tr><tr><th><span class='formel'>J</span></th><td>120 <span class='matt'>(0.24)</span></td><td>80 <span class='matt'>(0.16)</span></td><td>200 <span class='matt'>(0.4)</span></td></tr><tr><th><span class='formel'><span class='quer'>J</span></span></th><td>135 <span class='matt'>(0.27)</span></td><td>165 <span class='matt'>(0.33)</span></td><td>300 <span class='matt'>(0.6)</span></td></tr><tr><th>gesamt</th><td>255 <span class='matt'>(0.51)</span></td><td>245 <span class='matt'>(0.49)</span></td><td>500 <span class='matt'>(1)</span></td></tr></table><p>Aus der Tafel lassen sich zwei Bäume zeichnen: einer, der zuerst nach dem Alter fragt, und einer, der zuerst nach der Zustimmung fragt. Die Pfadenden sind beide Male die vier Felder der Tafel.</p><p><b>Zuerst Alter.</b></p><svg class='baum' viewBox='0 0 400 186' role='img' aria-label='Baumdiagramm'><circle cx='14' cy='93' r='3.5' class='knoten'/><line x1='18' y1='93' x2='138' y2='48'/><text x='70' y='63.5' class='p'>0.4</text><text x='152' y='53' class='e'>J</text><line x1='166' y1='48' x2='278' y2='18'/><text x='214' y='27.0' class='p'>0.6</text><text x='292' y='23' class='e'>Z</text><text x='328' y='23' class='pfad'>0.24</text><line x1='166' y1='48' x2='278' y2='74'/><text x='214' y='76.0' class='p'>0.4</text><text x='292' y='79' class='e'><tspan style='text-decoration:overline'>Z</tspan></text><text x='328' y='79' class='pfad'>0.16</text><line x1='18' y1='93' x2='138' y2='138'/><text x='70' y='131.5' class='p'>0.6</text><text x='152' y='143' class='e'><tspan style='text-decoration:overline'>J</tspan></text><line x1='166' y1='138' x2='278' y2='112'/><text x='214' y='119.0' class='p'>0.45</text><text x='292' y='117' class='e'>Z</text><text x='328' y='117' class='pfad'>0.27</text><line x1='166' y1='138' x2='278' y2='168'/><text x='214' y='168.0' class='p'>0.55</text><text x='292' y='173' class='e'><tspan style='text-decoration:overline'>Z</tspan></text><text x='328' y='173' class='pfad'>0.33</text></svg><p><b>Zuerst Zustimmung.</b> Die Äste der zweiten Stufe sind hier keine glatten Zahlen, zum Beispiel <span class='bruch'><i>120</i><i>255</i></span> ≈ 0.471.</p><svg class='baum' viewBox='0 0 400 186' role='img' aria-label='Baumdiagramm'><circle cx='14' cy='93' r='3.5' class='knoten'/><line x1='18' y1='93' x2='138' y2='48'/><text x='70' y='63.5' class='p'>0.51</text><text x='152' y='53' class='e'>Z</text><line x1='166' y1='48' x2='278' y2='18'/><text x='214' y='27.0' class='p'>≈ 0.471</text><text x='292' y='23' class='e'>J</text><text x='328' y='23' class='pfad'>0.24</text><line x1='166' y1='48' x2='278' y2='74'/><text x='214' y='76.0' class='p'>≈ 0.529</text><text x='292' y='79' class='e'><tspan style='text-decoration:overline'>J</tspan></text><text x='328' y='79' class='pfad'>0.27</text><line x1='18' y1='93' x2='138' y2='138'/><text x='70' y='131.5' class='p'>0.49</text><text x='152' y='143' class='e'><tspan style='text-decoration:overline'>Z</tspan></text><line x1='166' y1='138' x2='278' y2='112'/><text x='214' y='119.0' class='p'>≈ 0.327</text><text x='292' y='117' class='e'>J</text><text x='328' y='117' class='pfad'>0.16</text><line x1='166' y1='138' x2='278' y2='168'/><text x='214' y='168.0' class='p'>≈ 0.673</text><text x='292' y='173' class='e'><tspan style='text-decoration:overline'>J</tspan></text><text x='328' y='173' class='pfad'>0.33</text></svg>"}, {"text": "Wie gross ist der Anteil der Zustimmung insgesamt und bei den Älteren? Eine Person stimmt zu. Wie wahrscheinlich ist sie unter 30? Geben Sie an, wo Sie es in Baum und Tafel ablesen.", "loesung": "<p><span class='formel'>P(Z) = <span class='bruch'><i>255</i><i>500</i></span> = 0.51</span>: Spaltensumme Z in der Tafel, im Baum «zuerst Zustimmung» der erste Ast.</p><p><span class='formel'>P<sub><span class='quer'>J</span></sub>(Z) = <span class='bruch'><i>135</i><i>300</i></span> = 0.45</span>: Zeile <span class='formel'><span class='quer'>J</span></span> der Tafel, Feld <span class='formel'><span class='quer'>J</span>∩Z</span> durch die Zeilensumme. Im Baum «zuerst Alter» steht es auf dem Ast von <span class='formel'><span class='quer'>J</span></span> nach Z.</p><p><span class='formel'>P<sub>Z</sub>(J) = <span class='bruch'><i>120</i><i>255</i></span> = <span class='bruch'><i>8</i><i>17</i></span> ≈ 0.471</span>: Feld J∩Z durch die Spaltensumme Z. Im Baum «zuerst Zustimmung» steht es auf dem Ast von Z nach J, im Baum «zuerst Alter» muss man den Pfad J–Z durch alle Z-Pfade teilen.</p>"}, {"text": "<b>Fehlerkasten.</b> Jemand schreibt:<div class='fehlerkasten'>«47&nbsp;% der Zustimmenden sind unter 30, also stimmen 47&nbsp;% der unter 30-Jährigen zu.»</div>Was ist falsch?", "loesung": "<p>Die 47&nbsp;% sind <span class='formel'>P<sub>Z</sub>(J) ≈ 0.471</span>, bezogen auf die 255 Zustimmenden. Behauptet wird <span class='formel'>P<sub>J</sub>(Z)</span>, bezogen auf die 200 Jüngeren: <span class='formel'>P<sub>J</sub>(Z) = <span class='bruch'><i>120</i><i>200</i></span> = 0.6</span>. Gleicher Zähler, andere Bezugsgruppe.</p>"}, {"text": "<span class='knacknuss'>Knacknuss</span> Wie viele der 200 Jüngeren hätten zustimmen müssen, damit Alter und Zustimmung unabhängig sind (die 135 Älteren bleiben)?", "loesung": "<p>Unabhängig heisst: In beiden Altersgruppen ist der Anteil der Zustimmung gleich. Also <span class='formel'><span class='bruch'><i>x</i><i>200</i></span> = <span class='bruch'><i>135</i><i>300</i></span> = 0.45</span> und x = 90.</p><p>Kontrolle: Dann stimmen 225 von 500 zu, <span class='formel'>P(Z) = 0.45 = P<sub>J</sub>(Z)</span>.</p>"}]}}}, {"kuerzel": "B.4", "welt": "Flug", "kurz": "Angaben als Anteile im Baum", "bild": "", "kontext": "Buchungen bei einer Fluglinie.", "kapitel": {"5": {"name": "Bedingte Wahrscheinlichkeit", "einleitung": "Bei einer Fluglinie buchen 0.8 der Passagiere Economy und 0.2 Business. In der Economy erscheinen 0.1 der Gebuchten nicht zum Flug, in der Business 0.05.", "teile": [{"text": "Tragen Sie die Angaben in Baum und Tafel ein.", "loesung": "<p>E: «Economy», B: «Business», N: «erscheint nicht».</p><svg class='baum' viewBox='0 0 400 186' role='img' aria-label='Baumdiagramm'><circle cx='14' cy='93' r='3.5' class='knoten'/><line x1='18' y1='93' x2='138' y2='48'/><text x='70' y='63.5' class='p'>0.8</text><text x='152' y='53' class='e'>E</text><line x1='166' y1='48' x2='278' y2='18'/><text x='214' y='27.0' class='p'>0.1</text><text x='292' y='23' class='e'>N</text><text x='328' y='23' class='pfad'>0.08</text><line x1='166' y1='48' x2='278' y2='74'/><text x='214' y='76.0' class='p'>0.9</text><text x='292' y='79' class='e'><tspan style='text-decoration:overline'>N</tspan></text><text x='328' y='79' class='pfad'>0.72</text><line x1='18' y1='93' x2='138' y2='138'/><text x='70' y='131.5' class='p'>0.2</text><text x='152' y='143' class='e'>B</text><line x1='166' y1='138' x2='278' y2='112'/><text x='214' y='119.0' class='p'>0.05</text><text x='292' y='117' class='e'>N</text><text x='328' y='117' class='pfad'>0.01</text><line x1='166' y1='138' x2='278' y2='168'/><text x='214' y='168.0' class='p'>0.95</text><text x='292' y='173' class='e'><tspan style='text-decoration:overline'>N</tspan></text><text x='328' y='173' class='pfad'>0.19</text></svg><table class='tafel'><tr><th></th><th><span class='formel'>N</span></th><th><span class='formel'><span class='quer'>N</span></span></th><th>gesamt</th></tr><tr><th><span class='formel'>E</span></th><td>0.08</td><td>0.72</td><td>0.8</td></tr><tr><th><span class='formel'>B</span></th><td>0.01</td><td>0.19</td><td>0.2</td></tr><tr><th>gesamt</th><td>0.09</td><td>0.91</td><td>1</td></tr></table><p>Die Angaben sind Baumsicht: zuerst die Klasse, dann innerhalb der Klasse der Anteil, der nicht erscheint. Die Tafel entsteht über die Pfadregel, zum Beispiel 0.8 · 0.1 = 0.08.</p>"}, {"text": "Welcher Anteil aller Gebuchten erscheint nicht? Ein Platz bleibt leer. Wie wahrscheinlich war er Business gebucht? Geben Sie an, wie Sie es aus Baum und Tafel ablesen.", "loesung": "<p><span class='formel'>P(N) = 0.08 + 0.01 = 0.09</span>. Im Baum: die beiden N-Pfade addieren. In der Tafel: die Spaltensumme N.</p><p><span class='formel'>P<sub>N</sub>(B) = <span class='bruch'><i>0.01</i><i>0.09</i></span> = <span class='bruch'><i>1</i><i>9</i></span> ≈ 0.111</span>. Im Baum: den Pfad B–N durch alle N-Pfade teilen. In der Tafel: Feld B∩N durch die Spaltensumme N.</p><p>Etwa jeder neunte leere Platz war Business gebucht, obwohl ein Fünftel der Buchungen Business sind: Business-Gäste erscheinen zuverlässiger.</p>"}, {"text": "<b>Fehlerkasten.</b> Jemand schreibt:<div class='fehlerkasten'>«0.05 der No-Shows sind Business-Passagiere.»</div>Was ist falsch?", "loesung": "<p>0.05 ist <span class='formel'>P<sub>B</sub>(N)</span>: der Anteil der No-Shows unter den Business-Gebuchten. Der Satz behauptet <span class='formel'>P<sub>N</sub>(B)</span>, den Anteil Business unter den No-Shows. Der beträgt <span class='bruch'><i>1</i><i>9</i></span> ≈ 0.111.</p>"}, {"text": "<span class='knacknuss'>Knacknuss</span> Bekannt sind nur die beiden No-Show-Anteile (0.1 und 0.05) und der Gesamtanteil 0.09. Wie gross ist der Business-Anteil?", "loesung": "<p>Mit dem Business-Anteil b: 0.1(1 − b) + 0.05b = 0.09, also 0.1 − 0.05b = 0.09 und b = 0.2.</p><p>Das ist die totale Wahrscheinlichkeit, rückwärts gelesen: Sonst rechnet man aus b und den Ästen den Gesamtanteil, hier aus dem Gesamtanteil und den Ästen das b.</p>"}]}}}], "kapitel": [{"nr": 5, "name": "Bedingte Wahrscheinlichkeit", "farbe": "zugang", "hex": "#007D57"}, {"nr": 6, "name": "Zufallsgrössen", "farbe": "fach", "hex": "#0065A9"}, {"nr": 7, "name": "Bernoulli-Modelle", "farbe": "beweis", "hex": "#E09E5A"}, {"nr": 8, "name": "Normalverteilung", "farbe": "aktion", "hex": "#9867A5"}]};
+let stand = {welt: 0, kapitel: 5};
+
+/* Die Landkarte steht immer da - wie in Teil A. */
+function matrix(){
+  const t = document.getElementById('matrix');
+  let h = '<tr><th></th>' + D.kapitel.map(k =>
+      `<th style="color:${k.hex}" title="${k.name}">${k.nr}</th>`).join('') + '</tr>';
+  D.welten.forEach((w, i) => {
+    h += `<tr><th class="welt">${w.welt}</th>`;
+    D.kapitel.forEach(k => {
+      const da = !!w.kapitel[k.nr];
+      const hier = (i === stand.welt && k.nr === stand.kapitel);
+      h += `<td><button class="zelle" data-w="${i}" data-k="${k.nr}"
+              aria-current="${hier}"
+              style="border-color:${k.hex};${hier ? 'background:' + k.hex : ''}"
+              ${da ? '' : 'disabled'}>${da ? k.nr : 'folgt'}</button></td>`;
+    });
+    h += '</tr>';
+  });
+  t.innerHTML = h;
+  t.querySelectorAll('.zelle').forEach(b => b.onclick = () => {
+    stand.welt = +b.dataset.w; stand.kapitel = +b.dataset.k; zeigen();
+    document.getElementById('aufgabe').scrollTop = 0;
+  });
+}
+
+function zeigen(){
+  const w = D.welten[stand.welt];
+  const k = w.kapitel[stand.kapitel];
+  const kap = D.kapitel.find(x => x.nr === stand.kapitel);
+  document.documentElement.style.setProperty('--akzent', kap.hex);
+  document.documentElement.style.setProperty('--akzentblass', kap.hex + '14');
+  document.getElementById('streifen').style.background = kap.hex;
+  document.getElementById('wostehe').textContent =
+    `${w.welt} · Kapitel ${kap.nr} — ${kap.name}`;
+
+  const a = document.getElementById('aufgabe');
+  if (!k){ a.innerHTML = '<p>Diese Aufgabe folgt.</p>'; matrix(); return; }
+
+  a.innerHTML = `
+    <div class="kopfzeile">
+      <div>
+        <p class="welt">${w.welt}</p>
+        <p class="kurz">${w.kurz}</p>
+        <div class="kontext">${w.kontext}</div>
+      </div>
+    </div>
+    <div class="schwerpunkt">
+      <span class="nr">${kap.nr}</span>
+      <h3>${k.name}</h3>
+    </div>
+    ${k.einleitung ? `<p class="einleitung">${k.einleitung}</p>` : ''}
+    <ol class="auftraege" type="a">
+      ${k.teile.map(x => `<li>${x.text}
+        <div class="loesung">
+          <button type="button">Lösung zeigen</button>
+          <div class="inhalt">${x.loesung}</div>
+        </div></li>`).join('')}
+    </ol>
+    <div class="weiter" id="weiter"></div>`;
+
+  a.querySelectorAll('.loesung').forEach(l => {
+    const knopf = l.querySelector('button');
+    knopf.onclick = () => {
+      l.classList.toggle('offen');
+      knopf.textContent = l.classList.contains('offen')
+        ? 'Lösung verbergen' : 'Lösung zeigen';
+    };
+  });
+
+  /* Zwei Wege durch die Matrix - nach rechts oder nach unten. */
+  const weiter = document.getElementById('weiter');
+  const rechts = D.kapitel.find(x => x.nr === stand.kapitel + 1);
+  const unten = D.welten[stand.welt + 1];
+  let h = '';
+  if (rechts && w.kapitel[rechts.nr])
+    h += `<button data-w="${stand.welt}" data-k="${rechts.nr}">`
+       + `<b>nach rechts — dieselbe Welt, nächstes Kapitel</b>`
+       + `${w.welt} · ${rechts.nr} ${rechts.name}</button>`;
+  if (unten && unten.kapitel[stand.kapitel])
+    h += `<button data-w="${stand.welt + 1}" data-k="${stand.kapitel}">`
+       + `<b>nach unten — dasselbe Kapitel, andere Welt</b>`
+       + `${unten.welt} · ${kap.nr} ${kap.name}</button>`;
+  weiter.innerHTML = h || '<span class="kurz">Hier endet die Matrix. '
+                        + 'Über die Landkarte geht es weiter.</span>';
+  weiter.querySelectorAll('button').forEach(b => b.onclick = () => {
+    stand.welt = +b.dataset.w; stand.kapitel = +b.dataset.k; zeigen();
+    document.getElementById('aufgabe').scrollTop = 0;
+  });
+
+  matrix();
+}
+
+matrix(); zeigen();
+</script>
+<script>window.KASPER_RUECKMELDUNG={immer:true,projekt:"dz",sammeln:true,stueck:"Festigung Teil B",ablage:"https://drive.switch.ch/index.php/s/MSEEYxJ38JK4kwH"};</script>
+<script src="paket.js"></script>
+<script src="rueckmeldung.js"></script>
+</body></html>
