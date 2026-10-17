@@ -141,6 +141,23 @@
        Ihre Angaben duerfen auch als Ast stehen (A.gegeben_auch).
      - Alte Staende laden unveraendert: die Aufgaben-IDs bleiben.
 
+   NEU (FASSUNG 4, thema.md, 2026-10-17, Rike): Chilbi-Rahmen. Alle
+   Situationen ausserhalb des Skripts spielen an der Chilbi; Mechanik und
+   Zahlen bleiben. Uebungsstunden -> Karussell und Magenbrot, Wuerfel ->
+   Wuerfelbude, Jugendtreffen -> Zwei Lostoepfe usw. (thema.py). Das Menue
+   «Neue Aufgaben» heisst «An der Chilbi» (BW.menues). Neue Aufgaben-IDs;
+   alte Staende werden beim Laden umgeschrieben (alteIdsUmschreiben).
+   Wo unten in Kommentaren noch Uebungsstunden, Wuerfel oder Jugendtreffen
+   steht, ist S1, S2 bzw. die erste Aufgabe von Etappe 2 gemeint.
+
+   NEU (FASSUNG 4.1 «Uebersicht», thema.md, 2026-10-17, Rike): Die
+   Situation steht als hervorgehobene Karte ganz oben (situationKarte), mit
+   freiwilligem Textmarker (Stifte «Angabe», in Etappe 2 dazu «gesucht»;
+   wie Kapitel 7, nicht geprueft; stand.bwmark). Die Schritte als schmale
+   Leiste 1 · 2 · 3 ueber dem Brett (schrittLeiste), Details aufklappbar;
+   das Rechenprotokoll klappt unter dem Brett ein; Fortschritt und
+   Aufgabenwahl in der Kopfleiste. Mechanik unveraendert.
+
    E1  Zwei Situationen vollstaendig (OHNE Frage)
        S1 Uebungsstunden
          Zug 1  eintragen und berechnen - sofort weiterrechnen erlaubt
@@ -446,6 +463,86 @@
   .bwsit .bwtitel{font-family:var(--hand);font-size:23px;line-height:1.15;color:var(--akzent);margin:0 0 3px}
   .bwsit .bwtitel .frei{font-family:var(--druck);margin-left:10px;margin-right:0;vertical-align:4px}
   @media (max-width:900px){ .bwsit .bwtitel{font-size:20px} }
+
+  /* NEU (FASSUNG 4.1 «Uebersicht», thema.md, Rike 2026-10-17): Die
+     Situation steht als hervorgehobene Karte ganz oben (.bwskarte), mit
+     freiwilligem Textmarker. Darunter eine schmale Schrittleiste
+     (.bwsbar), Details aufklappbar. Nebenan, nur wenn es sie gibt, die
+     Fragen nach dem Ausfuellen (.bwmehr). Das Protokoll klappt unter dem
+     Brett ein (#bwprotbox), der Fortschritt steht in der Kopfleiste. */
+  .bwkopf{gap:6px 16px;padding:8px 18px 6px;align-items:flex-start}
+  .bwskarte{flex:1.6 1 520px;min-width:0;max-width:1180px;background:#fff;border:2px solid var(--akzent);
+     border-left-width:7px;border-radius:12px;padding:8px 14px 7px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+  .bwskopf{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;margin-bottom:2px}
+  .bwstitel{font-weight:700;font-size:17px;color:var(--akzent);line-height:1.25}
+  .bwskopf .frei{font-size:11px;font-weight:600;color:var(--matt);border:1px dashed var(--matt);border-radius:999px;padding:0 6px}
+  .bwstext{margin:0;font-size:16.5px;line-height:1.5;color:var(--tinte)}
+  .bwsfrage{margin:4px 0 0;font-size:18px;line-height:1.35;font-weight:700;color:var(--tinte)}
+  .bwskarte .namen{font-size:12.5px;color:var(--matt);margin-top:3px}
+  .bwskarte .namen b{color:var(--tinte)}
+  /* Textmarker (wie Kapitel 7): Stift waehlen, ueber den Text streichen
+     oder Woerter anklicken; Radierer. Nicht geprueft. */
+  .bwstifte{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;margin-left:auto;font-size:12px;color:var(--matt)}
+  .bwstifte button{font:inherit;font-size:12.5px;font-weight:600;height:24px;padding:0 8px;border:1.6px solid var(--mf,#b9ad98);
+     border-radius:7px;background:var(--mg,#fff);color:var(--tinte);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .bwstifte button::before{content:'';width:7px;height:13px;border-radius:2px 2px 3px 3px;background:var(--mf,#b9ad98);transform:rotate(18deg)}
+  .bwstifte button.weg{--mf:#8d8476;--mg:#f3efe8;font-weight:400}
+  .bwstifte button.weg::before{width:11px;height:7px;border-radius:2px;background:#e9b8b0;border:1px solid #8d8476;transform:rotate(-18deg)}
+  .bwstifte button[aria-pressed=true]{background:var(--mf);color:var(--mt,#fff);box-shadow:0 0 0 3px var(--mg)}
+  .bwstifte button[aria-pressed=true]::before{background:var(--mt,#fff)}
+  .m-angabe{--mf:#d4ac00;--mg:#fff09a;--mt:#2d2924} .m-gesucht{--mf:#C77D0A;--mg:#ffe0b3;--mt:#fff}
+  .bwskarte .w,.bwskarte .ws{border-radius:3px}
+  body.bw-stift-an .bwskarte [data-mk]{cursor:crosshair;user-select:none;-webkit-user-select:none}
+  body.bw-stift-an .bwskarte [data-mk] .w:hover{box-shadow:inset 0 -2px 0 #c9bda8}
+  .bwskarte .w[class*=" m-"],.bwskarte .ws[class*=" m-"]{background:var(--mg)}
+  .bwskarte .w[class*=" m-"]{box-shadow:inset 0 -2px 0 var(--mf)}
+  /* Was nach dem Ausfuellen kommt (Fragen, Legende, Ergebnis) */
+  .bwmehr{flex:1 1 340px;min-width:0;font-size:13px;line-height:1.42}
+  .bwmehr .ziel{font-weight:600;margin:0 0 2px}
+  .bwmehr .zeile{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--matt);margin-top:3px}
+  .bwmehr .zeile b{color:var(--tinte)}
+  .bwmehr .knopf{padding:3px 10px;font-size:12.5px}
+  .bwmehr .kopf{font-size:13px;font-weight:600;margin:0 0 2px}
+  .bwmehr textarea{width:100%;min-height:30px;height:30px;margin-top:3px;font-size:12.5px;border:1px solid var(--linie);
+     border-radius:8px;padding:4px 8px;font-family:var(--druck);background:#fffefb;resize:vertical}
+  .bwmehr .bwlegende{flex-direction:row;flex-wrap:wrap;gap:2px 12px;margin-top:3px;font-size:12px}
+  .bwmehr .bwlegende .m{width:22px;height:13px}
+  .bwmehr .bwschluss{margin-top:5px;border-top:1px solid var(--linie);padding-top:4px}
+  .bwmehr .bwschluss input[type=text]{font:inherit;font-size:13px;width:60px;padding:2px 6px;border:1.4px solid var(--linie);border-radius:6px}
+  /* Die Schrittleiste */
+  .bwsrow{flex:1 1 100%;display:flex;align-items:flex-start;gap:4px 14px;flex-wrap:wrap;font-size:12.5px;min-width:0}
+  details.bwsbar{flex:1 1 auto;min-width:0}
+  details.bwsbar > summary{list-style:none;cursor:pointer;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+  details.bwsbar > summary::-webkit-details-marker{display:none}
+  .bwsbar .st{padding:1px 9px;border-radius:999px;border:1px solid var(--linie);color:var(--matt);background:#fff;white-space:nowrap}
+  .bwsbar .st.jetzt{border-color:var(--akzent);background:var(--akzent);color:#fff;font-weight:600}
+  .bwsbar .st.fertig{color:var(--richtig)}
+  .bwsbar .pt{color:#c9bda8}
+  .bwsbar .auf{color:var(--matt);font-size:12px;margin-left:4px;white-space:nowrap}
+  .bwsbar .auf::before{content:'▸ '}
+  details.bwsbar[open] .auf::before{content:'▾ '}
+  .bwsdet{margin:3px 0 1px;padding:4px 10px;border-left:3px solid var(--akzent);background:#fffefb;border-radius:0 8px 8px 0;font-size:13px;line-height:1.45}
+  .bwsdet ol{margin:0;padding-left:18px}
+  .bwsdet p{margin:0 0 2px}
+  .bwsstat{flex:0 1 auto;display:flex;flex-wrap:wrap;gap:3px 10px;align-items:center;color:var(--matt);padding-top:1px}
+  .bwsstat b{color:var(--tinte)}
+  .bwsstat .hin{color:var(--tinte);font-weight:600}
+  .bwsstat .knopf{padding:2px 10px;font-size:12.5px}
+  /* Fortschritt in der Kopfleiste */
+  .auftrag .bwreiter .bwfort{font-size:12px;color:var(--matt);margin-left:6px;white-space:nowrap}
+  .auftrag .bwreiter .bwfort b{color:var(--tinte)}
+  /* Das Protokoll unter dem Brett */
+  .bwprotbox{width:max-content;max-width:min(760px,100%);margin:6px auto 0}
+  .bwprotbox details.bwprotokoll{margin:0}
+  .bwprotbox details.bwprotokoll[open] ol{height:74px;max-height:none;width:min(720px,calc(100vw - 60px))}
+  @media (max-width:900px),(max-height:640px){
+    .bwkopf{padding:5px 10px 4px;gap:4px 10px}
+    .bwskarte{padding:5px 10px 5px;border-left-width:5px}
+    .bwstext{font-size:15px;line-height:1.42}
+    .bwstitel{font-size:15.5px}
+    .bwsfrage{font-size:16px;margin-top:2px}
+    .bwstifte .was{display:none}
+  }
   `;
   const s = document.createElement('style');
   s.id = 'doppelbaum-stil';
@@ -818,6 +915,139 @@ function bwBuehne(e, titel, leiste){
 }
 function namenZeile(A){
   return '<div class="namen">' + ['X', 'nX', 'Y', 'nY'].map(e => `<b>${esc(sym(A, e))}</b> ${esc(A.namen[e][1])}`).join(' · ') + '</div>';
+}
+
+/* ───────── NEU (FASSUNG 4.1 «Uebersicht», Rike 2026-10-17) ─────────
+   «Die Aufgaben/Situationen werden nicht prominent und auffaellig genug
+   angezeigt. [...] Ggf. koennten wir dort auch die wichtigen Werte
+   markieren lassen.»
+   Die Situation als eigene Karte ganz oben, mit Textmarker wie in
+   Kapitel 7 (bernoulli/etappen.js: Stift waehlen, ueber den Text streichen
+   oder Woerter anklicken, Radierer). Stifte: «Angabe», in Etappe 2 dazu
+   «gesucht». Freiwillig, nicht geprueft. Die Markierungen stehen im
+   Stand (stand.bwmark, je Aufgabe und Textstueck), der gewaehlte Stift
+   nur in der Sitzung (E.stift). */
+const MK_ARTEN = ['angabe', 'gesucht'];
+const MK_NAME = {angabe: 'Angabe', gesucht: 'gesucht'};
+function mkStuecke(text){
+  // \p{M}: Ueberstriche (K̄) gehoeren zum Wort
+  const re = /(\d+(?:[.,]\d+)?(?:[\s ]?%)?)|([\p{L}\p{M}\-]+)|(\s+)|(.)/gu;
+  let m, i = 0, html = '';
+  while ((m = re.exec(text))){
+    if (m[1] || m[2]) html += `<span class="w" data-i="${i++}">${esc(m[0])}</span>`;
+    else if (m[3]) html += `<span class="ws">${m[0]}</span>`;
+    else html += esc(m[0]);
+  }
+  return html;
+}
+function mkMalen(el, marken){
+  const kn = [...el.children];
+  kn.forEach(x => MK_ARTEN.forEach(a => x.classList.remove('m-' + a)));
+  kn.forEach((x, j) => {
+    if (x.classList.contains('w')){
+      const a = marken[x.dataset.i];
+      if (a) x.classList.add('m-' + a);
+    } else if (x.classList.contains('ws')){
+      const v = kn[j - 1], n = kn[j + 1];
+      if (v && n && v.classList.contains('w') && n.classList.contains('w')){
+        const a = marken[v.dataset.i];
+        if (a && a === marken[n.dataset.i]) x.classList.add('m-' + a);
+      }
+    }
+  });
+}
+/* o: {titel (HTML), frage (bool), stifte: ['angabe', ...]} */
+function situationKarte(A, o){
+  const stifte = `<span class="bwstifte" role="toolbar" aria-label="Textmarker"
+      title="Freiwillig: Stift wählen, dann über den Text streichen oder Wörter anklicken.">
+    <span class="was">Markieren:</span>
+    ${o.stifte.map(a => `<button type="button" class="m-${a}" data-stift="${a}" aria-pressed="${E.stift === a}" title="Stift «${MK_NAME[a]}»">${MK_NAME[a]}</button>`).join('')}
+    <button type="button" class="weg" data-stift="weg" aria-pressed="${E.stift === 'weg'}" title="Radierer">Radierer</button></span>`;
+  return `<div class="bwskarte" role="region" aria-label="Situation">
+    <div class="bwskopf"><span class="bwstitel">${o.titel}</span>${stifte}</div>
+    <p class="bwstext" data-mk="${esc(A.id)}:t">${mkStuecke(A.text)}</p>
+    ${o.frage ? `<p class="bwsfrage" data-mk="${esc(A.id)}:f">${mkStuecke(A.frage)}</p>` : ''}
+    ${namenZeile(A)}</div>`;
+}
+function markerHaken(kopf){
+  if (!stand.bwmark || typeof stand.bwmark !== 'object') stand.bwmark = {};
+  const M = stand.bwmark;
+  const stiftSetzen = () => {
+    document.body.classList.toggle('bw-stift-an', !!E.stift);
+    kopf.querySelectorAll('.bwstifte button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stift === E.stift)));
+  };
+  kopf.querySelectorAll('.bwstifte button').forEach(b => b.onclick = () => {
+    E.stift = E.stift === b.dataset.stift ? null : b.dataset.stift;
+    stiftSetzen();
+  });
+  // Ein Stift, den es hier nicht gibt (gesucht in Etappe 1), gilt nicht.
+  if (E.stift && !kopf.querySelector(`.bwstifte button[data-stift="${E.stift}"]`)) E.stift = null;
+  stiftSetzen();
+  kopf.querySelectorAll('[data-mk]').forEach(text => {
+    const key = text.dataset.mk;
+    mkMalen(text, M[key] || {});
+    text.addEventListener('pointerdown', e => {
+      const stift = E.stift;
+      if (!stift) return;          // ohne Stift: gewoehnlicher Text
+      e.preventDefault();
+      const vorher = Object.assign({}, M[key] || {});
+      const w0 = e.target.closest('.w');
+      let start = w0 ? +w0.dataset.i : null, ende = start, bewegt = false;
+      const anwenden = () => {
+        const m = Object.assign({}, vorher);
+        if (start !== null){
+          const a = Math.min(start, ende), b = Math.max(start, ende);
+          // Ein Klick mit demselben Stift auf ein markiertes Stueck nimmt die Farbe weg.
+          if (a === b && !bewegt && vorher[a] === stift) delete m[a];
+          else for (let i = a; i <= b; i++){ if (stift === 'weg') delete m[i]; else m[i] = stift; }
+        }
+        M[key] = m; mkMalen(text, m);
+      };
+      anwenden();
+      const zug = ev => {
+        const t = document.elementFromPoint(ev.clientX, ev.clientY);
+        const w = t && t.closest ? t.closest('.w') : null;
+        if (!w || !text.contains(w)) return;
+        const i = +w.dataset.i;
+        if (start === null) start = i;
+        if (i !== start) bewegt = true;
+        if (i !== ende){ ende = i; anwenden(); }
+      };
+      const fertig = () => {
+        window.removeEventListener('pointermove', zug);
+        window.removeEventListener('pointerup', fertig);
+        window.removeEventListener('pointercancel', fertig);
+        sichern();
+      };
+      window.addEventListener('pointermove', zug);
+      window.addEventListener('pointerup', fertig);
+      window.addEventListener('pointercancel', fertig);
+    });
+  });
+}
+/* Die schmale Schrittleiste (1 · 2 · 3) ueber dem Brett. schritte: [{t,
+   ok, jetzt, tip}]. `det` ist der Detailtext (aufklappbar, offen solange
+   nichts getan ist - wie die Anleitung seit Fassung 3.5; E.anlOffen merkt
+   die eigene Wahl). `stat` steht rechts daneben (Zaehler, Weiter-Knopf). */
+function schrittLeiste(schritte, det, stat, getan){
+  // Im kleinen Fenster (etwa 800 x 570) zuerst zu: Baum und Tafel brauchen
+  // die Hoehe; die Details stehen dann im title der Schritte und im Aufklapper.
+  const klein = window.matchMedia && matchMedia('(max-height:700px), (max-width:900px)').matches;
+  const offen = det && (E.anlOffen === undefined ? !getan && !klein : E.anlOffen);
+  const chips = schritte.map((s, i) => (i ? '<span class="pt">·</span>' : '')
+    + `<span class="st${s.ok ? ' fertig' : s.jetzt ? ' jetzt' : ''}"${s.tip ? ` title="${esc(s.tip)}"` : ''}>${s.ok ? '✓ ' : ''}${s.t}</span>`).join('');
+  return `<div class="bwsrow">` + (det
+    ? `<details class="bwsbar" id="bwanl" data-war="${offen}"${offen ? ' open' : ''}><summary>${chips}<span class="auf">Details</span></summary><div class="bwsdet">${det}</div></details>`
+    : `<div class="bwsbar"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">${chips}</div></div>`)
+    + (stat ? `<div class="bwsstat">${stat}</div>` : '') + '</div>';
+}
+/* Das Rechenprotokoll unter dem Brett (#bwprotbox, von brettBauen
+   angelegt). Nach einem Eintrag nur den Inhalt erneuern. */
+function protokollAuffrischen(A, z){
+  const box = document.getElementById('bwprotbox');
+  if (!box) return;
+  box.innerHTML = protokollHtml(A, z);
+  protokollHaken(box);
 }
 
 /* Nur die Eintraege, die zu einer Stelle hinfuehren (ueber die
@@ -1193,7 +1423,19 @@ function brettMasse(feld, leiste, oben){
   // NEU (Nachtrag 2026-10-10): Platz fuer die dauernde Rechenleiste
   // GEAENDERT (Fassung 3.5): die Leiste ist schmaler; `oben` ist die Hoehe
   // der Fragekarte in Zug 2 (im niedrigen Fenster rollt die Buehne ohnehin).
-  const hoch = (niedrig ? 420 : (halb ? halb.clientHeight : 600) - 16 - (oben || 0)) - (leiste ? 32 : 0);
+  // GEAENDERT (Fassung 4.1): Im niedrigen Fenster nicht mehr fest 420 px,
+  // sondern so hoch, wie unter der (groesseren) Situationskarte im Fenster
+  // noch Platz ist - mindestens 250 px. So steht der Baum ganz im Bild.
+  let hochNiedrig = 420;
+  const bue = document.getElementById('buehne');
+  if (niedrig && bue){
+    const rb = bue.getBoundingClientRect(), oben0 = feld.getBoundingClientRect().top + bue.scrollTop;
+    hochNiedrig = Math.max(250, rb.bottom - oben0 - 14 - (oben || 0));
+  }
+  // FEHLERBEHOBEN (Fassung 4.1): 22 statt 16 px Abzug. Ursache: der Abstand
+  // .bwrleiste + .bwbrett (6 px) gilt auch bei versteckter Rechenleiste;
+  // die Haelfte rollte um 2 px.
+  const hoch = (niedrig ? hochNiedrig : (halb ? halb.clientHeight : 600) - 22 - (oben || 0)) - (leiste ? 32 : 0);
   const breit = (halb ? halb.clientWidth : (feld.clientWidth || 640)) - 22;
   const tH = TAF.hoehe * T_K, tB = TAF.breite * T_K;
   if (breit >= 860){
@@ -1254,6 +1496,17 @@ function brettBauen(feld, ctx){
     const f0 = ctx.fuehrung();
     if (f0){ fl.innerHTML = `<span class="pf">▼</span><span class="wo">${vw(f0.p) === 't' ? 'In der Tafel' : 'Im Baum'}:</span><span>${f0.html}</span>`; obenH += fl.offsetHeight + 4; }
     else fl.hidden = true;
+  }
+  // NEU (Fassung 4.1): das Rechenprotokoll klappt UNTER dem Brett ein
+  // (ctx.protokoll). Erst einsetzen und messen, nach dem Brett anhaengen.
+  let pbox = null;
+  if (ctx.protokoll){
+    pbox = document.createElement('div');
+    pbox.className = 'bwprotbox'; pbox.id = 'bwprotbox';
+    feld.appendChild(pbox);
+    pbox.innerHTML = protokollHtml(A, ctx.z);
+    protokollHaken(pbox);
+    obenH += pbox.offsetHeight + 8;
   }
   const m = brettMasse(feld, !!ctx.leiste && !!E.leisteDa, obenH);
   const brett = document.createElement('div');
@@ -1347,6 +1600,7 @@ function brettBauen(feld, ctx){
   rl.addEventListener('mousedown', ev => { ev.preventDefault(); blaseWeg(); });
   feld.appendChild(rl);
   feld.appendChild(brett);
+  if (pbox) feld.appendChild(pbox);
   BRETT = {ctx, m, brett, img, pf, rl, karte, fl};
   brettAuffrischen();
 }
@@ -1835,7 +2089,7 @@ function etappe1(){
 
 function e1ctx(A, z){
   const zug = A.paaren ? (z.zug || 1) : 1;
-  return {A, z, schreiben: zug === 1, fragen: false, rechnen: zug === 1, leiste: zug === 1,
+  return {A, z, schreiben: zug === 1, fragen: false, rechnen: zug === 1, leiste: zug === 1, protokoll: zug === 1,
     oben: zug === 2 ? findeKarte(z) : null,
     // NEU (Fassung 3.6): Zug 2 wird angeklickt, nicht beschrieben - der
     // einzige Ort in Etappe 1, an dem Tippen abgelehnt wird (Grund b).
@@ -1849,6 +2103,10 @@ function e1ctx(A, z){
     }};
 }
 function e1zeichnen(){
+  // FEHLERBEHOBEN (Fassung 4.1): Ein spaeter Neuzeichnen-Aufruf (Fenstergroesse)
+  // nach dem Verlassen der Etappe fand #bwkopf nicht mehr. Ursache: window._neuzeichnen
+  // bleibt gesetzt. Ohne Kopf nichts tun.
+  if (!document.getElementById('bwkopf')) return;
   mitLage(() => {
     const A = e1A(), z = e1z();
     e1links(A, z);
@@ -1978,56 +2236,67 @@ function e1links(A, z){
   }
   reiterEl.innerHTML = rh;
   const voll2 = !A.paaren && voll;
-  let h = `<div class="bwsit"><p><span class="t">${esc(label(A))}</span>${esc(A.text)}</p>${namenZeile(A)}`;
-  // S2, vollstaendig: die Frage nach beiden Situationen und die Sicht
-  // links unter der Situation (dort ist Platz), der Vergleich rechts.
+  // GEAENDERT (Fassung 4.1): die Situation als Karte ganz oben, mit
+  // Textmarker (Stift «Angabe»).
+  let h = situationKarte(A, {titel: esc(label(A)), frage: false, stifte: ['angabe']});
+  // Was nach dem Ausfuellen kommt, steht neben der Karte (.bwmehr).
+  let mehr = '';
+  // S2, vollstaendig: die Frage nach beiden Situationen, die Sicht und der Vergleich.
   if (voll2)
-    h += `<div class="bwfragen"><div class="kopf">${esc(BW.e1frage)}</div>
+    mehr += `<div class="kopf">${esc(BW.e1frage)}</div>
       <textarea id="bwe1vgl" placeholder="Ihre Antwort …"></textarea>
       <div class="zeile"><button class="knopf leer" id="bwsichtknopf">Eine mögliche Sicht</button></div>`
-      + (stand.bwe1sicht ? `<div class="bwsicht">${esc(BW.e1sicht)}</div>` : '') + '</div>';
-  h += '</div><div class="bwtun">';
-  const stand1 = `<div class="zeile"><span>Baum <b>${nR}/${halb}</b> · Tafel <b>${nT}/${halb}</b></span>`;
-  // GEAENDERT (Fassung 3.5, Punkt 2): Die Anleitung klappt nach dem ersten
-  // Eintrag auf eine Zeile zusammen (anleitungHtml).
+      + (stand.bwe1sicht ? `<div class="bwsicht">${esc(BW.e1sicht)}</div>` : '') + vergleichHtml(A, z);
   // GEAENDERT (2026-10-16, Rike: «das ist nicht verstaendlich. Bitte sagen,
   // dass man die Rechnung eintragen soll, und mit Beispiel»).
   const bsp = ANZ === 'prozent' ? ['70 %', '85 %', '59.5 %'] : ['0.7', '0.85', '0.595'];
   const rechnenLi = `<li>Berechnen Sie die übrigen Felder, indem Sie in jedes leere Feld <b>die Rechnung</b> eintragen. <span class="nw">Beispiel: Klicken Sie ins leere Feld, dann auf ${bsp[0]}, auf «·» und auf ${bsp[1]} – im Feld steht dann ${bsp[2]}, darunter «${bsp[0]} · ${bsp[1]}».</span> Sie können die Rechnung auch eintippen.</li>`;
+  const rechnenTip = `Rechnung eintragen: leeres Feld anklicken, dann ${bsp[0]}, «·» und ${bsp[1]}.`;
+  // GEAENDERT (Fassung 4.1): Schritte als schmale Leiste ueber dem Brett,
+  // der aktuelle hervorgehoben; die Anleitung klappt darin auf.
+  const angOk = A.gegeben.every(k => z.eintraege.some(e => kk(e.p) === k));
+  const fuell = [
+    {t: '1 · ' + (A.paaren ? 'Angaben eintragen' : 'Abzählen und eintragen'), ok: angOk,
+     tip: A.paaren ? 'Die Angaben aus dem Text in den Baum oder die Tafel eintragen.' : 'Abzählen und als Brüche eintragen, z. B. «2/6».'},
+    {t: `2 · Baum ausrechnen <b>${nR}/${halb}</b>`, ok: nR === halb, tip: rechnenTip},
+    {t: `3 · Tafel ausrechnen <b>${nT}/${halb}</b>`, ok: nT === halb, tip: rechnenTip}];
+  const jetzt = l => { const j = l.find(x => !x.ok); if (j) j.jetzt = true; return l; };
   if (!A.paaren){
     // S2 Wuerfel: Angaben aus Tafelsicht, abgezaehlt
-    h += (voll ? `<p class="ziel">${esc(D.etappen[0].auftrag)}</p>`
-      : anleitungHtml(esc(D.etappen[0].auftrag), `<ol><li>Zählen Sie ab und tragen Sie die Werte als Brüche ein, <span class="nw">z. B. «2/6».</span></li>
+    const l = jetzt(fuell.concat([{t: '4 · Frage beantworten', ok: !!(A.vergleich && z.wahl === A.vergleich.richtig),
+      tip: 'Hängen die beiden Merkmale zusammen?'}]));
+    h += schrittLeiste(l, `<p><b>${esc(D.etappen[0].auftrag)}</b></p><ol><li>Zählen Sie ab und tragen Sie die Werte als Brüche ein, <span class="nw">z. B. «2/6».</span></li>
       ${rechnenLi}
-      <li>Füllen Sie den Baum und die Tafel je für sich ganz aus.</li></ol>`, z.eintraege.length > 0))
-      + stand1 + (voll ? '<b>Vollständig.</b>' : '') + '</div>'
-      + (voll ? vergleichHtml(A, z) : '');
+      <li>Füllen Sie den Baum und die Tafel je für sich ganz aus.</li></ol>`,
+      voll ? '<span class="hin">Vollständig.</span>' : '', z.eintraege.length > 0);
   } else if (zug === 1){
-    h += anleitungHtml(esc(D.etappen[0].auftrag), `<ol><li>Tragen Sie die Angaben aus dem Text ein.</li>
+    h += schrittLeiste(jetzt(fuell), `<p><b>${esc(D.etappen[0].auftrag)}</b></p><ol><li>Tragen Sie die Angaben aus dem Text ein.</li>
       ${rechnenLi}
-      <li>Füllen Sie den Baum und die Tafel je für sich ganz aus.</li></ol>`, z.eintraege.length > 0)
-      + stand1 + (voll ? '<b>Vollständig.</b> <button class="knopf" data-geh="2">Weiter: Zug 2 →</button>' : '') + '</div>';
+      <li>Füllen Sie den Baum und die Tafel je für sich ganz aus.</li></ol>`,
+      voll ? '<span class="hin">Vollständig.</span> <button class="knopf" data-geh="2">Weiter: Zug 2 →</button>' : '', z.eintraege.length > 0);
   } else {
     // GEAENDERT (Fassung 3.4, Punkt 4): «Finde den Wert» statt «Gleiches
     // finden» - von der Frage her, Baum UND Tafel anklicken.
     // GEAENDERT (Fassung 3.5, Punkt 3): Die Frage steht als Karte direkt
-    // ueber dem Brett (findeKarte), hier nur die Anleitung. Keine
-    // Kategorienamen; die Legende zeigt nur die Farben, und erst am Ende.
+    // ueber dem Brett (findeKarte). Keine Kategorienamen; die Legende
+    // zeigt nur die Farben, und erst am Ende.
     const alle = z.paare.length === SCHLUESSEL.length;
-    if (!alle)
-      h += anleitungHtml('Wo steht der Wert im Baum und wo in der Tafel?',
-        `<ol><li>Lesen Sie die Frage über dem Baum.</li>
+    const sf = BW.schlussfrage, ant = stand.texte.bw_e1_anzahl || '';
+    const l = jetzt([
+      {t: `1 · Werte finden <b>${findeFertig(z)}/${FINDE.length}</b>`, ok: alle,
+       tip: 'Die Frage über dem Baum lesen, die Stelle im Baum und in der Tafel anklicken.'},
+      {t: '2 · Wie viele Angaben braucht man?', ok: parseInt(ant, 10) === sf.antwort}]);
+    h += schrittLeiste(l, alle ? '' : `<p><b>Wo steht der Wert im Baum und wo in der Tafel?</b></p><ol><li>Lesen Sie die Frage über dem Baum.</li>
          <li>Klicken Sie die Stelle im Baum an und die Stelle in der Tafel.</li>
-         <li>Stimmen beide, färben sie sich und bekommen ihre Bezeichnung.</li></ol>`, z.paare.length > 0);
-    else {
-      h += `<p class="ziel">Alle Werte gefunden: Jede Stelle ist gefärbt und beschriftet.</p>`;
-      h += '<div class="bwlegende">' + FARBFOLGE.map(a => {
+         <li>Stimmen beide, färben sie sich und bekommen ihre Bezeichnung.</li></ol>`,
+      alle ? '<span class="hin">Alle Werte gefunden: Jede Stelle ist gefärbt und beschriftet.</span>' : '', z.paare.length > 0);
+    if (alle){
+      mehr += '<div class="bwlegende">' + FARBFOLGE.map(a => {
         const ks = SCHLUESSEL.filter(k => farbeVon(k) === a);
         return `<div><span class="m" style="background:${a.startsWith('t-') ? '#fff' : FUELL[a]};border-color:${RAND[a]}"></span>`
           + ks.map(k => teileHtml(pTeile(A, k))).join(', ') + '</div>';
       }).join('') + '</div>';
-      const sf = BW.schlussfrage, ant = stand.texte.bw_e1_anzahl || '';
-      h += `<div class="bwschluss"><b>${esc(sf.frage)}</b>
+      mehr += `<div class="bwschluss"><b>${esc(sf.frage)}</b>
         <input type="text" id="bwanzahl" value="${esc(ant)}" inputmode="numeric">
         <button class="knopf leer" id="bwanzahlok">Prüfen</button>
         <div id="bwanzahlurteil" style="font-size:12.5px"></div>
@@ -2035,10 +2304,16 @@ function e1links(A, z){
         <div class="zeile"><button class="knopf" data-sitgeh="1">Weiter: ${esc(label(SIT2))} →</button></div></div>`;
     }
   }
-  // GEAENDERT (Fassung 3.5, Punkt 3): kein Rechenprotokoll in Zug 2
-  h += (zug === 2 ? '' : protokollHtml(A, z)) + '</div>';
+  // Die Leiste steht zuletzt (ueber dem Brett), die Fragen neben der Karte.
+  if (mehr){
+    const i = h.indexOf('<div class="bwsrow">');
+    h = h.slice(0, i) + `<div class="bwmehr">${mehr}</div>` + h.slice(i);
+  }
+  // GEAENDERT (Fassung 4.1): das Rechenprotokoll steht unter dem Brett
+  // (brettBauen, ctx.protokoll); in Zug 2 gibt es keines.
   kopf.innerHTML = h;
-  protokollHaken(kopf);
+  protokollAuffrischen(A, z);
+  markerHaken(kopf);
   anleitungHaken(kopf);
   const tisch = kopf;
   const zuSit = i => { stand.bwe1sit = i; E.finde = {}; E.rechnen = null; E.meldung = null; E.falsch = {}; E.neuSicher = false; E.anlOffen = undefined; E.blase = null; e1zeichnen(); };
@@ -2058,10 +2333,11 @@ function e1links(A, z){
       if (!/^\s*\d+\s*$/.test(an.value)){ u.innerHTML = '<span style="color:#a3650a">Diese Eingabe verstehe ich nicht. Schreiben Sie eine ganze Zahl, z. B. 4.</span>'; return; }
       u.innerHTML = v === BW.schlussfrage.antwort ? `<span style="color:var(--richtig)">✓</span> ${esc(BW.schlussfrage.einsicht)}`
         : v < BW.schlussfrage.antwort ? 'Reicht das? Versuchen Sie, nur damit den Baum und die Tafel zu füllen.'
-        : 'Brauchen Sie wirklich so viele? Welche davon folgen aus den anderen — etwa P(Ǖ) aus P(Ü)?';
+        : `Brauchen Sie wirklich so viele? Welche davon folgen aus den anderen — etwa P(${SIT.namen.nX[0]}) aus P(${SIT.namen.X[0]})?`;
     };
-    tisch.querySelector('#bwanzahlok').onclick = () => { stand.texte.bw_e1_anzahl = an.value; urteil(); sichern(); };
-    an.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ stand.texte.bw_e1_anzahl = an.value; urteil(); } });
+    // GEAENDERT (Fassung 4.1): neu zeichnen, damit die Schrittleiste mitgeht
+    tisch.querySelector('#bwanzahlok').onclick = () => { stand.texte.bw_e1_anzahl = an.value; e1auffrischen(); };
+    an.addEventListener('keydown', ev => { if (ev.key === 'Enter'){ stand.texte.bw_e1_anzahl = an.value; e1auffrischen(); } });
     if (an.value) urteil();
     const bg = tisch.querySelector('#bwanzahlbegr');
     bg.value = stand.texte.bw_e1_begr || '';
@@ -2085,7 +2361,7 @@ function e1links(A, z){
       if (!vgl.value.trim()){ meldung('Schreiben Sie zuerst Ihre eigene Antwort — dann zeigt der Knopf eine mögliche Sicht.', 'nein'); return meldungZeigen(); }
       stand.bwe1sicht = true; e1auffrischen();
     };
-    vergleichHaken(tisch, A, z);
+    vergleichHaken(tisch, A, z, () => e1auffrischen());
   }
 }
 
@@ -2180,7 +2456,27 @@ function e1klick(p){
    wird. Nichts wird in die andere Darstellung gespiegelt. z.gesucht
    bleibt als Schluessel stehen (gesetzt, sobald irgendwo ein «?» sitzt),
    damit Protokoll und Bilder weiter lesen koennen. */
+/* NEU (Fassung 4, Chilbi-Rahmen): Die Aufgaben haben neue IDs. Ein alter
+   Stand (a2, velo, kiosk, brille, spam) wird beim Laden umgeschrieben:
+   Eintraege, gewaehlte Aufgabe und Begruendungstexte. Die Zahlen sind
+   dieselben, die Eintraege bleiben gueltig. */
+function alteIdsUmschreiben(){
+  const m = BW.alteIds || {}, s = stand.bwe2;
+  if (s && s.a) for (const alt in m){
+    if (s.a[alt] && !s.a[m[alt]]) s.a[m[alt]] = s.a[alt];
+    delete s.a[alt];
+  }
+  if (s && m[s.ansicht]) s.ansicht = m[s.ansicht];
+  if (stand.texte) for (const alt in m){
+    const k = 'bw_' + alt + '_begr', n = 'bw_' + m[alt] + '_begr';
+    if (k in stand.texte){
+      if (!(n in stand.texte)) stand.texte[n] = stand.texte[k];
+      delete stand.texte[k];
+    }
+  }
+}
 function e2stand(){
+  alteIdsUmschreiben();
   if (!stand.bwe2 || !stand.bwe2.a) stand.bwe2 = {ansicht: AUFG[0].id, a: {}};
   // Aufgaben, die es nicht mehr gibt (vor Fassung 3.3: der Wuerfel), fallen weg
   if (!aufgabe(stand.bwe2.ansicht)) stand.bwe2.ansicht = AUFG[0].id;
@@ -2372,7 +2668,7 @@ function e2fuehrung(A, z){
 }
 
 function e2ctx(A, z){
-  return {A, z, schreiben: true, fragen: true, rechnen: true, leiste: true, farblos: true,
+  return {A, z, schreiben: true, fragen: true, rechnen: true, leiste: true, farblos: true, protokoll: true,
     // Solange in einer Darstellung kein «?» sitzt, stehen dort alle kleinen
     // ? bereit; danach nur das gesetzte.
     // FEHLERBEHOBEN (2026-10-10): je Darstellung, nicht fuers ganze Brett
@@ -2399,6 +2695,10 @@ function e2ctx(A, z){
     frage: p => e2frage(A, z, p)};
 }
 function e2zeichnen(){
+  // FEHLERBEHOBEN (Fassung 4.1): Ein spaeter Neuzeichnen-Aufruf (Fenstergroesse)
+  // nach dem Verlassen der Etappe fand #bwkopf nicht mehr. Ursache: window._neuzeichnen
+  // bleibt gesetzt. Ohne Kopf nichts tun.
+  if (!document.getElementById('bwkopf')) return;
   mitLage(() => {
     const s = e2stand(), A = aufgabe(s.ansicht), z = e2zustand(A.id);
     e2links(A, z);
@@ -2406,10 +2706,14 @@ function e2zeichnen(){
   });
 }
 function e2auffrischen(){
+  // NEU (Fassung 4.1): aendert sich die Hoehe oben (Schrittleiste, Fragen
+  // neben der Karte), das Brett neu einpassen - wie in Etappe 1.
+  const kopf = document.getElementById('bwkopf'), h0 = kopf ? kopf.offsetHeight : 0;
   mitLage(() => {
     const s = e2stand(), A = aufgabe(s.ansicht), z = e2zustand(A.id);
     e2links(A, z); if (BRETT) BRETT.ctx = e2ctx(A, z); brettAuffrischen();
   });
+  if (kopf && kopf.isConnected && kopf.offsetHeight !== h0) e2zeichnen();
 }
 
 /* GEAENDERT (Fassung 3.2): Aufgabenwahl in der Auftragsleiste, Frage,
@@ -2448,37 +2752,44 @@ function e2links(A, z){
   const frei = BW.freiwillig.includes(A.id);
   const ein = aufgabe(BW.pflicht[0]);
   reiterEl.innerHTML = `<button class="bwein" data-ansicht="${ein.id}" aria-current="${s.ansicht === ein.id}">Zum Einstieg: ${esc(label(ein))}${geloest(ein, s.a[ein.id]) ? ' <span class="ok">✓</span>' : ''}</button>`
-    + menueHtml('skript', 'Aus dem Skript', BW.skript, s)
-    + menueHtml('neu', 'Neue Aufgaben', BW.neu, s);
-  // Erst Titel (gross) und Situation, darunter die Frage, gross und hervorgehoben.
-  let h = `<div class="bwsit"><div class="bwtitel">${esc(label(A))}${frei ? '<span class="frei">nach Wahl</span>' : ''}</div><p>${esc(A.text)}</p>
-    <div class="bwfrage2 nach">${esc(A.frage)}</div>${namenZeile(A)}</div>`;
-  h += '<div class="bwtun">';
+    // GEAENDERT (Fassung 4): die Titel der Menues kommen aus flaeche.py
+    // («Aus dem Skript», «An der Chilbi»)
+    + menueHtml('skript', BW.menues.skript, BW.skript, s)
+    + menueHtml('neu', BW.menues.neu, BW.neu, s);
+  // GEAENDERT (Fassung 4.1): Titel, Situation und Frage als Karte ganz
+  // oben, mit Textmarker (Stifte «Angabe» und «gesucht»).
+  let h = situationKarte(A, {titel: esc(label(A)) + (frei ? ' <span class="frei">nach Wahl</span>' : ''),
+    frage: true, stifte: ['angabe', 'gesucht']});
+  let mehr = '';
   const schritt = e2schritt(A, z), v1 = e2erster(A, z), ganz = geloest(A, z), basis = basisGeloest(A, z);
   const erfuellt = [v1 ? angabenIn(A, z, andere(v1)) : angabenDa(A, z), fragSchritt(A, z), basis];
   const namen = ['1 · Angaben eintragen', '2 · Gesuchtes markieren', '3 · Bis zum ? rechnen'];
+  const tips = ['Eintragen, was gegeben ist.', 'Am gesuchten Feld auf das kleine ? klicken.', 'Nur rechnen, was Sie für das ? brauchen.'];
   // NEU (Fassung 3.7): Aufgaben mit Vergleich haben einen vierten Schritt
-  if (A.vergleich){ namen.push('4 · Vergleichen und antworten'); erfuellt.push(ganz); }
-  h += '<div class="bwschritte">' + (zweiWege(A) ? `<span class="${v1 || ganz ? 'fertig' : 'jetzt'}">${v1 || ganz ? '✓ ' : ''}Weg 1</span><span class="${v1 ? 'jetzt' : ganz ? 'fertig' : ''}">${ganz ? '✓ ' : ''}Weg 2</span>` : '')
-    + namen.map((n, i) =>
-    `<span class="${erfuellt[i] ? 'fertig' : i + 1 === schritt ? 'jetzt' : ''}">${erfuellt[i] ? '✓ ' : ''}${esc(n)}</span>`).join('') + '</div>';
+  if (A.vergleich){ namen.push('4 · Vergleichen und antworten'); erfuellt.push(ganz); tips.push('Hängen die beiden Merkmale zusammen?'); }
+  // GEAENDERT (Fassung 4.1): die Schritte als schmale Leiste ueber dem Brett
+  const l = (zweiWege(A) ? [{t: 'Weg 1', ok: !!(v1 || ganz), jetzt: !v1 && !ganz},
+                            {t: 'Weg 2', ok: ganz, jetzt: !!v1 && !ganz}] : [])
+    .concat(namen.map((n, i) => ({t: esc(n), ok: erfuellt[i], jetzt: !erfuellt[i] && i + 1 === schritt, tip: tips[i]})));
+  let det = '', stat = '';
   if (!ganz && A.vergleich && basis){
-    h += `<p class="ziel">Das ? ist erreicht. Jetzt der Vergleich:</p>` + vergleichHtml(A, z);
+    stat = '<span class="hin">Das ? ist erreicht. Jetzt der Vergleich.</span>';
+    mehr += vergleichHtml(A, z);
   } else if (!ganz){
     if (zweiWege(A))
-      h += v1 ? `<p class="ziel">Der Weg ${IM[v1]} steht. Jetzt dasselbe ${IM[andere(v1)]} — nur mit Werten ${AUS[andere(v1)]}.</p>`
-        : `<div class="zeile"><span>Diese Aufgabe lösen Sie <b>zweimal</b>: einmal im Baum, einmal in der Tafel, jeden Weg für sich. Womit Sie beginnen, ist frei.</span></div>`;
-    if (!v1) h += `<p class="ziel">${esc(D.etappen[1].auftrag)}</p>`;
+      det += v1 ? '' : '<p>Diese Aufgabe lösen Sie <b>zweimal</b>: einmal im Baum, einmal in der Tafel, jeden Weg für sich. Womit Sie beginnen, ist frei.</p>';
+    det += `<p><b>${esc(D.etappen[1].auftrag)}</b></p>`;
     // NEU (Rike 2026-10-10): das «?» je Darstellung, auch im Auftrag
-    h += `<div class="zeile"><span>${zweiWege(A)
+    det += `<p>${zweiWege(A)
       ? 'Das ? setzen Sie in jeder Darstellung selbst: im Baum und in der Tafel.'
-      : 'Das ? setzen Sie in der Darstellung, in der Sie rechnen — es erscheint nicht von selbst in der anderen.'}</span></div>`;
+      : 'Das ? setzen Sie in der Darstellung, in der Sie rechnen — es erscheint nicht von selbst in der anderen.'} Reihenfolge frei, Baum oder Tafel.</p>`;
     const v = v1 ? andere(v1) : null;
     const da = A.gegeben.filter(k => angabeDa(A, z, k, v)).length;
-    h += `<div class="zeile"><span>Angaben <b>${da}/${A.gegeben.length}</b>${v ? ' ' + IM[v] : ''}</span>`
+    if (zweiWege(A) && v1)
+      stat += `<span class="hin">Der Weg ${IM[v1]} steht. Jetzt dasselbe ${IM[andere(v1)]} — nur mit Werten ${AUS[andere(v1)]}.</span>`;
+    stat += `<span>Angaben <b>${da}/${A.gegeben.length}</b>${v ? ' ' + IM[v] : ''}</span>`
       + `<span>Gesucht: <b>${z.gesucht ? nameOder(A, 'r:' + z.gesucht, 'das Feld mit dem ?') : 'noch kein ?'}</b>${fragIrgendwo(z)
-          ? ' (? ' + ['r', 't'].filter(w => fragIn(z, w)).map(w => IM[w]).join(' und ') + ')' : ''}</span>`
-      + `<span>Reihenfolge frei, Baum oder Tafel.</span></div>`;
+          ? ' (? ' + ['r', 't'].filter(w => fragIn(z, w)).map(w => IM[w]).join(' und ') + ')' : ''}</span>`;
   } else {
     // NEU (Fassung 3.4, Punkt 5): Wie schnell war der Weg? Gezaehlt wird
     // jede Rechnung; der kuerzeste Weg ist der aus thema.py.
@@ -2489,23 +2800,27 @@ function e2links(A, z){
     if (zweiWege(A) || wegeFertig(A, z).length === 2){
       const zahl = v => { const m = z.eintraege.filter(e => vw(e.p) === v && !e.ohne).length;
         return `${WO[v]}: <b>${m} ${m === 1 ? 'Rechnung' : 'Rechnungen'}</b>${m <= kurz ? ' — schneller geht es nicht' : ` — es geht auch mit ${kurz}`}`; };
-      h += `<p class="ziel">Das ? ist im Baum und in der Tafel erreicht.</p>${schluss}
+      mehr += `<p class="ziel">Das ? ist im Baum und in der Tafel erreicht.</p>${schluss}
         <div class="zeile"><span>${zahl('r')}</span><span>${zahl('t')}</span></div>
         <div class="zeile"><span>Blass ist, was Sie für die beiden ? nicht gebraucht haben.</span></div>`;
     } else
-    h += `<p class="ziel">Das ? ist erreicht.</p>${schluss}
+    mehr += `<p class="ziel">Das ? ist erreicht.</p>${schluss}
       <div class="zeile"><span>${n <= kurz ? `<b>${n} ${n === 1 ? 'Rechnung' : 'Rechnungen'}</b> — schneller geht es nicht.`
         : `<b>${n} Rechnungen</b> — es geht auch mit ${kurz}.`} Blass ist, was Sie für das ? nicht gebraucht haben.</span></div>`;
-    if (A.vergleich) h += vergleichHtml(A, z);
+    if (A.vergleich) mehr += vergleichHtml(A, z);
   }
+  if (mehr) h += `<div class="bwmehr">${mehr}</div>`;
+  h += schrittLeiste(l, det, stat, z.eintraege.length > 0 || fragIrgendwo(z));
   // NEU (Fassung 3.7): «Jugendtreffen ✓ · 1 von 2 weiteren»
+  // GEAENDERT (Fassung 4.1): der Fortschritt steht in der Kopfleiste.
   const fw = fertigZahl(BW.freiwillig), m = BW.mindestens;
   const einOk = BW.pflicht.every(id => geloest(aufgabe(id), s.a[id]));
-  h += `<div class="zeile bwfort"><span><b>${esc(label(ein))} ${einOk ? '✓' : 'offen'}</b> · <b>${Math.min(fw, m)} von ${m}</b> weiteren`
-    + `${fw > m ? ` (dazu ${fw - m} freiwillig)` : ''}${einOk && fw >= m ? ' — <b>Pflicht erfüllt.</b>' : ''}</span></div>`;
-  h += protokollHtml(A, z) + '</div>';
+  reiterEl.insertAdjacentHTML('beforeend', `<span class="bwfort"><b>${esc(label(ein))} ${einOk ? '✓' : 'offen'}</b> · <b>${Math.min(fw, m)} von ${m}</b> weiteren`
+    + `${fw > m ? ` (dazu ${fw - m} freiwillig)` : ''}${einOk && fw >= m ? ' — <b>Pflicht erfüllt.</b>' : ''}</span>`);
   kopf.innerHTML = h;
-  protokollHaken(kopf);
+  protokollAuffrischen(A, z);
+  markerHaken(kopf);
+  anleitungHaken(kopf);
   if (A.vergleich){
     const war = geloest(A, z);
     vergleichHaken(kopf, A, z, () => {
@@ -2515,7 +2830,7 @@ function e2links(A, z){
   }
   const waehlen = id => {
     E.menue = null;
-    s.ansicht = id; E.falsch = {}; E.rechnen = null; E.meldung = null; E.neuSicher = false; E.blase = null; e2zeichnen(); };
+    s.ansicht = id; E.falsch = {}; E.rechnen = null; E.meldung = null; E.neuSicher = false; E.blase = null; E.anlOffen = undefined; e2zeichnen(); };
   reiterEl.querySelectorAll('[data-ansicht]').forEach(b => b.onclick = ev => { ev.stopPropagation(); waehlen(b.dataset.ansicht); });
   reiterEl.querySelectorAll('.bwmenue').forEach(mn => {
     const kn = mn.querySelector('.bwmknopf'), li = mn.querySelector('.bwmliste');
@@ -2800,6 +3115,7 @@ function bearbeitet(z){ return !!(z && z.eintraege && (z.eintraege.length || z.g
 
 /* Bild 2: die Wege im Raster, zwei je Zeile. */
 function wegebild(){
+  alteIdsUmschreiben();              // NEU (Fassung 4): alter Stand
   const s2 = stand.bwe2;
   const liste = AUFG.filter(A => s2 && s2.a && bearbeitet(s2.a[A.id]));
   if (!liste.length) return null;
