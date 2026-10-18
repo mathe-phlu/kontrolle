@@ -158,6 +158,15 @@
    das Rechenprotokoll klappt unter dem Brett ein; Fortschritt und
    Aufgabenwahl in der Kopfleiste. Mechanik unveraendert.
 
+   NEU (FASSUNG 4.2, thema.md, 2026-10-17, Rike): Titel «Vorwaerts und
+   rueckwaerts» (flaeche.py); die Darstellung heisst weiter Doppelbaum.
+   Auftragsfenster beim ersten Oeffnen jeder Etappe (auftragFenster,
+   stand.bwauftrag), Knopf «Auftrag» in der Kopfleiste, Auftragssatz oben
+   in der Situationskarte.
+   NEU (Rike 2026-10-17, Zusatz): direkter richtiger Wert in einem
+   Rechenfeld zeigt eine Rechnung darunter und kurz die Pfeile
+   (vorschlagFinden, e.vorschlag).
+
    E1  Zwei Situationen vollstaendig (OHNE Frage)
        S1 Uebungsstunden
          Zug 1  eintragen und berechnen - sofort weiterrechnen erlaubt
@@ -177,13 +186,16 @@
      stand.bwe1b     {eintraege, wahl}                    S2 (Fassung 3.3)
      stand.bwe1sit   0 oder 1: die gezeigte Situation
      stand.bwe1sicht bool: «Eine moegliche Sicht» geoeffnet
+     stand.bwauftrag {1: bool, 2: bool}: Auftragsfenster gesehen (Fassung 4.2)
+     stand.bwe2.lostopf 'mit' | 'allein': Lostoepfe mit oder ohne Anleitung
+                     (2026-10-18; fehlt in alten Staenden, siehe lostopfModus)
      stand.bwe2      {ansicht, gefuehrt, a: {Aufgaben-ID: {eintraege,
                      gesucht, wahl, markNach, fragen}}}
                      fragen = {r: n, t: n}: in welcher Darstellung das
                      «?» sitzt (n = Zahl der Eintraege beim Setzen)
      (stand.bwgruppen, stand.bwkasper: Etappe 3 bis Fassung 3.5; werden
       nicht mehr gelesen, ein alter Stand stoert nicht)
-   Ein Eintrag: {p, ausdruck, text, anz, ohne, quellen}.
+   Ein Eintrag: {p, ausdruck, text, anz, ohne, quellen, vorschlag?}.
 */
 
 (function(){
@@ -528,6 +540,71 @@
   .bwsstat b{color:var(--tinte)}
   .bwsstat .hin{color:var(--tinte);font-weight:600}
   .bwsstat .knopf{padding:2px 10px;font-size:12.5px}
+  /* NEU (FASSUNG 4.2): der Auftragssatz oben in der Situation, der Knopf
+     «Auftrag» in der Kopfleiste und das Auftragsfenster ueber der Flaeche. */
+  .bwsauftrag{margin:0 0 4px;padding:3px 9px;border-radius:7px;background:var(--akzent);color:#fff;
+     font-size:14.5px;line-height:1.35;font-weight:600}
+  .bwsauftrag .was{font-weight:700;margin-right:6px;opacity:.85}
+  .bwreiter button.bwauftragknopf{font-weight:700;border:2px solid var(--akzent);color:var(--akzent);background:#fff}
+  .bwreiter button.bwauftragknopf::before{content:'☰ ';font-weight:400}
+  .bwfenster{position:fixed;inset:0;z-index:200000;display:flex;align-items:center;justify-content:center;
+     background:rgba(45,41,36,.42);padding:12px}
+  .bwfenster .kasten{position:relative;background:#fff;border-radius:14px;border:2px solid var(--akzent);border-top-width:7px;
+     box-shadow:0 10px 36px rgba(0,0,0,.25);width:min(600px,100%);max-height:calc(100vh - 24px);overflow:auto;
+     padding:14px 20px 14px;font-size:15px;line-height:1.45;color:var(--tinte)}
+  .bwfenster h2{margin:0 30px 4px 0;font-size:19px;color:var(--akzent)}
+  .bwfenster .satz{margin:0 0 8px;font-weight:600;font-size:16px}
+  .bwfenster ol{margin:0 0 8px;padding-left:24px}
+  .bwfenster li{margin:0 0 4px}
+  .bwfenster li::marker{font-weight:700;color:var(--akzent)}
+  .bwfenster .bsp{color:var(--matt);font-size:13.5px}
+  .bwfenster .schluss{margin:0 0 10px;padding:5px 10px;border-left:3px solid var(--akzent);background:#fffefb;font-size:14px}
+  .bwfenster .zu{position:absolute;top:6px;right:8px;width:32px;height:32px;border:0;background:none;font-size:24px;
+     line-height:1;color:var(--matt);cursor:pointer;border-radius:8px}
+  .bwfenster .zu:hover{background:#f3efe6;color:var(--tinte)}
+  .bwfenster .unten{display:flex;justify-content:flex-end}
+  .bwfenster .los{font-size:15px;padding:6px 18px}
+  @media (max-height:640px),(max-width:900px){
+    .bwfenster .kasten{font-size:14px;line-height:1.38;padding:10px 16px 10px}
+    .bwfenster h2{font-size:17px}
+    .bwfenster .satz{font-size:14.5px;margin-bottom:5px}
+    .bwfenster li{margin-bottom:2px}
+    .bwfenster .schluss{margin-bottom:6px;font-size:13px}
+    .bwsauftrag{font-size:13px;padding:2px 8px;margin-bottom:3px}
+  }
+  /* NEU (Rike 2026-10-17, Zusatz «Zug 2»): zwei Ebenen in der Kopfleiste -
+     die Zuege der Situation als nummerierte Schrittreihe, die Wahl der
+     Situation bzw. Aufgabe zurueckgenommen (gedimmt, solange Zuege offen
+     sind). Die Weiter-Fahne steht unten im Brettbereich. */
+  .bwreiter .bwzuege{display:inline-flex;flex-wrap:nowrap;align-items:center;gap:3px;padding:2px 4px;border-radius:999px;background:#f3efe6}
+  .bwreiter .bwzuege .pfeil{color:var(--matt);font-weight:700;margin:0 1px}
+  .bwreiter button.bwzug{font-weight:600;border-width:2px;display:inline-flex;align-items:center;gap:6px}
+  .bwreiter button.bwzug .nr{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:50%;
+     font-size:11px;font-weight:700;background:var(--linie);color:var(--tinte)}
+  .bwreiter button.bwzug.fertig .nr{background:var(--richtig);color:#fff}
+  .bwreiter button.bwzug[aria-current=true] .nr{background:#fff;color:var(--akzent)}
+  .bwreiter button.bwzug:not(.knopflos)[aria-current=true]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--akzent)}
+  .bwreiter .bwzug.knopflos{cursor:default}
+  .bwreiter .bwsitwahl{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px;font-size:12px}
+  .bwreiter .bwsitwahl .was{color:var(--matt);font-size:11.5px}
+  .bwreiter .bwsitwahl button{font-size:11.5px;padding:2px 8px}
+  .bwreiter .gedimmt > button,.bwreiter .gedimmt > .bwmenue{opacity:.45;filter:grayscale(1)}
+  .bwreiter .gedimmt > button:hover,.bwreiter .gedimmt > .bwmenue:hover{opacity:.8}
+  .bwreiter .gedimmt .hin{font-size:11.5px;color:var(--matt);font-style:italic}
+  .bwfahne{position:absolute;right:14px;bottom:12px;z-index:40;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+     max-width:min(460px,calc(100% - 28px));background:#fff;border:2px solid var(--akzent);border-radius:12px;padding:7px 10px 7px 12px;
+     box-shadow:0 6px 20px rgba(0,0,0,.18);font-size:14px;animation:bwfahne .25s ease-out}
+  .bwfahne .notiz{font-weight:600;color:var(--tinte)}
+  .bwfahne .knopf{font-size:14.5px;padding:6px 14px;white-space:nowrap}
+  .bwfahne .uhr{height:3px;flex-basis:100%;background:var(--linie);border-radius:2px;overflow:hidden}
+  .bwfahne .uhr i{display:block;height:100%;width:100%;background:var(--akzent);animation:bwuhr 1.5s linear forwards}
+  @media (max-width:900px){ .bwreiter .bwzug .lang{display:none} }
+  @keyframes bwfahne{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+  @keyframes bwuhr{from{width:0}to{width:100%}}
+  /* NEU (Rike 2026-10-18): Wahl «Mit Anleitung» / «Selbststaendig» */
+  .bwmodus{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 8px;color:var(--tinte)}
+  .bwmodus.wahl{padding:4px 8px;border:2px solid var(--akzent);border-radius:10px;background:#fff}
+  .bwmodus .knopf{padding:3px 10px;font-size:12.5px}
   /* Fortschritt in der Kopfleiste */
   .auftrag .bwreiter .bwfort{font-size:12px;color:var(--matt);margin-left:6px;white-space:nowrap}
   .auftrag .bwreiter .bwfort b{color:var(--tinte)}
@@ -818,6 +895,62 @@ function quellenFinden(A, z, p, literale){
   return q;
 }
 
+/* NEU (Rike 2026-10-17, Zusatz zu Fassung 4.2): Wer in ein Feld, das
+   berechnet werden muss, direkt den richtigen Wert tippt, sieht die
+   Rechnung trotzdem darunter und kurz die Pfeile - wie bei einer selbst
+   eingetragenen Rechnung. Gewaehlt wird die direkteste Rechnung aus den
+   Werten, die in DERSELBEN Darstellung schon stehen (sonst kaeme bei den
+   Zwei Lostoepfen ein Pfeil aus der anderen Darstellung): zuerst die mit
+   den meisten Angaben, dann Produkt am Ast, 1 minus Gegenereignis, Summe,
+   Differenz, Quotient. Gibt es mehrere, steht «z. B.» davor.
+   Der Vorschlag steht im Eintrag (e.vorschlag = {ausdruck, quellen});
+   e.ohne bleibt wahr, gezaehlt wird er nicht als Rechnung. Aeltere Staende
+   haben kein e.vorschlag und bleiben, wie sie sind.
+   Angaben (gegeben, zaehlbar, gegeben_auch) bekommen keinen Vorschlag. */
+const gegenE = e => (e.startsWith('n') ? e.slice(1) : 'n' + e);
+function istAngabe(A, k){
+  return A.gegeben.includes(k) || (A.zaehlbar || []).includes(k)
+    || Object.values(A.gegeben_auch || {}).includes(k);
+}
+function vorschlagFinden(A, z, p){
+  const k = kk(p), v = vw(p), s = ST[k];
+  if (k === 'E' || istAngabe(A, k)) return null;
+  const da = {};
+  z.eintraege.forEach(e => { if (e.p !== p && vw(e.p) === v) da[kk(e.p)] = e; });
+  const hat = q => !!da[q];
+  const kand = [];   // {rang, q: [Schluessel], art}
+  const dazu = (rang, art, q) => { if (q.every(hat)) kand.push({rang, art, q}); };
+  if (s.art === 'schnitt'){
+    const [x, y] = s.ev;
+    dazu(0, 'produkt', [x, x + '_' + y]);
+    dazu(0, 'produkt', [y, y + '_' + x]);
+    // Differenz: Rand minus das andere Pfadende desselben Randes
+    dazu(3, 'differenz', [x, schnittK(x, gegenE(y))]);
+    dazu(3, 'differenz', [y, schnittK(gegenE(x), y)]);
+  }
+  if (s.art === 'rand' || s.art === 'bed'){
+    const g = s.art === 'rand' ? gegenE(s.ev[0]) : s.bed + '_' + gegenE(s.ev[0]);
+    dazu(1, 'gegen', [g]);
+  }
+  if (s.art === 'rand'){
+    const e = s.ev[0], fam = X_FAM.includes(e) ? Y_FAM : X_FAM;
+    dazu(2, 'summe', fam.map(f => schnittK(e, f)));
+    // Rand aus Pfadende und Ast: P(X) = P(X∩Y) : P_X(Y)
+    fam.forEach(f => dazu(4, 'quotient', [schnittK(e, f), e + '_' + f]));
+  }
+  if (s.art === 'bed') dazu(4, 'quotient', [schnittK(s.bed, s.ev[0]), s.bed]);
+  if (!kand.length) return null;
+  const nichtAngabe = c => c.q.filter(q => !istAngabe(A, q)).length;
+  kand.sort((a, b) => (nichtAngabe(a) - nichtAngabe(b)) || (a.rang - b.rang));
+  const c = kand[0], T = q => da[q].text;
+  const ausdruck = c.art === 'produkt' ? `${T(c.q[0])} · ${T(c.q[1])}`
+    : c.art === 'gegen' ? einsText(A) + ' − ' + T(c.q[0])
+    : c.art === 'summe' ? `${T(c.q[0])} + ${T(c.q[1])}`
+    : c.art === 'differenz' ? `${T(c.q[0])} − ${T(c.q[1])}`
+    : `${T(c.q[0])} : ${T(c.q[1])}`;
+  return {ausdruck: (kand.length > 1 ? 'z. B. ' : '') + ausdruck, quellen: c.q.map(q => v + ':' + q)};
+}
+
 /* Was im Feld steht, nachdem es angenommen ist. Prozentaufgaben zeigen
    Prozent, Bruchaufgaben Brueche - bei Summen gleicher Nenner so, wie
    gezaehlt (2/6 + 1/6 = 3/6). */
@@ -864,6 +997,8 @@ function eintragVerarbeiten(A, z, p, txt, vorgabe){
   const a = anzeige(A, r, wahr, k);
   const e = {p, ausdruck: r.text, text: a.text, ungefaehr: a.gerundet && !r.einzeln,
              ohne: r.einzeln, quellen: r.einzeln ? [] : (vorgabe && vorgabe.length ? vorgabe.slice() : quellenFinden(A, z, p, r.literale))};
+  // NEU (Rike 2026-10-17): direkter Wert in einem Rechenfeld - Vorschlag
+  if (r.einzeln){ const vs = vorschlagFinden(A, z, p); if (vs) e.vorschlag = vs; }
   const alt = z.eintraege.findIndex(x => x.p === p);
   if (alt >= 0){ z.eintraege[alt] = e; return {ok: true, nr: alt + 1, nachgetragen: true}; }
   z.eintraege.push(e);
@@ -873,6 +1008,8 @@ function eintragVerarbeiten(A, z, p, txt, vorgabe){
 function protokollTeile(A, e, nr){
   // GEAENDERT (Fassung 3.5): ohne entdeckte Bezeichnung nur die Rechnung
   const n = nameTeile(A, kk(e.p), vw(e.p)), vor = n.length ? [...n, {s: ' = '}] : [];
+  // NEU (Rike 2026-10-17): ein direkter Wert mit Vorschlag zeigt die Rechnung
+  if (e.ohne && e.vorschlag) return [{s: nr + ' · '}, ...vor, {s: e.vorschlag.ausdruck + ' = ' + e.text}];
   if (e.ohne) return [{s: nr + ' · '}, ...vor, {s: e.text}];
   return [{s: nr + ' · '}, ...vor, {s: e.ausdruck + (e.ungefaehr ? ' ≈ ' : ' = ') + e.text}];
 }
@@ -884,7 +1021,7 @@ function protokollHtml(A, z){
     ? '<ol>' + z.eintraege.map((e, i) => {
         const t = protokollTeile(A, e, i + 1);
         return `<li data-i="${i}" title="Pfeil zeigen"><b class="nr">${i + 1}</b> ${teileHtml(t.slice(1))} <span class="wo">(${WO[vw(e.p)]})</span>`
-          + (e.ohne ? ' <span class="ohne">ohne Rechnung</span>' : '') + '</li>';
+          + (e.ohne && !e.vorschlag ? ' <span class="ohne">ohne Rechnung</span>' : '') + '</li>';
       }).join('') + '</ol>'
     : '<div class="leer">Noch nichts eingetragen.</div>') + '</details>';
 }
@@ -956,14 +1093,16 @@ function mkMalen(el, marken){
     }
   });
 }
-/* o: {titel (HTML), frage (bool), stifte: ['angabe', ...]} */
+/* o: {titel (HTML), frage (bool), stifte: ['angabe', ...], auftrag (Text)} */
 function situationKarte(A, o){
   const stifte = `<span class="bwstifte" role="toolbar" aria-label="Textmarker"
       title="Freiwillig: Stift wählen, dann über den Text streichen oder Wörter anklicken.">
     <span class="was">Markieren:</span>
     ${o.stifte.map(a => `<button type="button" class="m-${a}" data-stift="${a}" aria-pressed="${E.stift === a}" title="Stift «${MK_NAME[a]}»">${MK_NAME[a]}</button>`).join('')}
     <button type="button" class="weg" data-stift="weg" aria-pressed="${E.stift === 'weg'}" title="Radierer">Radierer</button></span>`;
+  // NEU (FASSUNG 4.2): der Auftragssatz der Etappe hervorgehoben ganz oben
   return `<div class="bwskarte" role="region" aria-label="Situation">
+    ${o.auftrag ? `<p class="bwsauftrag"><span class="was">Auftrag:</span>${esc(o.auftrag)}</p>` : ''}
     <div class="bwskopf"><span class="bwstitel">${o.titel}</span>${stifte}</div>
     <p class="bwstext" data-mk="${esc(A.id)}:t">${mkStuecke(A.text)}</p>
     ${o.frage ? `<p class="bwsfrage" data-mk="${esc(A.id)}:f">${mkStuecke(A.frage)}</p>` : ''}
@@ -1041,6 +1180,87 @@ function schrittLeiste(schritte, det, stat, getan){
     : `<div class="bwsbar"><div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px">${chips}</div></div>`)
     + (stat ? `<div class="bwsstat">${stat}</div>` : '') + '</div>';
 }
+/* ───────── NEU (FASSUNG 4.2, Rike 2026-10-17): Auftragsfenster ─────────
+   «In Etappe 1 (und 2) muss sehr deutlich der Auftrag dastehen. Das darf
+   auch ein Popup sein, das direkt erscheint, wenn die Seite geoeffnet
+   wird, und dann geschlossen wird.»
+   Beim ersten Oeffnen jeder Etappe erscheint das Fenster von selbst; zu
+   mit «Los geht's», × oder Escape. Danach oeffnet der Knopf «Auftrag» in
+   der Kopfleiste (#bwreiter) es wieder.
+   Stand: stand.bwauftrag = {1: true, 2: true} - gesehen je Etappe. Ein
+   aelterer Stand hat das Feld nicht; er bleibt, wie er ist, und zeigt das
+   Fenster einmal. Die Schritte passen zur Schrittleiste (e1links,
+   e2links) und zu ANZ (Beispielzahlen). */
+const AUFTRAG_KNOPF = '<button type="button" class="bwauftragknopf" data-auftrag title="Den Auftrag dieser Etappe noch einmal zeigen">Auftrag</button>';
+function auftragKnopfHaken(reiterEl, nr){
+  reiterEl.querySelectorAll('[data-auftrag]').forEach(b => b.onclick = ev => { ev.stopPropagation(); auftragFenster(nr); });
+}
+function auftragHtml(nr){
+  const bsp = ANZ === 'prozent' ? ['70 %', '85 %', '59.5 %'] : ['0.7', '0.85', '0.595'];
+  if (nr === 1) return `<h2 id="bwfenstertitel">Auftrag · Etappe 1</h2>
+    <p class="satz">${esc(D.etappen[0].auftrag)}</p>
+    <ol>
+      <li>Lesen Sie die Situation und markieren Sie die Werte <span class="bsp">(Stift «Angabe»)</span>.</li>
+      <li>Tragen Sie die Angaben in den Baum oder in die Tafel ein. <span class="bsp">Bei «${esc(label(SIT2))}» zählen Sie ab, z. B. «2/6».</span></li>
+      <li>Berechnen Sie die übrigen Felder: <b>die Rechnung</b> ins leere Feld. <span class="bsp">Z. B. ${bsp[0]} · ${bsp[1]} – im Feld steht dann ${bsp[2]}.</span></li>
+      <li>Zeichnen Sie den Weg in der zweiten Darstellung nach: Füllen Sie Baum und Tafel je für sich ganz aus.</li>
+    </ol>
+    <p class="schluss">Am Schluss: ${esc(BW.schlussfrage.frage)}</p>`;
+  const ein = aufgabe(BW.pflicht[0]);
+  return `<h2 id="bwfenstertitel">Auftrag · Etappe 2</h2>
+    <p class="satz">${esc(D.etappen[1].auftrag)}</p>
+    <ol>
+      <li>Zuerst «${esc(label(ein))}», dann ${BW.mindestens === 2 ? 'zwei' : BW.mindestens} weitere nach Wahl <span class="bsp">(«${esc(BW.menues.skript)}» oder «${esc(BW.menues.neu)}»)</span>.</li>
+      <li>Tragen Sie ein, was gegeben ist.</li>
+      <li>Markieren Sie mit <b>?</b>, was gesucht ist: <span class="bsp">am gesuchten Feld auf das kleine ? klicken.</span></li>
+      <li>Rechnen Sie nur, was Sie für das ? brauchen.</li>
+    </ol>
+    <p class="schluss">«${esc(label(ein))}» lösen Sie in beiden Darstellungen: einmal im Baum, einmal in der Tafel – mit Anleitung oder selbstständig, Sie wählen.</p>`;
+}
+function auftragFenster(nr){
+  const alt = document.getElementById('bwfenster');
+  if (alt) alt.remove();
+  const vorher = document.activeElement;
+  const f = document.createElement('div');
+  f.className = 'bwfenster'; f.id = 'bwfenster';
+  f.innerHTML = `<div class="kasten" role="dialog" aria-modal="true" aria-labelledby="bwfenstertitel">
+    <button type="button" class="zu" aria-label="Schliessen" title="Schliessen">×</button>
+    ${auftragHtml(nr)}
+    <div class="unten"><button type="button" class="knopf los">Los geht's</button></div></div>`;
+  const zu = () => {
+    f.remove();
+    document.removeEventListener('keydown', taste, true);
+    const kn = document.querySelector('#bwreiter [data-auftrag]');
+    if (vorher && vorher.isConnected && vorher !== document.body) vorher.focus();
+    else if (kn) kn.focus();
+  };
+  // Escape schliesst nur das Fenster (Fangphase, damit nichts anderes reagiert)
+  const taste = ev => {
+    if (!f.isConnected){ document.removeEventListener('keydown', taste, true); return; }
+    if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); zu(); }
+    else if (ev.key === 'Tab'){
+      // Fokus im Fenster halten
+      const kn = [...f.querySelectorAll('button')], i = kn.indexOf(document.activeElement);
+      ev.preventDefault();
+      kn[(i + (ev.shiftKey ? kn.length - 1 : 1)) % kn.length].focus();
+    }
+  };
+  document.addEventListener('keydown', taste, true);
+  f.querySelector('.zu').onclick = zu;
+  f.querySelector('.los').onclick = zu;
+  f.addEventListener('pointerdown', ev => { if (ev.target === f) zu(); });
+  // Im Buehnenbereich: ein Etappenwechsel ersetzt #buehne und nimmt das Fenster mit.
+  (document.getElementById('buehne') || document.body).appendChild(f);
+  f.querySelector('.los').focus();
+}
+function auftragBeimOeffnen(nr){
+  if (!stand.bwauftrag || typeof stand.bwauftrag !== 'object') stand.bwauftrag = {};
+  if (stand.bwauftrag[nr]) return;
+  stand.bwauftrag[nr] = true;
+  sichern();
+  auftragFenster(nr);
+}
+
 /* Das Rechenprotokoll unter dem Brett (#bwprotbox, von brettBauen
    angelegt). Nach einem Eintrag nur den Inhalt erneuern. */
 function protokollAuffrischen(A, z){
@@ -1365,6 +1585,9 @@ function szene(A, o){
         // NEU (Fassung 3.2, Punkt 3): die Rechnung klein darunter, wie auf dem Schirm
         if (w && !w.fest && !w.ohne && w.ausdruck)
           t.push({t: 'text', x, y: y + hh + gr * 0.5, s: w.ausdruck, gross: gr * 0.62, farbe: F.matt, hof: true});
+        // NEU (Rike 2026-10-17): der Vorschlag bei einem direkten Wert
+        else if (w && !w.fest && w.ohne && w.vorschlag)
+          t.push({t: 'text', x, y: y + hh + gr * 0.5, s: w.vorschlag.ausdruck, gross: gr * 0.62, farbe: F.matt, hof: true});
         else if (gef) t.push({t: 'text', x, y, s: '?', gross: gr * 1.2, fett: true, farbe: F.frage});
         if (vw(p) === 'r' && ST[k].art !== 'wurzel' && namenAn(A, k))
           t.push({t: 'text', x, y: y - hh - Math.max(6, o.s * 1.2), teile: nameTeile(A, k, 'r'),
@@ -1383,6 +1606,11 @@ function szene(A, o){
   (o.eintraege || []).forEach((e, i) => {
     if (o.nurPfeil !== undefined && i !== o.nurPfeil) return;
     if (vw(e.p) === 't' && o.tafel === false) return;
+    // NEU (Rike 2026-10-17): Ein direkter Wert mit Vorschlag zeigt dessen
+    // Pfeile, aber nur kurz (nurPfeil) - in der ganzen Pfeilkette (Bilder
+    // zum Mitnehmen) bleibt er ein Eintrag ohne Rechnung.
+    if (o.nurPfeil !== undefined && !e.quellen.length && e.vorschlag)
+      e = Object.assign({}, e, {quellen: e.vorschlag.quellen});
     const [x1, y1] = ortPx(e.p, o), r1 = halb(e.p);
     const nrg = mini ? s * 2.1 : Math.max(6.5, o.s * 1.45);
     if (!e.quellen.length && o.nurSchritte) return;
@@ -1930,8 +2158,9 @@ function brettAuffrischen(){
     d.querySelector('.bwbild').textContent = e ? e.text : (istFrage(z, p) ? '?' : '');
     // Die Rechnung klein darunter - nur, wenn eine getippt wurde und das
     // Feld nicht gerade eine falsche Eingabe zeigt.
-    d.querySelector('.bwrech').textContent =
-      e && !e.fest && !e.ohne && e.ausdruck && !(E.falsch && E.falsch[p] !== undefined) ? e.ausdruck : '';
+    // NEU (Rike 2026-10-17): bei einem direkten Wert der Vorschlag
+    d.querySelector('.bwrech').textContent = !e || e.fest || (E.falsch && E.falsch[p] !== undefined) ? ''
+      : !e.ohne && e.ausdruck ? e.ausdruck : e.ohne && e.vorschlag ? e.vorschlag.ausdruck : '';
   });
   _namenVorher = {A, k: new Set(SCHLUESSEL.filter(k => k !== 'E' && namenAn(A, k)))};
   if (BRETT.karte && ctx.oben) karteSetzen(BRETT.karte, ctx.oben);
@@ -1979,7 +2208,7 @@ function eintragMelden(A, z, p, r){
   if (!r.ok){ blase(p, r.art || 'a', r.html); return; }
   E.blase = null;      // gelungen: eine alte Blase ist erledigt
   const e = z.eintraege[r.nr - 1];
-  meldung(`✓ ${teileHtml(protokollTeile(A, e, r.nr))}` + (e.ohne ? ' <span style="color:#C77D0A;font-style:italic">— ohne Rechnung</span>' : '')
+  meldung(`✓ ${teileHtml(protokollTeile(A, e, r.nr))}` + (e.ohne && !e.vorschlag ? ' <span style="color:#C77D0A;font-style:italic">— ohne Rechnung</span>' : '')
     + (r.nachgetragen ? ' <span style="color:var(--matt)">(Eintrag ' + r.nr + ' ersetzt)</span>' : ''), 'ok');
 }
 
@@ -2085,6 +2314,7 @@ function etappe1(){
   window._neuzeichnen = e1zeichnen;
   e1zeichnen();
   loesungsKnopf(() => etappe1());
+  auftragBeimOeffnen(1);
 }
 
 function e1ctx(A, z){
@@ -2120,6 +2350,55 @@ function e1auffrischen(){
   mitLage(() => { const A = e1A(), z = e1z(); e1links(A, z); if (BRETT) BRETT.ctx = e1ctx(A, z); brettAuffrischen(); });
   if (kopf && kopf.isConnected && kopf.offsetHeight !== h0) e1zeichnen();
 }
+/* ───────── NEU (Rike 2026-10-17, Zusatz «Zug 2») ─────────
+   «Studierende sehen nicht, dass sie nach einem Zug zu Zug 2 muessen, nicht
+   zur naechsten Situation.» Ist ein Zug fertig, steht unten im Brettbereich
+   eine Fahne mit dem Knopf (#bwfahne, in #rechts, ueberlebt den Neubau des
+   Bretts). Nach Zug 1 geht es nach etwa 1.5 s von selbst weiter, mit
+   sichtbarer Notiz. Nur nach dem letzten Zug: «Naechste Situation →».
+   Gemerkt wird nichts im Stand: Die Automatik loest nur der Eintrag aus,
+   der den Zug fertig macht - nie das Laden. */
+let _zugUhr = null, _fahneUhr = null;
+function weiterFahne(o){
+  const r = document.getElementById('rechts');
+  let f = document.getElementById('bwfahne');
+  if (!o || !r){ if (f) f.remove(); return; }
+  const sig = o.notiz + '|' + o.knopf + '|' + !!o.uhr;
+  if (!f || f.parentNode !== r){
+    if (f) f.remove();
+    f = document.createElement('div');
+    f.id = 'bwfahne'; f.className = 'bwfahne'; f.setAttribute('role', 'status');
+    r.appendChild(f);
+  }
+  if (f.dataset.sig !== sig){
+    f.dataset.sig = sig;
+    f.innerHTML = (o.notiz ? `<span class="notiz">${esc(o.notiz)}</span>` : '')
+      + (o.knopf ? `<button type="button" class="knopf">${esc(o.knopf)}</button>` : '')
+      + (o.uhr ? '<span class="uhr"><i></i></span>' : '');
+  }
+  const kn = f.querySelector('button');
+  if (kn) kn.onclick = ev => { ev.stopPropagation(); o.tun(); };
+}
+function zuZug2(z){
+  clearTimeout(_zugUhr); _zugUhr = null;
+  const auto = !!E.zugAuto;
+  E.zugAuto = false;
+  z.zug = 2; E.finde = {}; E.rechnen = null; E.anlOffen = undefined; E.blase = null;
+  meldung(auto ? 'Zug 1 fertig – weiter mit Zug 2: Finde den Wert.' : 'Zug 2: Finde den Wert.', 'ok');
+  e1zeichnen();
+}
+function zugAutomatisch(z){
+  E.zugAuto = true;
+  const Ejetzt = E;
+  clearTimeout(_zugUhr);
+  _zugUhr = setTimeout(() => {
+    // Nur, wenn man noch dort ist: dieselbe Etappe, Situation und Zug 1
+    if (E !== Ejetzt || !E.zugAuto || !document.getElementById('bwkopf')) return;
+    if (e1sit() !== 0 || e1z() !== z || (z.zug || 1) !== 1 || !vollstaendig(z)) return;
+    zuZug2(z);
+  }, 1500);
+}
+
 /* NEU (Fassung 3.5, Punkt 3): die Frage von «Finde den Wert» als Karte
    direkt ueber dem Brett, daneben nur der Zaehler. */
 function findeKarte(z){
@@ -2224,21 +2503,32 @@ function e1links(A, z){
   const nR = ALLE_STELLEN.filter(p => vw(p) === 'r' && z.eintraege.some(e => e.p === p)).length;
   const nT = ALLE_STELLEN.filter(p => vw(p) === 't' && z.eintraege.some(e => e.p === p)).length;
   const halb = ALLE_STELLEN.length / 2;
-  // NEU (Fassung 3.3): erst die Situationen, dann - nur fuer S1 - die Zuege
-  let rh = SITS.map((S, i) => `<button data-sit="${i}" aria-current="${e1sit() === i}">${esc(label(S))}`
-    + `${(i === 0 ? s1fertig() : s2fertig()) ? ' <span class="ok">✓</span>' : ''}</button>`).join('');
+  // GEAENDERT (Rike 2026-10-17, Zusatz «Zug 2»): zwei Ebenen. Vorn die
+  // Zuege der Situation als nummerierte Schrittreihe (der aktuelle
+  // hervorgehoben, fertige mit ✓); dahinter, zurueckgenommen, die Wahl der
+  // Situation - gedimmt mit «zuerst Zug 1 und 2», solange Zuege offen sind.
+  // (Bis dahin: erst die Situationen, dann die Zuege, gleich gewichtet.)
+  let rh = '';
+  const zugOffen = !!A.paaren && !s1fertig();
   if (A.paaren){
     // GEAENDERT (Nachtrag 2026-10-10): «Angaben markieren» entfaellt
-    const reiter = [[1, 'Zug 1 · Eintragen und berechnen', voll],
-                    [2, 'Zug 2 · Finde den Wert', z.paare.length === SCHLUESSEL.length]];
-    rh += '<span class="bwtrenn"></span>' + reiter.map(([n, t, ok]) =>
-      `<button data-zug="${n}" aria-current="${zug === n}">${t}${ok ? ' <span class="ok">✓</span>' : ''}</button>`).join('');
+    const reiter = [[1, 'Eintragen und berechnen', voll],
+                    [2, 'Finde den Wert', z.paare.length === SCHLUESSEL.length]];
+    rh += '<span class="bwzuege" role="group" aria-label="Züge dieser Situation">' + reiter.map(([n, t, ok], i) =>
+      (i ? '<span class="pfeil" aria-hidden="true">›</span>' : '')
+      + `<button data-zug="${n}" class="bwzug${ok ? ' fertig' : ''}" aria-current="${zug === n}" title="Zug ${n} · ${t}"><span class="nr">${ok ? '✓' : n}</span>Zug ${n}<span class="lang">&nbsp;· ${t}</span></button>`).join('')
+      + '</span>';
   }
-  reiterEl.innerHTML = rh;
+  rh += `<span class="bwsitwahl${zugOffen ? ' gedimmt' : ''}"${zugOffen ? ' title="zuerst Zug 1 und 2"' : ''}><span class="was">Situation:</span>`
+    + SITS.map((S, i) => `<button data-sit="${i}" aria-current="${e1sit() === i}">${esc(label(S))}`
+      + `${(i === 0 ? s1fertig() : s2fertig()) ? ' <span class="ok">✓</span>' : ''}</button>`).join('')
+    + (zugOffen ? '<span class="hin">zuerst Zug 1 und 2</span>' : '') + '</span>';
+  reiterEl.innerHTML = AUFTRAG_KNOPF + rh;
+  auftragKnopfHaken(reiterEl, 1);
   const voll2 = !A.paaren && voll;
   // GEAENDERT (Fassung 4.1): die Situation als Karte ganz oben, mit
   // Textmarker (Stift «Angabe»).
-  let h = situationKarte(A, {titel: esc(label(A)), frage: false, stifte: ['angabe']});
+  let h = situationKarte(A, {titel: esc(label(A)), frage: false, stifte: ['angabe'], auftrag: D.etappen[0].auftrag});
   // Was nach dem Ausfuellen kommt, steht neben der Karte (.bwmehr).
   let mehr = '';
   // S2, vollstaendig: die Frage nach beiden Situationen, die Sicht und der Vergleich.
@@ -2320,9 +2610,19 @@ function e1links(A, z){
   reiterEl.querySelectorAll('[data-sit]').forEach(b => b.onclick = () => zuSit(+b.dataset.sit));
   tisch.querySelectorAll('[data-sitgeh]').forEach(b => b.onclick = () => zuSit(+b.dataset.sitgeh));
   reiterEl.querySelectorAll('[data-zug]').forEach(b => b.onclick = () => {
+    clearTimeout(_zugUhr); E.zugAuto = false;
     z.zug = +b.dataset.zug; E.finde = {}; E.rechnen = null; E.meldung = null; E.anlOffen = undefined; E.blase = null; e1zeichnen(); });
   tisch.querySelectorAll('[data-geh]').forEach(b => b.onclick = () => {
     z.zug = +b.dataset.geh; E.finde = {}; E.rechnen = null; E.meldung = null; E.anlOffen = undefined; E.blase = null; e1zeichnen(); });
+  // NEU (Rike 2026-10-17, Zusatz «Zug 2»): Weiter-Fahne im Brettbereich
+  if (A.paaren && zug === 1 && voll)
+    weiterFahne({notiz: E.zugAuto ? 'Zug 1 fertig – weiter mit Zug 2' : '', uhr: !!E.zugAuto,
+                 knopf: 'Weiter zu Zug 2 →', tun: () => zuZug2(z)});
+  else if (A.paaren && zug === 2 && z.paare.length === SCHLUESSEL.length)
+    weiterFahne({notiz: 'Zug 2 fertig.', knopf: 'Nächste Situation →', tun: () => zuSit(1)});
+  else if (!A.paaren && voll && A.vergleich && z.wahl === A.vergleich.richtig)
+    weiterFahne({notiz: 'Beide Situationen fertig.', knopf: 'Weiter zu Etappe 2 →', tun: () => { stand.etappe = 1; los(); }});
+  else weiterFahne(null);
   const an = tisch.querySelector('#bwanzahl');
   if (an){
     const urteil = () => {
@@ -2368,7 +2668,11 @@ function e1links(A, z){
 function e1eintrag(p, txt, quellen){
   const A = e1A(), z = e1z();
   if (!String(txt).trim()){ delete E.falsch[p]; return e1auffrischen(); }
+  const warVoll = vollstaendig(z);
   const r = eintragVerarbeiten(A, z, p, txt, quellen);
+  // NEU (Rike 2026-10-17, Zusatz «Zug 2»): Zug 1 eben fertig - nach etwa
+  // 1.5 s von selbst zu Zug 2 (zugAutomatisch); zurueck geht es ueber die Leiste.
+  if (r.ok && !warVoll && vollstaendig(z) && A.paaren && (z.zug || 1) === 1) zugAutomatisch(z);
   if (r.ok) delete E.falsch[p]; else E.falsch[p] = txt;
   eintragMelden(A, z, p, r);
   if (r.ok && vollstaendig(z))
@@ -2494,6 +2798,26 @@ function e2zustand(id){
 /* NEU (Nachtrag 2026-10-10, Rike): Beim Jugendtreffen beide Wege, erst
    im einen, dann im anderen (Reihenfolge frei). */
 const zweiWege = A => A.id === AUFG[0].id;
+/* NEU (Rike 2026-10-18, «Lostoepfe mit oder ohne Anleitung»): Bei den
+   Zwei Lostoepfen waehlt man «Mit Anleitung» oder «Selbststaendig: beide
+   Wege allein»; Wechsel jederzeit, die Eintraege bleiben.
+   stand.bwe2.lostopf = 'mit' | 'allein'. stand.bwe2.gefuehrt wird NICHT
+   dafuer verwendet: es heisst seit Fassung 3.6 «das gefuehrte Beispiel
+   ist vorbei» und wird nach dem Loesen gesetzt.
+   Ohne Feld (neuer oder alter Stand): Hat die Aufgabe schon Eintraege oder
+   ist die Fuehrung vorbei, gilt «mit» (alte Staende arbeiten weiter wie
+   bisher); sonst ist noch nicht gewaehlt (null) - die Flaeche bietet die
+   zwei Knoepfe an und verhaelt sich bis dahin wie «mit».
+   Selbststaendig: keine Hinweisleiste des gefuehrten Beispiels (e2fuehrung),
+   keine Schrittfuehrung (Schrittleiste, Statuszeile, Weg-1-Notiz). Beide
+   Wege bleiben Pflicht, geprueft wie bisher (geloest), Hinweise bei Fehlern
+   (Blase) wie bisher. */
+function lostopfModus(z){
+  const s = e2stand();
+  if (s.lostopf === 'mit' || s.lostopf === 'allein') return s.lostopf;
+  return s.gefuehrt || (z && z.eintraege && (z.eintraege.length || fragIrgendwo(z))) ? 'mit' : null;
+}
+const alleinArbeiten = (A, z) => zweiWege(A) && lostopfModus(z) === 'allein';
 const IM = {r: 'im Baum', t: 'in der Tafel'}, AUS = {r: 'aus dem Baum', t: 'aus der Tafel'};
 const andere = v => (v === 'r' ? 't' : 'r');
 const daIn = (A, z, v) => z.eintraege.find(e => e.p === v + ':' + A.gesucht);
@@ -2621,6 +2945,7 @@ function etappe2(){
   window._neuzeichnen = e2zeichnen;
   e2zeichnen();
   loesungsKnopf(() => etappe2());
+  auftragBeimOeffnen(2);
 }
 
 /* Die Regel des naechsten Schritts in wenigen Worten - nur fuer das
@@ -2647,6 +2972,7 @@ const e2wo = z => (z.eintraege.length ? vw(z.eintraege[z.eintraege.length - 1].p
 function e2fuehrung(A, z){
   const s = e2stand();
   if (s.gefuehrt || !zweiWege(A) || stand.loesungOffen || geloest(A, z)) return null;
+  if (alleinArbeiten(A, z)) return null;     // NEU (Rike 2026-10-18): selbststaendig
   const v1 = e2erster(A, z), v = v1 ? andere(v1) : e2wo(z);
   const hat = k => z.eintraege.some(e => e.p === v + ':' + k);
   const vor = v1 ? `Jetzt dasselbe ${IM[v]}. ` : '';
@@ -2751,15 +3077,31 @@ function e2links(A, z){
   const kopf = document.getElementById('bwkopf'), reiterEl = document.getElementById('bwreiter'), s = e2stand();
   const frei = BW.freiwillig.includes(A.id);
   const ein = aufgabe(BW.pflicht[0]);
-  reiterEl.innerHTML = `<button class="bwein" data-ansicht="${ein.id}" aria-current="${s.ansicht === ein.id}">Zum Einstieg: ${esc(label(ein))}${geloest(ein, s.a[ein.id]) ? ' <span class="ok">✓</span>' : ''}</button>`
+  // GEAENDERT (Rike 2026-10-17, Zusatz «Zug 2»): wie in Etappe 1 zwei
+  // Ebenen. Bei der Einstiegsaufgabe (zwei Wege) vorn die Wege als
+  // Schrittreihe; die Aufgabenwahl dahinter, gedimmt mit «zuerst Weg 1
+  // und 2», solange ein Weg offen ist. Waehlbar bleibt sie.
+  const wegOffen = zweiWege(A) && !geloest(A, z);
+  let zr = '';
+  if (zweiWege(A)){
+    const w1 = e2erster(A, z) || geloest(A, z) || basisGeloest(A, z);
+    zr = '<span class="bwzuege" role="group" aria-label="Wege dieser Aufgabe">'
+      + [[1, 'Weg 1', !!w1], [2, 'Weg 2', geloest(A, z)]].map(([n, t, ok], i) =>
+        (i ? '<span class="pfeil" aria-hidden="true">›</span>' : '')
+        + `<span class="bwzug knopflos${ok ? ' fertig' : ''}" aria-current="${!ok && (n === 1 || w1)}" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border:2px solid var(--linie);border-radius:999px;background:var(--karte)"><span class="nr">${ok ? '✓' : n}</span>${t}</span>`).join('')
+      + '</span>';
+  }
+  reiterEl.innerHTML = AUFTRAG_KNOPF + zr + `<span class="bwsitwahl bwaufgwahl${wegOffen ? ' gedimmt' : ''}"${wegOffen ? ' title="zuerst Weg 1 und 2"' : ''}>`
+    + `<button class="bwein" data-ansicht="${ein.id}" aria-current="${s.ansicht === ein.id}">Zum Einstieg: ${esc(label(ein))}${geloest(ein, s.a[ein.id]) ? ' <span class="ok">✓</span>' : ''}</button>`
     // GEAENDERT (Fassung 4): die Titel der Menues kommen aus flaeche.py
     // («Aus dem Skript», «An der Chilbi»)
     + menueHtml('skript', BW.menues.skript, BW.skript, s)
-    + menueHtml('neu', BW.menues.neu, BW.neu, s);
+    + menueHtml('neu', BW.menues.neu, BW.neu, s)
+    + (wegOffen ? '<span class="hin">zuerst Weg 1 und 2</span>' : '') + '</span>';
   // GEAENDERT (Fassung 4.1): Titel, Situation und Frage als Karte ganz
   // oben, mit Textmarker (Stifte «Angabe» und «gesucht»).
   let h = situationKarte(A, {titel: esc(label(A)) + (frei ? ' <span class="frei">nach Wahl</span>' : ''),
-    frage: true, stifte: ['angabe', 'gesucht']});
+    frage: true, stifte: ['angabe', 'gesucht'], auftrag: D.etappen[1].auftrag});
   let mehr = '';
   const schritt = e2schritt(A, z), v1 = e2erster(A, z), ganz = geloest(A, z), basis = basisGeloest(A, z);
   const erfuellt = [v1 ? angabenIn(A, z, andere(v1)) : angabenDa(A, z), fragSchritt(A, z), basis];
@@ -2772,7 +3114,25 @@ function e2links(A, z){
                             {t: 'Weg 2', ok: ganz, jetzt: !!v1 && !ganz}] : [])
     .concat(namen.map((n, i) => ({t: esc(n), ok: erfuellt[i], jetzt: !erfuellt[i] && i + 1 === schritt, tip: tips[i]})));
   let det = '', stat = '';
-  if (!ganz && A.vergleich && basis){
+  // NEU (Rike 2026-10-18): Modus der Lostoepfe
+  const modus = zweiWege(A) ? lostopfModus(z) : null, allein = modus === 'allein';
+  let modusHtml = '';
+  if (zweiWege(A) && !ganz){
+    if (modus === null)
+      modusHtml = `<span class="bwmodus wahl"><b>Wie möchten Sie arbeiten?</b>
+        <button type="button" class="knopf" data-modus="mit">Mit Anleitung</button>
+        <button type="button" class="knopf" data-modus="allein">Selbstständig: beide Wege allein</button></span>`;
+    else modusHtml = allein
+      ? '<span class="bwmodus"><b>Selbstständig:</b> beide Wege allein, im Baum und in der Tafel. <button type="button" class="knopf leer" data-modus="mit">Doch mit Anleitung</button></span>'
+      : '<span class="bwmodus"><button type="button" class="knopf leer" data-modus="allein">Ohne Anleitung weiter</button></span>';
+  }
+  if (allein && !ganz){
+    // keine Schrittfuehrung: nur der Auftrag, die Leiste zeigt die beiden Wege
+    l.splice(0, l.length, {t: 'Weg im Baum', ok: !!(daIn(A, z, 'r') && fragIn(z, 'r'))},
+                          {t: 'Weg in der Tafel', ok: !!(daIn(A, z, 't') && fragIn(z, 't'))});
+    det = `<p><b>${esc(D.etappen[1].auftrag)}</b></p><p>Beide Wege allein: einmal im Baum, einmal in der Tafel, jeder für sich.</p>`;
+    stat = modusHtml;
+  } else if (!ganz && A.vergleich && basis){
     stat = '<span class="hin">Das ? ist erreicht. Jetzt der Vergleich.</span>';
     mehr += vergleichHtml(A, z);
   } else if (!ganz){
@@ -2810,17 +3170,29 @@ function e2links(A, z){
     if (A.vergleich) mehr += vergleichHtml(A, z);
   }
   if (mehr) h += `<div class="bwmehr">${mehr}</div>`;
+  if (modusHtml && !allein) stat = modusHtml + stat;
   h += schrittLeiste(l, det, stat, z.eintraege.length > 0 || fragIrgendwo(z));
   // NEU (Fassung 3.7): «Jugendtreffen ✓ · 1 von 2 weiteren»
   // GEAENDERT (Fassung 4.1): der Fortschritt steht in der Kopfleiste.
   const fw = fertigZahl(BW.freiwillig), m = BW.mindestens;
   const einOk = BW.pflicht.every(id => geloest(aufgabe(id), s.a[id]));
-  reiterEl.insertAdjacentHTML('beforeend', `<span class="bwfort"><b>${esc(label(ein))} ${einOk ? '✓' : 'offen'}</b> · <b>${Math.min(fw, m)} von ${m}</b> weiteren`
+  // Fortschritt in die zurueckgenommene Wahl (Fassung 4.1: Kopfleiste)
+  (reiterEl.querySelector('.bwaufgwahl') || reiterEl).insertAdjacentHTML('beforeend', `<span class="bwfort"><b>${esc(label(ein))} ${einOk ? '✓' : 'offen'}</b> · <b>${Math.min(fw, m)} von ${m}</b> weiteren`
     + `${fw > m ? ` (dazu ${fw - m} freiwillig)` : ''}${einOk && fw >= m ? ' — <b>Pflicht erfüllt.</b>' : ''}</span>`);
   kopf.innerHTML = h;
   protokollAuffrischen(A, z);
   markerHaken(kopf);
   anleitungHaken(kopf);
+  // NEU (Rike 2026-10-18): Modus wechseln, die Eintraege bleiben
+  kopf.querySelectorAll('[data-modus]').forEach(b => b.onclick = () => {
+    s.lostopf = b.dataset.modus;
+    // «Mit Anleitung» gewaehlt: das gefuehrte Beispiel gilt wieder
+    if (s.lostopf === 'mit' && !geloest(A, z)) s.gefuehrt = false;
+    E.wegHinweis = null; E.anlOffen = undefined;
+    meldung(s.lostopf === 'mit' ? 'Mit Anleitung: Der nächste Schritt wird vorgeschlagen.'
+                                : 'Selbstständig: beide Wege allein, im Baum und in der Tafel.', 'ok');
+    e2zeichnen();
+  });
   if (A.vergleich){
     const war = geloest(A, z);
     vergleichHaken(kopf, A, z, () => {
@@ -2832,6 +3204,21 @@ function e2links(A, z){
     E.menue = null;
     s.ansicht = id; E.falsch = {}; E.rechnen = null; E.meldung = null; E.neuSicher = false; E.blase = null; E.anlOffen = undefined; e2zeichnen(); };
   reiterEl.querySelectorAll('[data-ansicht]').forEach(b => b.onclick = ev => { ev.stopPropagation(); waehlen(b.dataset.ansicht); });
+  auftragKnopfHaken(reiterEl, 2);
+  // NEU (Rike 2026-10-17, Zusatz «Zug 2»): Weiter-Fahne im Brettbereich.
+  // Weg 1 eben fertig: kurze Notiz (E.wegHinweis, von e2eintrag gesetzt);
+  // Aufgabe geloest: «Naechste Aufgabe →» zur naechsten offenen.
+  if (ganz){
+    const folge = BW.pflicht.concat(BW.skript, BW.neu);
+    const i0 = folge.indexOf(A.id);
+    const naechste = folge.slice(i0 + 1).concat(folge.slice(0, i0)).find(id => !geloest(aufgabe(id), s.a[id]));
+    const pflichtOk = einOk && fw >= m;
+    weiterFahne(naechste && !pflichtOk
+      ? {notiz: 'Aufgabe fertig.', knopf: 'Nächste Aufgabe →', tun: () => waehlen(naechste)}
+      : {notiz: pflichtOk ? 'Pflicht erfüllt.' : 'Aufgabe fertig.', knopf: 'Mitnehmen →', tun: () => { stand.etappe = ETAPPEN.length; los(); }});
+  } else if (E.wegHinweis === A.id && v1 && !alleinArbeiten(A, z))
+    weiterFahne({notiz: `Weg 1 fertig – weiter mit Weg 2 ${IM[andere(v1)]}`, knopf: '', tun: () => {}});
+  else weiterFahne(null);
   reiterEl.querySelectorAll('.bwmenue').forEach(mn => {
     const kn = mn.querySelector('.bwmknopf'), li = mn.querySelector('.bwmliste');
     kn.onclick = ev => {
@@ -2854,7 +3241,7 @@ function e2links(A, z){
 function e2eintrag(A, z, p, txt, quellen){
   if (!String(txt).trim()){ delete E.falsch[p]; return e2auffrischen(); }
   const vorher = z.eintraege.slice(), warAngaben = angabenDa(A, z), warGeloest = geloest(A, z), warBasis = basisGeloest(A, z);
-  const warWege = wegeFertig(A, z);
+  const warWege = wegeFertig(A, z), warErster = e2erster(A, z);
   const r = eintragVerarbeiten(A, z, p, txt, quellen);
   // Beim Jugendtreffen jeder Weg fuer sich: keine Werte aus der anderen
   // Darstellung (Grund c). GEAENDERT (Fassung 3.6): Abschreiben als Zahl
@@ -2890,6 +3277,14 @@ function e2eintrag(A, z, p, txt, quellen){
     // NEU (Fassung 3.7): Weg steht, die Antwort zum Vergleich fehlt noch
     else if (A.vergleich && !warBasis && basisGeloest(A, z)) dazu.push(vergleichAuf(A));
     if (dazu.length) meldung(E.meldung.html + '<br>' + dazu.join(' '), 'ok');
+    // NEU (Rike 2026-10-17, Zusatz «Zug 2»): Weg 1 eben fertig - Notiz an
+    // der Fahne fuer einige Sekunden
+    if (zweiWege(A) && !warErster && e2erster(A, z)){
+      E.wegHinweis = A.id;
+      const Ejetzt = E;
+      clearTimeout(_fahneUhr);
+      _fahneUhr = setTimeout(() => { if (E === Ejetzt && E.wegHinweis){ E.wegHinweis = null; if (document.getElementById('bwkopf')) e2auffrischen(); } }, 4000);
+    }
   }
   e2auffrischen();
   nachEintrag(z, r);
