@@ -1173,16 +1173,25 @@ function eigenschaftsspiel(){
         <span>${S.schritt === 'suchen'
           ? 'Legen Sie <b>alle</b> Karten, die diese Eigenschaft haben — Terme <b>und</b> Bilder —, nach rechts unter «Gefunden».'
           : 'Bilden Sie jetzt aus den gefundenen Karten <b>Paare</b>: Je ein Term und ein Bild gehören zusammen.'}</span>
-        <button class="knopf klein" id="naechste">${rest > 0 ? 'Nächste Eigenschaft aufdecken' : 'Der Stapel ist leer'}</button>
-        <span class="rest">noch ${rest} im Stapel</span></span>`
+        <button class="knopf klein" id="naechste">${rest > 0 ? 'Nächste Eigenschaft aufdecken' : 'Nächste Eigenschaft — von vorn'}</button>
+        <span class="rest">${rest > 0 ? 'noch ' + rest + ' im Stapel' : 'alle einmal gespielt'}</span></span>`
       + (RU_LEITUNG ? `<div class="m2leitung"><span class="leitmarke">Leitung</span> aufdecken:
-          ${RU.runden.map((r, i) => `<button data-i="${i}" class="${i === S.offen ? 'an' : S.war.includes(i) ? 'war' : ''}">${r.name}</button>`).join('')}</div>` : '');
+          ${RU.runden.map((r, i) => `<button data-i="${i}" class="${i === S.offen ? 'an' : S.war.includes(i) ? 'war' : ''}">${r.name}</button>`).join('')}</div>`
+      /* NEU (Rike, 2026-10-21): «Man kann einmal alle Karten nacheinander
+         aufdecken, und dann ist vorbei. Man kann nicht wieder zu einer
+         anderen Karte zurück. Das ist doof.» Jetzt sieht jede Gruppe die
+         schon gespielten Karten und kann jede nochmals aufdecken. Die
+         noch nicht gespielten bleiben verdeckt - die zieht «Nächste». */
+      : (S.war.filter(i => i !== S.offen).length ? `<div class="m2leitung">Nochmals spielen:
+          ${S.war.filter(i => i !== S.offen).map(i => `<button data-i="${i}">${RU.runden[i].name}</button>`).join('')}</div>` : ''));
     const n = ziel.querySelector('#naechste');
-    n.disabled = rest <= 0;
     n.onclick = () => {
       const S = ruSpiel();
-      const i = RU.runden.findIndex((_, j) => !S.war.includes(j));
-      if (i >= 0) aufdecken(i);
+      // Erst, was noch verdeckt ist; ist der Stapel durch, geht es in der
+      // Reihenfolge des Stapels weiter, nach der offenen Karte.
+      let i = RU.runden.findIndex((_, j) => !S.war.includes(j));
+      if (i < 0) i = (S.offen + 1) % RU.runden.length;
+      aufdecken(i);
     };
     ziel.querySelectorAll('.m2leitung button').forEach(b => b.onclick = () => aufdecken(Number(b.dataset.i)));
   }
