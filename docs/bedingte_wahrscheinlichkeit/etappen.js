@@ -2050,9 +2050,14 @@ function szene(A, o){
     X_FAM.forEach((r, i) => {
       const y = zy + i * TAF.zush;
       kasten(0, y, TAF.kopfb, TAF.zush, kopf);
+      // GEAENDERT (2026-11-03, Anstoss Maurus «musste lange studieren»):
+      // vorher «Anteil in der Spalte» und darunter nur das Zeichen. Jetzt
+      // «Anteil von Ü / in der Spalte darueber» - sagt, wovon und wo, ohne
+      // den Begriff vorwegzunehmen (der entsteht mit «= P_B(Ü)» in Zug 2).
       if (!mini){
-        text(TAF.kopfb / 2, y + 2.1, 'Anteil in der Spalte', kk2 * 0.9, false, F.matt);
-        text(TAF.kopfb / 2, y + 5, sym(A, r), kg, true);
+        t.push({t: 'text', x: TX(TAF.kopfb / 2), y: TY(y + 2.4), gross: kk2,
+                teile: [{s: 'Anteil von ', farbe: F.matt}, {s: sym(A, r), farbe: F.tinte}]});
+        text(TAF.kopfb / 2, y + 5, 'in der Spalte darüber', kk2 * 0.85, false, F.matt);
       } else text(TAF.kopfb / 2, y + TAF.zush / 2, sym(A, r), kg, true);
     });
     TAF.zusatz.forEach(f => kasten(f.x, f.y, f.w, f.h, F.karte));
