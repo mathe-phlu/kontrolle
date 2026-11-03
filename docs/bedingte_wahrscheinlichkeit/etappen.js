@@ -2020,8 +2020,8 @@ function szene(A, o){
     t.push({t: 'text', x: X(2), y: Y(1.5), s: 'zuerst: ' + sym(A, 'X') + ' oder ' + sym(A, 'nX'), gross: g, farbe: F.matt, anker: 'start'});
     t.push({t: 'text', x: X(98), y: Y(1.5), s: 'zuerst: ' + sym(A, 'Y') + ' oder ' + sym(A, 'nY'), gross: g, farbe: F.matt, anker: 'end'});
   }
-  // Die Tafel: Kern (2 x 2 und gesamt), rechts «Anteil in der Zeile»,
-  // unten «Anteil in der Spalte».
+  // Die Tafel: Kern (2 x 2 und gesamt), rechts und unten je zwei Felder
+  // «bedingte Wahrscheinlichkeit» (bis 2026-11-03: «Anteil in der Zeile/Spalte»).
   if (o.tafel !== false){
     const ts = o.ts, TX = x => o.tx + x * ts, TY = y => o.ty + y * ts;
     const kopf = F.creme, rand = '#cfc5b3';
@@ -2045,19 +2045,20 @@ function szene(A, o){
     // Zusatzspalten und -zeilen
     const zx = TAF.kernb + TAF.luecke, zy = TAF.kernh + TAF.luecke;
     kasten(zx, 0, 2 * TAF.zusb, TAF.kopfh, kopf);
-    if (!mini) text(zx + TAF.zusb, 2.2, 'Anteil in der Zeile', kk2, false, F.matt);
+    // GEAENDERT (2026-11-03, Rike nach Maurus' Rueckmeldung): der Name
+    // «bedingte Wahrscheinlichkeit» darf stehen, nur kein Term - die
+    // Rechnung P(A∩B) : P(B) sollen die Studierenden selbst finden.
+    if (!mini) text(zx + TAF.zusb, 2.2, 'bedingte Wahrscheinlichkeit', kk2, false, F.matt);
     Y_FAM.forEach((c, j) => text(zx + j * TAF.zusb + TAF.zusb / 2, mini ? TAF.kopfh / 2 : 5.6, sym(A, c), kg, true));
     X_FAM.forEach((r, i) => {
       const y = zy + i * TAF.zush;
       kasten(0, y, TAF.kopfb, TAF.zush, kopf);
       // GEAENDERT (2026-11-03, Anstoss Maurus «musste lange studieren»):
-      // vorher «Anteil in der Spalte» und darunter nur das Zeichen. Jetzt
-      // «Anteil von Ü / in der Spalte darueber» - sagt, wovon und wo, ohne
-      // den Begriff vorwegzunehmen (der entsteht mit «= P_B(Ü)» in Zug 2).
+      // vorher «Anteil in der Spalte». Jetzt der Name, darunter das Zeichen
+      // wie bisher; kein Term (siehe oben bei der Zeile).
       if (!mini){
-        t.push({t: 'text', x: TX(TAF.kopfb / 2), y: TY(y + 2.4), gross: kk2,
-                teile: [{s: 'Anteil von ', farbe: F.matt}, {s: sym(A, r), farbe: F.tinte}]});
-        text(TAF.kopfb / 2, y + 5, 'in der Spalte darüber', kk2 * 0.85, false, F.matt);
+        text(TAF.kopfb / 2, y + 2.1, 'bedingte Wahrscheinlichkeit', kk2 * 0.8, false, F.matt);
+        text(TAF.kopfb / 2, y + 5, sym(A, r), kg, true);
       } else text(TAF.kopfb / 2, y + TAF.zush / 2, sym(A, r), kg, true);
     });
     TAF.zusatz.forEach(f => kasten(f.x, f.y, f.w, f.h, F.karte));
