@@ -124,6 +124,8 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
     .zgr-sicht p{margin:4px 0}
     .zgr-baum{position:relative}
     .zgr-baum .zgr-linien{position:absolute;left:0;top:0;pointer-events:none}
+    /* NEU (Fassung 20): beim Pruefen leere oder nicht lesbare Felder */
+    .zgr-e1 input.fehlt{outline:2px solid #C0392B;outline-offset:1px;background:#fdecea}
     .zgr-kopf{position:absolute;top:0;transform:translateX(-50%);font-size:13px;
         color:var(--matt);white-space:nowrap}
     .zgr-weg,.zgr-zurueck{border:none;background:none;cursor:pointer;
@@ -398,6 +400,10 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
     .zgr-sleiste .st.jetzt{border-color:var(--akzent);background:var(--akzent);color:#fff;font-weight:600}
     .zgr-sleiste .st.fertig{color:var(--richtig)}
     .zgr-sleiste .st.jetzt.fertig{color:#fff}
+    /* FEHLERBEHOBEN (2026-10-29): Der aktuelle Zug war beim Ueberfahren
+       blau auf blau. Ursache: Die Hover-Regel (Schrift in der Akzentfarbe)
+       ist spezifischer als .st.jetzt. */
+    .zgr-sleiste .st.jetzt:hover:not([disabled]),.zgr-sleiste .st.jetzt:focus-visible{color:#fff}
     .zgr-sleiste .st[disabled]{opacity:.45;cursor:default}
     .zgr-sleiste .pt{color:#c9bda8}
     .zgr-wegwahl{display:flex;flex-wrap:wrap;gap:12px;margin:8px 10px 6px}
@@ -649,6 +655,12 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
         box-shadow:0 6px 20px rgba(0,0,0,.18);font-size:14px;animation:zgrfahne .25s ease-out}
     .zgr-fahne .notiz{font-weight:600;color:var(--tinte)}
     .zgr-fahne .knopf{font-size:14.5px;padding:6px 14px;white-space:nowrap}
+    /* NEU (Fassung 20): das Fenster «Geschafft» an den Uebergaengen */
+    .zgr-wegweiser .kasten h2{color:#007D57}
+    .zgr-wegweiser .unten{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .zgr-wegfrei{margin:10px 0 4px;padding:8px 10px;border-left:3px solid #E09E5A;background:#fdf8f0;border-radius:4px}
+    .zgr-wegfrei .was{font-weight:600;margin-bottom:6px}
+    .zgr-wegfrei .zeile{display:flex;align-items:center;gap:10px;margin:4px 0;flex-wrap:wrap}
     .zgr-fahne .uhr{height:3px;flex-basis:100%;background:var(--linie);border-radius:2px;overflow:hidden}
     .zgr-fahne .uhr i{display:block;height:100%;width:100%;background:var(--akzent);animation:zgruhr 1.5s linear forwards}
     @keyframes zgrfahne{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
@@ -918,9 +930,152 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
       header nav button{padding-left:9px!important;padding-right:9px!important}
       header .entwurf{font-size:11px!important;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
     }
+    /* NEU (gemeinsam entschieden, Rike 2026-10-29): Leseleiste
+       (kern/flaechen/leiste). Situation, Fortschritt und Schritte stehen
+       links in einer schmalen Spalte. Alles haengt an body.ws-leiste. */
+    body.ws-leiste .wsleiste .zgr-skarte{display:block;margin:0;padding:10px 12px 10px 14px}
+    body.ws-leiste .wsleiste .zgr-sbild{float:right;width:58px;height:58px;margin:0 0 4px 8px}
+    body.ws-leiste .wsleiste .zgr-skopf{display:block;margin-bottom:4px}
+    body.ws-leiste .wsleiste .zgr-sklapp{display:none}
+    body.ws-leiste .wsleiste .zgr-stitel{display:block;font-size:20px}
+    body.ws-leiste .wsleiste .zgr-stext{font-size:15.5px;clear:right}
+    body.ws-leiste .wsleiste .zgr-sfrage{font-size:16px}
+    body.ws-leiste .wsleiste .zgr-sauftragz{flex-wrap:wrap}
+    body.ws-leiste .wsleiste .zgr-skarte.zu .zgr-sganz{display:block}
+    body.ws-leiste .wsleiste .zgr-sammlung,body.ws-leiste .wsleiste .zgr-sleiste,
+    body.ws-leiste .wsleiste .zgr-fortschritt{margin:0}
+    /* Die Zuege als Liste untereinander */
+    body.ws-leiste .wsleiste .zgr-sleiste{flex-direction:column;align-items:stretch;gap:4px}
+    body.ws-leiste .wsleiste .zgr-sleiste > *{text-align:left}
+    body.ws-leiste .wsleiste .zgr-sleiste .pt{display:none}
+    body.ws-leiste .wsleiste > .zgr-sauftrag{margin:0;border-radius:8px;line-height:1.4}
+    /* Reihenfolge: Auftrag/Situation, Ihr Weg, Sammlung, Jetzt */
+    body.ws-leiste .wsleiste > .zgr-sauftrag,body.ws-leiste .wsleiste > .zgr-skarte{order:1}
+    body.ws-leiste .wsleiste > .zgr-fortschritt,body.ws-leiste .wsleiste > .zgr-sleiste{order:2}
+    body.ws-leiste .wsleiste > .zgr-sammlung{order:3}
+    body.ws-oben .wsleiste > .zgr-fortschritt::before,body.ws-oben .wsleiste > .zgr-sleiste::before{content:none !important}
+    body.ws-oben .zgr-jetztsatz{margin:8px 0 0;padding:4px 0 4px 10px;border-left:3px solid var(--akzent);font-size:15px;line-height:1.42}
+    body.ws-leiste .wsleiste > .zgr-fortschritt::before,body.ws-leiste .wsleiste > .zgr-sleiste::before{content:'Ihr Weg';
+       font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--matt);font-weight:600}
+    body.ws-leiste .wsleiste > .zgr-fortschritt::before{flex-basis:100%}
+    /* NEU (Rike 2026-10-29, wie Kapitel 5): Band oben. Links die
+       Situation, rechts Ihr Weg und Jetzt. Oben nur das Noetige: der
+       Auftragssatz steht hinter «Auftrag» im Kopf. Die Arbeit liegt auf
+       dem Holz, jeder Baum auf einem eigenen Blatt. */
+    body.ws-oben .wsleiste{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,420px);
+       gap:5px 18px;align-items:start;padding-top:6px;padding-bottom:8px}
+    body.ws-oben .wsleiste .wsgriff{grid-column:2}
+    body.ws-oben .wsleiste > .zgr-skarte{grid-column:1;grid-row:1 / span 4;padding:7px 12px 7px 14px}
+    body.ws-oben .wsleiste > .zgr-fortschritt,body.ws-oben .wsleiste > .zgr-sleiste,
+    body.ws-oben .wsleiste > .zgr-sammlung,body.ws-oben .wsleiste > .wsjetzt{grid-column:2}
+    body.ws-oben .wsleiste:not(:has(> .zgr-skarte)) > .wsjetzt{grid-column:1;grid-row:1 / span 3}
+    body.ws-oben .wsleiste .zgr-sauftragz,body.ws-oben .wsleiste > .zgr-sauftrag{display:none}
+    body.ws-oben .wsleiste .zgr-skopf{display:flex;align-items:baseline;gap:4px 12px}
+    body.ws-oben .wsleiste .zgr-stitel{display:inline;font-size:19px}
+    body.ws-oben .wsleiste .zgr-sbild{width:44px;height:44px}
+    body.ws-oben .wsleiste .zgr-stext{font-size:15.5px;margin-top:2px}
+    body.ws-oben .wsleiste .zgr-sfrage{font-size:16px;margin-top:3px}
+    body.ws-oben .wsleiste > .zgr-sleiste{flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 6px}
+    body.ws-oben .wsleiste > .zgr-sleiste::before{margin-right:4px}
+    body.ws-oben .wsleiste > .zgr-sleiste > *{font-size:12.5px}
+    body.ws-oben .wsleiste > .wsjetzt{padding:6px 10px;font-size:13.5px}
+    body.ws-oben .wsleiste > .wsjetzt > button{margin-top:0}
+    /* Tisch: Etappe 1 - jeder Baum mit seiner Tabelle ein Blatt, die
+       Verteilung rechts ein drittes */
+    body.ws-oben #obenhaelfte:has(.zgr-e1){background:transparent;border-color:transparent;box-shadow:none}
+    body.ws-oben #obenhaelfte:has(.zgr-e1) > .marke{background:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+    body.ws-oben .zgr-e1 .zgr-spalten{gap:18px}
+    /* Etappe 2: Weg 1 und Weg 2 je auf einem Blatt */
+    body.ws-oben #links:has(.zgr-wegbox){background:transparent;border-color:transparent;box-shadow:none}
+    body.ws-oben #links:has(.zgr-wegbox) > .marke{background:none;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+    body.ws-oben .zgr-wegbox{background:var(--karte);border-radius:6px;padding:8px 10px;
+       box-shadow:0 1px 2px rgba(60,40,20,.18),0 6px 18px rgba(60,40,20,.25)}
+    body.ws-oben .zgr-e1 .zgr-spalte,body.ws-oben .zgr-e1 .zgr-e1rechts{background:var(--karte);border-radius:6px;
+       padding:10px 12px;box-shadow:0 1px 2px rgba(60,40,20,.18),0 6px 18px rgba(60,40,20,.25)}
+    body.ws-leiste .wsleiste > .zgr-fortschritt{display:flex;flex-wrap:wrap;gap:5px}
+    /* NEU (Rike 2026-10-29, «so gross wie moeglich»): die Buden als grosse
+       Karten auf dem Holz, bei 1280 px vier in einer Reihe (4 + 3), im
+       schmalen Fenster zwei; Bild und Schrift wachsen mit. */
+    body.ws-oben .zgr-bliste{grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:16px;margin:10px 14px 14px}
+    body.ws-oben .zgr-bliste .zgr-bk{padding:9px 12px 10px 14px;font-size:14.5px}
+    body.ws-oben .zgr-bliste .zgr-bk .kopf{font-size:16px}
+    body.ws-oben .zgr-bliste .zgr-bk .was{font-size:14px}
+    body.ws-oben .zgr-bliste .zgr-bk .bild svg{max-width:none}
+    body.ws-oben .zgr-bliste .zgr-bk :is(.zgr-plantitel,.zgr-plan,.bild .unter){font-size:13px}
+    /* NEU (Rike 2026-10-29, Band wie Kapitel 5, Etappe 1; leisteNachher
+       unten): Etappe 2 - die Wahl der Situation als Reiter oben in der
+       Karte; Etappe 1 - die Hilfe im Kopf der Karte. Ohne rechte Spalte
+       nimmt die Karte die ganze Breite. */
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt{margin:0 0 6px;gap:4px;opacity:1;filter:none}
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt::before{content:none}
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt > b{display:none}
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt .pkt{display:inline-flex;align-items:center;gap:5px;min-width:28px;
+       height:auto;line-height:1.3;font-size:12.5px;padding:2px 9px;border-radius:0 !important}
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt .pkt .nm{font-weight:400}
+    body.ws-oben .wsleiste .zgr-skarte .zgr-fortschritt.gedimmt .pkt:not(.jetzt){opacity:.6}
+    body.ws-oben .wsleiste .zgr-skopf > .knopf{margin-left:auto;font-size:13px;padding:3px 11px}
+    body.ws-oben .wsleiste:not(:has(> .zgr-fortschritt, > .zgr-sleiste, > .wsjetzt, > .zgr-sammlung)) > .zgr-skarte{grid-column:1 / -1;margin-right:112px}
+    /* Etappe 3 - Ihr Weg als Liste untereinander, unter dem aktuellen Zug
+       sein Satz (und seine Hilfe). */
+    body.ws-oben .wsleiste > .zgr-sleiste{grid-column:1;grid-row:1 / span 3;flex-direction:column;align-items:stretch;gap:4px}
+    body.ws-oben .wsleiste > .zgr-sleiste::before{margin:0 0 2px}
+    body.ws-oben .wsleiste > .zgr-sleiste .pt{display:none}
+    body.ws-oben .wsleiste > .zgr-sleiste > .st{text-align:left;font-size:13.5px;padding:4px 12px}
+    body.ws-oben .wsleiste > .zgr-sleiste{max-width:620px}
+    /* FEHLERBEHOBEN (2026-10-29): Mit «Ihre Sammlung» war das Band rund
+       100 px hoeher als sein Inhalt. Ursache: Die Karte ueberspannt vier
+       Zeilen, und die leeren Zeilen bekamen dabei Hoehe zugeteilt. */
+    body.ws-oben .wsleiste{grid-auto-rows:min-content}
+    /* Die Sammlung rechts beginnt unter dem Griff «Einklappen». */
+    body.ws-oben .wsleiste > .zgr-sammlung{margin-top:22px !important}
+    body.ws-oben .wsleiste > .zgr-sleiste > .wsjetzt{order:0;margin:0 0 4px 22px;padding:4px 10px;border:0;
+       border-left:3px solid var(--akzent);background:#fff;font-size:13.5px}
+    body.ws-oben .wsleiste > .zgr-sleiste > .wsjetzt > .wskopfzeile{display:none}
+    body.ws-oben .wsleiste > .zgr-sleiste > .wsjetzt .wsjetzttext{margin:0}
+    /* NEU (Rike 2026-10-30, Vorschlag A): Marke «gezeigt» weg; der Hinweis
+       zu den Zellen in Etappe 1 steht im Satz oben. Etappe 3: die Teile
+       als Reiter nebeneinander, der Satz darunter (wie Kapitel 5). */
+    body.ws-oben .zgr-gezeigt{display:none}
+    body.ws-oben .zgr-e1rechts > .zgr-qtext{display:none}
+    body.ws-oben .wsleiste > .zgr-sleiste{flex-direction:row;flex-wrap:wrap;align-items:center;max-width:none;grid-row:auto;grid-column:1 / -1;margin-right:112px}
+    body.ws-oben .wsleiste > .zgr-sleiste > .st{font-size:13px;padding:3px 11px}
+    body.ws-oben .wsleiste > .zgr-sleiste > .wsjetzt{order:99;flex:1 1 100%;margin:6px 0 0;background:transparent;font-size:15px}
   `;
   document.head.appendChild(s);
 })();
+
+/* NEU (Rike 2026-10-29: «die Wahl zwischen Beispielen gehoert zur
+   Situation», «Schritte gehoeren unter ihren Zug»): das Band oben ordnen
+   wie in Kapitel 5, Etappe 1. Laeuft nach jedem Fuellen der Leiste
+   (kern/flaechen/leiste) und muss deshalb wiederholbar sein: Es
+   verschiebt nur, was nicht schon am Platz ist. */
+window.leisteNachher = function(l){
+  if (D.leiste !== 'oben') return;
+  const karte = l.querySelector(':scope > .zgr-skarte');
+  const inhalt = karte && karte.querySelector('.zgr-sinhalt');
+  // Etappe 2: die Wahl der sieben Situationen in die Karte, als Reiter oben
+  const fort = l.querySelector(':scope > .zgr-fortschritt');
+  if (fort && inhalt){
+    if (fort.parentNode !== inhalt) inhalt.insertBefore(fort, inhalt.firstChild);
+    // Die Reiter tragen den Namen der Situation, nicht nur die Nummer.
+    fort.querySelectorAll('.pkt[title]:not(:has(.nm))').forEach(p => {
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = p.title; p.appendChild(nm);
+    });
+  }
+  const jetzt = l.querySelector(':scope > .wsjetzt');
+  const sl = l.querySelector(':scope > .zgr-sleiste');
+  // Etappe 3: der Satz zum Zug unter den aktuellen Zug
+  if (sl && jetzt){
+    const zug = sl.querySelector('.st.jetzt');
+    if (zug && zug.nextElementSibling !== jetzt) zug.after(jetzt);
+  }
+  // Etappe 1: «Hilfe: Abzaehlen» in den Kopf der Karte; der leere Block weg
+  else if (jetzt && karte){
+    const kopf = karte.querySelector('.zgr-skopf');
+    if (kopf) jetzt.querySelectorAll(':scope > button').forEach(b => kopf.appendChild(b));
+    if (!jetzt.querySelector(':scope > :not(.wskopfzeile)')) jetzt.remove();
+  }
+};
 
 /* ───────── Ein Schreibfeld ───────── */
 function zgrSchreibfeld(label, wert, gesperrt, setzen){
@@ -1000,6 +1155,14 @@ function zgrBaum(ziel, T, m, opt){
   // Halbe Breite eines Knotens: 12 fuer ein Zeichen, breiter fuer «rot»
   const HALB = k => Math.max(12, (String(k.kurz || '').length * 7.6 + 12) / 2);
   let urteil = null;
+  let linienNeu = () => {};
+  // Fassung 20: das X-Feld in der Farbe seines Eintrags
+  const xFeldFarbe = (xf, k) => {
+    if (!opt.xFarben) return;
+    const t = String(m.x[k.id] || '').trim(), f = /^\d+$/.test(t) ? opt.xFarben[+t] : null;
+    xf.style.borderColor = f || ''; xf.style.boxShadow = f ? `inset 0 0 0 1px ${f}` : '';
+    xf.style.color = f || '';
+  };
 
   function zeichnen(){
     bau.innerHTML = '';
@@ -1023,8 +1186,20 @@ function zgrBaum(ziel, T, m, opt){
     baum.style.width = breite + 'px'; baum.style.height = hoehe + 'px';
     bau.appendChild(baum);
 
-    const L = [], G = [];
     const stil = k => (opt.ast && k.eltern !== null && opt.ast(k)) || {};
+    // NEU (Fassung 20, Maurus 09.11., Rike «sobald X dasteht»): Am
+    // Pfadende traegt der letzte Ast die Farbe des eingetragenen X
+    // (opt.xFarben). Die Farbe folgt dem Eintrag, sie prueft nicht.
+    const xFarbe = k => {
+      if (!opt.xFarben || !k.blatt) return null;
+      const t = String(m.x[k.id] || '').trim();
+      return /^\d+$/.test(t) ? (opt.xFarben[+t] || null) : null;
+    };
+    const im = document.createElement('img');
+    im.className = 'zgr-linien'; im.alt = ''; im.draggable = false;
+    im.style.width = breite + 'px'; im.style.height = hoehe + 'px';
+    linienNeu = () => {
+    const L = [], G = [];
     T.knoten.forEach(k => {
       if (k.eltern === null) return;
       const e = nach[k.eltern], st = stil(k);
@@ -1035,18 +1210,18 @@ function zgrBaum(ziel, T, m, opt){
       // Leuchten: ein breiter, blasser Strich unter dem Ast
       if (st.glanz) G.push(`<polyline points="${pkt}" fill="none" stroke="${st.glanz}" stroke-width="9" `
         + 'stroke-linecap="round" stroke-linejoin="round" opacity=".28"/>');
-      L.push(`<polyline points="${pkt}" fill="none" stroke="${st.farbe || '#8a8279'}" `
-        + `stroke-width="${st.farbe ? 3 : 1.3}"${st.durch ? ' stroke-dasharray="5 4"' : ''}/>`);
+      const xf = st.farbe ? null : xFarbe(k);
+      L.push(`<polyline points="${pkt}" fill="none" stroke="${st.farbe || xf || '#8a8279'}" `
+        + `stroke-width="${st.farbe || xf ? 3 : 1.3}"${st.durch ? ' stroke-dasharray="5 4"' : ''}/>`);
       if (k.blatt) L.push(`<line x1="${cx + HALB(k)}" y1="${Y[k.id]}" x2="${xEnde - 4}" y2="${Y[k.id]}" `
-        + `stroke="${st.durch ? '#C0392B' : '#c9bda8'}" stroke-dasharray="2 3"/>`);
+        + `stroke="${st.durch ? '#C0392B' : xf || '#c9bda8'}" stroke-dasharray="${xf ? '4 3' : '2 3'}"${xf ? ' stroke-width="2"' : ''}/>`);
       if (st.durch) L.push(`<line x1="${px2 + 4}" y1="${Y[k.id] - 6}" x2="${cx + 16}" y2="${Y[k.id] + 6}" `
         + 'stroke="#C0392B" stroke-width="2"/>');
     });
-    const im = document.createElement('img');
-    im.className = 'zgr-linien'; im.alt = ''; im.draggable = false;
     im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
       `<svg xmlns="http://www.w3.org/2000/svg" width="${breite}" height="${hoehe}">${G.join('')}${L.join('')}</svg>`);
-    im.style.width = breite + 'px'; im.style.height = hoehe + 'px';
+    };
+    linienNeu();
     baum.appendChild(im);
 
     T.stufen.forEach((name, i) => {
@@ -1123,7 +1298,8 @@ function zgrBaum(ziel, T, m, opt){
       const kette = [];
       for (let j = k; j.eltern !== null; j = nach[j.eltern]) kette.unshift(j.kurz);
       xf.setAttribute('aria-label', 'X am Pfadende ' + kette.join(', '));
-      xf.oninput = () => { m.x[k.id] = xf.value; geaendert(); };
+      xFeldFarbe(xf, k);
+      xf.oninput = () => { m.x[k.id] = xf.value; xFeldFarbe(xf, k); linienNeu(); geaendert(); };
       x.appendChild(xf);
       baum.appendChild(x);
       if (opt.ohneRechnung) return;
@@ -1403,6 +1579,12 @@ function zgrSammeln(id){
   s[id] = true; sichern();
   const alt = document.getElementById('zgrsammlung');
   if (alt) alt.outerHTML = zgrSammlungHtml(!!alt.dataset.satz);
+  // NEU (Rike 2026-10-29): Mit der Leseleiste steht das Band dort.
+  else if (window.leisteAn && leisteAn()){
+    const t = document.createElement('div');
+    t.innerHTML = zgrSammlungHtml(true);
+    leisteLegen(t.firstElementChild);
+  }
   else {
     // Die erste Verteilung: Das Band erscheint unter dem Auftrag.
     const auf = document.querySelector('#buehne > .zgr-sleiste') || document.querySelector('#buehne > .zgr-fortschritt')
@@ -1441,7 +1623,8 @@ function zgrSchrittleiste(schritte, vor){
     + (vor ? `<span class="vor">${vor}</span>` : '')
     + schritte.map((x, i) => (i ? '<span class="pt">·</span>' : '')
       + `<button class="st${x.jetzt ? ' jetzt' : ''}${x.ok ? ' fertig' : ''}" data-i="${i}"${x.aus ? ' disabled' : ''}`
-      + `${x.jetzt ? ' aria-current="step"' : ''}>${x.ok ? '✓ ' : ''}${i + 1} ${x.t}</button>`).join('')
+      // GEAENDERT (Rike 2026-10-30, Vorschlag A): mit dem Band oben ohne Nummer
+      + `${x.jetzt ? ' aria-current="step"' : ''}>${x.ok ? '✓ ' : ''}${D.leiste === 'oben' ? '' : (i + 1) + ' '}${x.t}</button>`).join('')
     + '</div>';
 }
 function zgrSchrittKlick(klick){
@@ -1551,6 +1734,16 @@ function zgrEinFeld(auftrag, marke, leiste, extra){
    Stand: stand.zgrAuftrag = {1: true, 2: true, 3: true}. Ein Stand aus
    Fassung 11 hat das Feld nicht; er bleibt, wie er ist, und zeigt jedes
    Fenster einmal. */
+/* NEU (Rike 2026-10-30, Vorschlag Abschnitt 17 B): ein Satz in der
+   Situationskarte, was jetzt zu tun ist. Nur mit dem Band oben. */
+function zgrJetztSatz(text){
+  if (D.leiste !== 'oben') return;
+  const inhalt = document.querySelector('#zgrskarte .zgr-sinhalt');
+  if (!inhalt) return;
+  let p = inhalt.querySelector(':scope > .zgr-jetztsatz');
+  if (!p){ p = document.createElement('p'); p.className = 'zgr-jetztsatz'; inhalt.appendChild(p); }
+  if (p.textContent !== text) p.textContent = text;
+}
 function zgrAuftragFenster(nr){
   const alt = document.getElementById('zgrfenster');
   if (alt) alt.remove();
@@ -1600,8 +1793,22 @@ function zgrAuftragKopf(nr){
   else if (!a.querySelector('.zgr-auftragknopf'))
     a.insertAdjacentHTML('beforeend', `<button type="button" class="zgr-auftragknopf" title="Den Auftrag dieser Etappe noch einmal zeigen">${D.zgrAuftrag.knopf}</button>`);
   if (!karte) a.querySelector('.zgr-auftragknopf').onclick = ev => { ev.stopPropagation(); zgrAuftragFenster(nr); };
-  if (!karte && !document.querySelector('#buehne > .zgr-sauftrag'))
+  // NEU (Rike 2026-10-29): Mit der Leseleiste steht der Auftragssatz
+  // oben in der Leiste statt als zweite Zeile ueber der Flaeche.
+  if (!karte && window.leisteAn && leisteAn()){
+    if (!document.querySelector('#wsleiste > .zgr-sauftrag')){
+      const d = document.createElement('div');
+      d.className = 'zgr-sauftrag';
+      d.innerHTML = `<span class="was">${D.zgrAuftrag.knopf}</span>${D.etappen[nr - 1].auftrag}`;
+      leisteLegen(d, true);
+    }
+  }
+  else if (!karte && !document.querySelector('#buehne > .zgr-sauftrag'))
     a.insertAdjacentHTML('afterend', `<div class="zgr-sauftrag"><span class="was">${D.zgrAuftrag.knopf}</span>${D.etappen[nr - 1].auftrag}</div>`);
+  // GEAENDERT (Rike 2026-10-30, «Ja, uebertragen»; Vorschlag Abschnitt 17 A):
+  // Mit dem Band oben oeffnet die Etappe direkt am Tisch; der Auftrag
+  // steht hinter «Auftrag», gefuehrt wird mit dem Satz im Band.
+  if (D.leiste === 'oben') return;
   if (!zgrObj(stand.zgrAuftrag)) stand.zgrAuftrag = {};
   if (stand.zgrAuftrag[nr]) return;
   stand.zgrAuftrag[nr] = true;
@@ -1626,8 +1833,10 @@ function zgrMeldung(text){
    einen Teil fertig macht - nie das Laden. `wache()` prueft vor dem
    Weitergehen, ob man noch dort ist. o = null nimmt die Fahne weg. */
 let _zgrUhr = null;
+let _zgrWegWartet = null;   // Fassung 20: Fenster, das auf das Ende des Schreibens wartet
 function zgrFahne(o){
   clearTimeout(_zgrUhr); _zgrUhr = null;
+  _zgrWegWartet = null;
   const alt = document.getElementById('zgrfahne');
   if (alt) alt.remove();
   if (!o) return;
@@ -1635,15 +1844,85 @@ function zgrFahne(o){
   if (!ziel) return;
   const f = document.createElement('div');
   f.id = 'zgrfahne'; f.className = 'zgr-fahne'; f.setAttribute('role', 'status');
+  // GEAENDERT (Fassung 20, Maurus 09.11.: «Die Loesungen verschwinden
+  // schnell wieder»): Es geht nie mehr von selbst weiter (o.uhr wird nicht
+  // mehr beachtet). Statt dessen geht beim ersten Mal das Fenster
+  // «Geschafft» auf (o.fenster, Rike 10.11.: «an den Uebergaengen»).
   f.innerHTML = (o.notiz ? `<span class="notiz">${o.notiz}</span>` : '')
-    + `<button type="button" class="knopf">${o.knopf}</button>` + (o.uhr ? '<span class="uhr"><i></i></span>' : '');
+    + `<button type="button" class="knopf">${o.knopf}</button>`;
   ziel.appendChild(f);
-  f.querySelector('button').onclick = ev => { ev.stopPropagation(); clearTimeout(_zgrUhr); o.tun(); };
-  if (o.uhr) _zgrUhr = setTimeout(() => {
-    if (!f.isConnected || (o.wache && !o.wache())) return;
-    if (o.meldung) zgrMeldung(o.meldung);
-    o.tun();
-  }, 1500);
+  f.querySelector('button').onclick = ev => { ev.stopPropagation(); o.tun(); };
+  if (o.fenster && o.schluessel){
+    if (!zgrObj(stand.wegweiser)) stand.wegweiser = {};
+    if (!stand.wegweiser[o.schluessel]){
+      // Wer gerade schreibt, wird nicht unterbrochen: Das Fenster wartet,
+      // bis das Schreibfeld verlassen wird, und nur, wenn der Knopf dann
+      // noch steht (der Teil also noch fertig ist).
+      const a = document.activeElement;
+      if (a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type !== 'button'))){
+        _zgrWegWartet = o;
+        if (!window._zgrWegHorcht){
+          window._zgrWegHorcht = true;
+          document.addEventListener('focusout', () => setTimeout(() => {
+            const w = _zgrWegWartet, ae = document.activeElement;
+            if (!w || (ae && (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && ae.type !== 'button')))) return;
+            _zgrWegWartet = null;
+            // nur, wenn der Teil noch fertig ist (der Knopf steht noch)
+            const fa = document.getElementById('zgrfahne');
+            if (!fa || !zgrObj(stand.wegweiser) || stand.wegweiser[w.schluessel]) return;
+            stand.wegweiser[w.schluessel] = true; sichern(); zgrWegweiser(w);
+          }, 200), true);
+        }
+      } else {
+        stand.wegweiser[o.schluessel] = true;
+        sichern();
+        zgrWegweiser(o);
+      }
+    }
+  }
+}
+
+/* NEU (Fassung 20, Rike 2026-11-10): das Fenster an einem Uebergang.
+   o.fenster = {text, jetzt, frei:[{knopf, text}]}; o.haupt = {knopf, tun}
+   ersetzt den Weiter-Knopf (z. B. «Zum Schreibfeld»), o.frei = [tun] die
+   Handlungen der freiwilligen Knoepfe, in derselben Reihenfolge. */
+function zgrWegweiser(o){
+  const alt = document.getElementById('zgrwegweiser');
+  if (alt) alt.remove();
+  const WG = D.wegweiser, F = o.fenster, haupt = o.haupt || {knopf: o.knopf, tun: o.tun};
+  const frei = (F.frei || []).filter((x, i) => o.frei && o.frei[i]);
+  const f = document.createElement('div');
+  f.className = 'zgr-fenster zgr-wegweiser'; f.id = 'zgrwegweiser';
+  f.innerHTML = `<div class="kasten" role="dialog" aria-modal="true" aria-labelledby="zgrwegtitel">
+    <button type="button" class="zu" aria-label="${WG.bleiben}" title="${WG.bleiben}">×</button>
+    <h2 id="zgrwegtitel">✓ ${WG.titel}</h2>
+    <p class="satz">${F.text}</p>
+    <p class="schluss"><b>${WG.jetzt}:</b> ${F.jetzt}</p>
+    ${frei.length ? `<div class="zgr-wegfrei"><div class="was">${WG.frei}</div>`
+      + frei.map((x, i) => `<div class="zeile"><button type="button" class="knopf leer" data-frei="${i}">${x.knopf}</button>`
+        + `<span>${x.text}</span></div>`).join('') + '</div>' : ''}
+    <div class="unten"><button type="button" class="knopf leer bleiben">${WG.bleiben}</button>`
+    + `<button type="button" class="knopf los">${haupt.knopf}</button></div></div>`;
+  const zu = () => { f.remove(); document.removeEventListener('keydown', taste, true); };
+  const taste = ev => {
+    if (!f.isConnected){ document.removeEventListener('keydown', taste, true); return; }
+    if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); zu(); }
+    else if (ev.key === 'Tab'){
+      const kn = [...f.querySelectorAll('button')], i = kn.indexOf(document.activeElement);
+      ev.preventDefault();
+      kn[(i + (ev.shiftKey ? kn.length - 1 : 1)) % kn.length].focus();
+    }
+  };
+  document.addEventListener('keydown', taste, true);
+  f.querySelector('.zu').onclick = zu;
+  f.querySelector('.bleiben').onclick = zu;
+  f.querySelector('.los').onclick = () => { zu(); haupt.tun(); };
+  f.querySelectorAll('[data-frei]').forEach(b => b.onclick = () => {
+    zu(); const i = (F.frei || []).indexOf(frei[+b.dataset.frei]); o.frei[i]();
+  });
+  f.addEventListener('click', ev => { if (ev.target === f) zu(); });
+  document.body.appendChild(f);
+  f.querySelector('.los').focus();
 }
 
 /* Die benutzten Pfade leuchten kurz auf: eine Schicht ueber dem Baum,
@@ -1811,6 +2090,9 @@ function zgrKarteHtml(o){
 function zgrKarteHaken(neu){
   const k = document.getElementById('zgrskarte');
   if (!k) return;
+  // NEU (Rike 2026-10-29): In der Leseleiste ist die Situation immer
+  // ganz zu sehen; zugeklappt wird die Leiste selbst.
+  if (window.leisteAn && leisteAn()){ k.classList.remove('zu'); return; }
   const id = k.dataset.sk, kn = k.querySelector('.zgr-sklapp'), K = D.skarte;
   const setzen = (zu, nachher) => {
     zgrSkZu[id] = zu;
@@ -1922,7 +2204,7 @@ function zgrE1Hinweise(e){
   info.forEach(i => {
     const w = D.e1.wem[i.art];
     if (i.leerA) leer.push(`${i.leerA} ${i.leerA > 1 ? 'Äste' : 'Ast'} im ${w}`);
-    if (i.leerX) leer.push(`${i.leerX} X im ${w}`);
+    if (i.leerX) leer.push(`${i.leerX} X am Pfadende im ${w}`);
     if (i.leerT) leer.push(`${i.leerT} ${i.leerT > 1 ? 'Einträge' : 'Eintrag'} in der Verteilung unter dem ${w}`);
   });
   if (leer.length) return {key: 'leer', stufen: [H.leer.replace('{liste}', zgrUnd(leer))]};
@@ -1972,6 +2254,7 @@ function etappe1(){
   links.className = 'zgr-e1links'; rechts.className = 'zgr-e1rechts';
   brett.append(links, rechts);
   feld.appendChild(brett);
+  brett.addEventListener('input', ev => { if (ev.target.classList) ev.target.classList.remove('fehlt'); });
 
   // Masse nach dem Platz (Fassung 10). Pfadabstand H so, dass Baum
   // (Kopf 44 + 8 Pfade), Titel und Tabelle in die Hoehe passen;
@@ -1996,9 +2279,9 @@ function etappe1(){
     const T = D.e1.baeume[art];
     const abz = zgrAbzaehlen(T, D.e1.rueckgaben, D.e1.abzText);
     const opt = {col: COL, h: H * nMax / blaetter(art), abzaehlen: abz, ohneRechnung: true,
-                 nachAenderung: () => befund('')};
+                 xFarben: ZGR_XFARBEN, nachAenderung: () => { befund(''); }};
     const baum = zgrBaum(sp, T, e.b[art], opt);
-    const tab = zgrVertQuer(sp, ks, e.t[art], {name: D.e1.wem[art], soll: zgrSollAus(D.e1.verteilung),
+    const tab = zgrVertQuer(sp, ks, e.t[art], {name: D.e1.wem[art], soll: zgrSollAus(D.e1.verteilung), xFarben: ZGR_XFARBEN,
       rechnung: k => zgrPfadRechnung(T, k, false), leuchten: ids => zgrLeuchten(baum.element, ids)});
     tab.nachAenderung = () => befund('');
     teile[art] = {T, abz, baum, tab, opt};
@@ -2040,15 +2323,30 @@ function etappe1(){
   let autoDeckung = false;
   function zeichneNachher(){
     const rollen = rechts.scrollTop, c = e.klapp, W = D.weiter;
+    // NEU (Rike 2026-10-30, Vorschlag Abschnitt 17 B): der eine Satz, was
+    // jetzt zu tun ist (statt des Auftragsfensters beim Oeffnen)
+    // GEAENDERT (Vorschlag A): der Hinweis zu den Zellen steht im Satz
+    zgrJetztSatz(!e.ok ? 'Tragen Sie in beiden Bäumen an jedem Ast die Wahrscheinlichkeit und an jedem Pfadende X ein. Rechnen Sie darunter P(X = …) aus, dann «Prüfen». In jede Zelle passt eine Rechnung, z. B. «1/3 · 1/2 + 1/3 · 1/2», oder eine Zahl.'
+      : !c.an ? 'Beide Verteilungen stimmen. Klappen Sie jetzt den Baum nach Jacken zusammen.'
+      : !c.fertig ? 'Klappen Sie den Baum nach Jacken Ebene für Ebene zusammen. Welche Äste verschmelzen?'
+      : 'Wie hängen die beiden Bäume zusammen? Schreiben Sie es rechts auf.');
     nachher.innerHTML = '';
     // GEAENDERT (Fassung 12.2): Zusammenklappen statt Farbcodes
     if (e.ok && c.an){
       zgrKlappen(nachher, e, zeichneNachher, teile.jacke.baum.element);
       if (c.fertig) zeichneZusammen();
     }
-    if (e.ok && !c.an) zgrFahne({notiz: W.deckungNotiz, knopf: W.deckung, uhr: autoDeckung, meldung: W.deckungMeldung,
-      wache: () => stand.etappe === 0 && !e.klapp.an, tun: deckungAn});
-    else if (e.ok && c.fertig) zgrFahne({notiz: W.etappe2Notiz, knopf: W.etappe2, tun: () => { stand.etappe = 1; los(); }});
+    // GEAENDERT (Fassung 20): die Fenster «Geschafft» statt der Uhr
+    const WG = D.wegweiser;
+    if (e.ok && !c.an) zgrFahne({notiz: W.deckungNotiz, knopf: W.deckung, tun: deckungAn,
+      schluessel: 'e1deckung', fenster: WG.deckung});
+    else if (e.ok && c.fertig) zgrFahne({notiz: W.etappe2Notiz, knopf: W.etappe2, tun: () => { stand.etappe = 1; los(); },
+      schluessel: 'e1geklappt', fenster: WG.geklappt,
+      haupt: {knopf: WG.geklappt.haupt, tun: () => {
+        const z = document.querySelector('#zgrzusammen textarea');
+        if (z){ zgrInSpalte(z.closest('.zgr-abschnitt') || z); z.focus({preventScroll: true}); } }},
+      frei: [() => { const d = document.querySelector('.zgr-wette');
+        if (d){ d.open = true; zgrInSpalte(d); const t = d.querySelector('textarea'); if (t) t.focus({preventScroll: true}); } }]});
     else zgrFahne(null);
     autoDeckung = false;
     passen();
@@ -2126,6 +2424,15 @@ function etappe1(){
       // Die Sammlung kann gerade erschienen sein: neu einpassen
       if (neu){ autoDeckung = true; zeichneNachher(); anpassen(); } else { anpassen(); passen(); }
     } else {
+      // NEU (Fassung 20, Maurus 09.11.): Was fehlt, wird rot umrandet -
+      // die Meldung allein sagte nicht, wo.
+      if (u.key === 'leer') brett.querySelectorAll('input').forEach(f => {
+        const v = String(f.value || '').trim();
+        const fehlt = f.classList.contains('zgr-xfeld') ? !/^\d+$/.test(v)
+          : f.classList.contains('zgr-ast') ? !zgrLies(v)
+          : f.classList.contains('zgr-zelle') ? !zgrRechne(v) : false;
+        f.classList.toggle('fehlt', fehlt);
+      });
       if (e.hinweis.key === u.key) e.hinweis.stufe = Math.min((e.hinweis.stufe || 0) + 1, u.stufen.length - 1);
       else e.hinweis = {key: u.key, stufe: 0};
       sichern();
@@ -2161,8 +2468,11 @@ function zgrVertQuer(ziel, ks, werte, o){
   o = o || {};
   const box = document.createElement('div');
   box.className = 'zgr-quer';
-  box.innerHTML = '<table class="zgr-tabelle"><tr><th>X</th>' + ks.map(k => `<td>${k}</td>`).join('')
-    + '</tr><tr><th>P</th>' + ks.map(k => `<td><div class="zelle">`
+  // Fassung 20: mit o.xFarben traegt jede Spalte die Farbe ihres X
+  const fx = k => o.xFarben && o.xFarben[+k];
+  box.innerHTML = '<table class="zgr-tabelle"><tr><th>X</th>' + ks.map(k => fx(k)
+      ? `<td style="color:#fff;background:${fx(k)};font-weight:700">${k}</td>` : `<td>${k}</td>`).join('')
+    + '</tr><tr><th>P</th>' + ks.map(k => `<td${fx(k) ? ` style="box-shadow:inset 0 -3px 0 ${fx(k)}"` : ''}><div class="zelle">`
       + `<input class="zgr-zelle" data-k="${k}" placeholder="?" autocomplete="off" spellcheck="false" `
       + `aria-label="P(X = ${k}) unter dem ${o.name || 'Baum'}"></div><div class="wert" data-k="${k}"></div></td>`).join('')
     + '</tr></table><div class="zgr-qrech" aria-live="polite"></div>';
@@ -2227,6 +2537,10 @@ function zgrVertQuer(ziel, ks, werte, o){
    Stand: stand.e1.klapp = {an, L (0 bis 3), nul, vor:{n: Text}, ok:{n:
    true}, tipp:{n: Stufe}, fertig}. */
 const ZGR_GRUEN = '#007D57', ZGR_GELB = '#d4ac00';
+/* NEU (Fassung 20): Farben fuer X = 0, 1, 2, 3 in Etappe 1 - ohne Gruen
+   und Gelb (eigene/fremde Jacke beim Zusammenklappen) und ohne Rot
+   (fehlende Felder). */
+const ZGR_XFARBEN = ['#2E6DB4', '#8E44AD', '#8B5A2B', '#D35400'];
 function zgrRfVon(p){ return [...p].map((j, i) => j === D.e1.jacken[i] ? 'R' : 'F').join(''); }
 /* Zeilen bei Klapptiefe L (und den Null-Aesten): {zeile: {Schluessel: r},
    zeilen, key}. Schluessel: 'M' + R/F-Folge (verschmolzen), 'E' + feine
@@ -2662,7 +2976,10 @@ function etappe2(){
     + `<button class="knopf leer" id="weiter" style="margin-left:auto">${i < K.length - 1 ? D.e2.naechste : D.e2.zurUebersicht}</button>`;
   buehne({rolle: a.rolle, rang: a.rang, titel: `Etappe 2 · ${a.name}`, text: ''},
     SCH.baeume, SCH.aufgaben, leiste, fort + zgrSammlungHtml(true)
-    + zgrKarteHtml({id: 'e2' + id, nr: 2, name: S.name, frage: D.skarte.e2frage, bild: S.bild, text: S.satz}), '', [1.2, 1]);
+    + zgrKarteHtml({id: 'e2' + id, nr: 2, name: S.name, frage: D.skarte.e2frage, bild: S.bild, text: S.satz}), '',
+    // NEU (Rike 2026-10-29): Mit der Leseleiste brauchen die Baeume mehr
+    // vom Rest, damit Weg 1 und Weg 2 nebeneinander bleiben.
+    D.leiste ? [3, 1] : [1.2, 1]);
   zgrAuftragKopf(2);
   zgrKarteHaken(null);
   zgrFortHaken(st, !zgrE2Fertig(st, S));
@@ -2682,7 +2999,11 @@ function etappe2(){
   const W11 = D.weiter, letzte = i === K.length - 1;
   const fahneKarte = auto => {
     if (!zgrE2Fertig(st, S)) return zgrFahne(null);
-    zgrFahne({notiz: W11.budeNotiz, knopf: letzte ? W11.faelle : W11.bude, uhr: auto,
+    zgrFahne({notiz: W11.budeNotiz, knopf: letzte ? W11.faelle : W11.bude,
+      // NEU (Fassung 20): nach der letzten Situation das Fenster, mit «Und im Skript?»
+      ...(zgrAlleFertig(st) ? {schluessel: 'e2faelle', fenster: D.wegweiser.faelle,
+        haupt: {knopf: W11.faelle, tun: () => { st.aktiv = 'Z'; sichern(); etappe2(); }},
+        frei: [() => { st.aktiv = 'S'; sichern(); etappe2(); }]} : {}),
       meldung: letzte ? W11.faelleMeldung : W11.budeMeldung,
       wache: () => stand.etappe === 1 && st.aktiv === id,
       tun: () => { st.aktiv = ids[i + 1]; sichern(); etappe2(); }});
@@ -3441,7 +3762,8 @@ function zgrSWaage(ziel, o, w, nachher){
   const ux = (ZSW.B - ZS.L - ZS.R) / (o.hi - o.lo), SEG = ZSW.ACHSE + 40, Q0 = ZSW.ACHSE + 66;
   const qmax = Math.max(0, ...quad.map(q => q.seite * ux));
   const QH = Q0 + qmax + 22;                                // Ende des Histogramm-Teils
-  const H = QH + 12 + 95 + 40, Y0 = QH + 12 + 95 + 8, MX = ZSW.B / 2;
+  // Fassung 20: 14 px mehr unten fuer die Zahlen unter den Schalen
+  const H = QH + 12 + 95 + 54, Y0 = QH + 12 + 95 + 8, MX = ZSW.B / 2;
   const hq = q => { const d = q.seite * ux; return {x: Math.max(2, Math.min(ZSW.B - 2 - d, sx(q.g) - d / 2)), y: Q0, d}; };
   let gleitet = false;
   const box = document.createElement('div');
@@ -3486,10 +3808,15 @@ function zgrSWaage(ziel, o, w, nachher){
   };
   const ziel0 = () => w.los && !w.ok ? Math.max(-SW.gradMax, Math.min(SW.gradMax, SW.gradMax * (w.s * w.s - o.sigma * o.sigma) / (o.sigma * o.sigma))) : 0;
   let winkel = ziel0(), lauf = null;
+  // GEAENDERT (Fassung 20, Maurus 10.11.): Das Band ist keine getoente
+  // Flaeche mehr (sie ist nicht s² und fuehrte auf eine falsche Faehrte),
+  // sondern ein flacher Streifen auf der Achse mit «s = …»; die Raender
+  // nur als feine gestrichelte Linien zu den Griffen.
   const zeichneBand = () => {
     const l = sx(o.E - w.s), r = sx(o.E + w.s);
-    gBand.innerHTML = `<rect x="${l}" y="18" width="${Math.max(0, r - l)}" height="${ZSW.ACHSE - 18}" fill="#E09E5A" opacity=".22"/>`
-      + [l, r].map(x => `<line x1="${x}" x2="${x}" y1="18" y2="${ZSW.ACHSE}" stroke="#b8540a" stroke-width="2"/>`
+    gBand.innerHTML = `<rect x="${l}" y="${ZSW.ACHSE - 3}" width="${Math.max(0, r - l)}" height="7" fill="#E09E5A" stroke="#b8540a" stroke-width="1"/>`
+      + `<text x="${(l + r) / 2}" y="11" ${F} font-size="11" text-anchor="middle" fill="#b8540a">${L.bandZahl.replace('{v}', zgrRund(w.s).t)}</text>`
+      + [l, r].map(x => `<line x1="${x}" x2="${x}" y1="22" y2="${ZSW.ACHSE}" stroke="#b8540a" stroke-width="1" stroke-dasharray="3 3"/>`
         + `<rect x="${x - 7}" y="14" width="14" height="16" rx="4" fill="#fff" stroke="#b8540a" stroke-width="1.5"${w.ok ? '' : ' style="cursor:ew-resize"'}/>`).join('');
   };
   const zeichneWaage = () => {
@@ -3502,8 +3829,11 @@ function zgrSWaage(ziel, o, w, nachher){
     if (w.los && !gleitet && !zieht2) (w.zl ? [mergeRect(lx, ly)] : panRects(lx, ly)).forEach(r => t.push(`<rect x="${r.x}" y="${r.y}" width="${r.d}" height="${r.d}" fill="#0065A9" fill-opacity=".35" stroke="#0065A9"/>`));
     const ds = w.s * u;
     t.push(`<rect x="${rx - ds / 2}" y="${ry - 2 - ds}" width="${ds}" height="${ds}" fill="#E09E5A" fill-opacity=".45" stroke="#b8540a"/>`,
-      `<text x="${lx}" y="${H - 6}" ${F} font-size="11" text-anchor="middle" fill="#6c6357">${L.links}</text>`,
-      `<text x="${rx}" y="${H - 6}" ${F} font-size="11" text-anchor="middle" fill="#6c6357">${L.rechts}</text>`);
+      `<text x="${MX - ZSW.ARM}" y="${H - 20}" ${F} font-size="11" text-anchor="middle" fill="#6c6357">${L.links}</text>`,
+      `<text x="${MX + ZSW.ARM}" y="${H - 20}" ${F} font-size="11" text-anchor="middle" fill="#6c6357">${L.rechts}</text>`,
+      // NEU (Fassung 20): die Zahlen an den Schalen; links erst nach dem Loslassen
+      `<text x="${MX + ZSW.ARM}" y="${H - 5}" ${F} font-size="11.5" font-weight="600" text-anchor="middle" fill="#b8540a">${L.rechtsZahl.replace('{v}', zgrRund(w.s * w.s).t)}</text>`);
+    if (w.los) t.push(`<text x="${MX - ZSW.ARM}" y="${H - 5}" ${F} font-size="11.5" font-weight="600" text-anchor="middle" fill="#0065A9">${L.linksZahl.replace('{v}', zgrRund(o.sigma * o.sigma).t)}</text>`);
     if (!w.los) t.push(`<rect x="${MX - ZSW.ARM - 46}" y="${Y0 + 4}" width="10" height="20" fill="#8a8279"/><rect x="${MX + ZSW.ARM + 36}" y="${Y0 + 4}" width="10" height="20" fill="#8a8279"/>`);
     gWaage.innerHTML = t.join('');
   };
@@ -4341,6 +4671,8 @@ function zgrBude(ziel, b, nachAenderung, nurEinsatz){
   // Breit: links bauen, rechts das Gewinn-Histogramm
   wrap.innerHTML = `<div class="links"><div class="zgr-zeile zgr-einsatz"><label>${BU.einsatz} <input inputmode="decimal" value="${zgrFrText(b.einsatz)}" aria-label="${BU.einsatz} in Fr."> Fr.</label></div>`
     + `<div class="zgr-zart" style="margin:0 2px">${BU.wahrsch}</div>`
+    // NEU (Fassung 20, Maurus 10.11.): dass man die Balken zieht, steht da
+    + (nurEinsatz ? '' : `<div class="zgr-ziehen" style="margin:0 2px;font-size:13.5px;font-weight:600;color:#0065A9">↕ ${BU.ziehen}</div>`)
     + `<div class="zgr-schaetz zgr-bauk${nurEinsatz ? ' fest' : ''}" ${nurEinsatz ? '' : 'tabindex="0"'} role="group" aria-label="${BU.wahrsch} je ${BU.feld}. ${BU.tastatur}"><div class="bild"></div></div>`
     + '<table class="zgr-tabelle zgr-budetab"><tr><th></th>' + b.h.map((v, i) => `<th>${BU.feld} ${i + 1}</th>`).join('') + '</tr>'
     + `<tr><th>P</th>${b.h.map((v, i) => `<td data-p="${i}"></td>`).join('')}</tr>`
@@ -4467,6 +4799,14 @@ function etappe3(){
   const auftrag = {rolle: a.rolle, rang: a.rang, titel, text};
   if (zug < 3) zgrEinFeld(auftrag, Z[zug - 1], leiste, oben);
   else buehne(auftrag, 'Die Aufträge', D.e3.bude.titel, leiste, oben, '', [0.85, 1.5]);
+  // NEU (Rike 2026-10-29, Tisch): In Zug 1 liegen die Buden als Karten
+  // direkt auf dem Holz, ohne Blatt darunter.
+  // FEHLERBEHOBEN (2026-10-29): Diese Zeile stand zuerst zwischen dem
+  // «if» und dem «else» darueber. Das «else» hing dann an ihr, und Zug 2
+  // bekam zusaetzlich die Buehne von Zug 3 (zwei Haelften, «Die
+  // Auftraege» leer). Ursache: eingefuegt, ohne auf das folgende «else»
+  // zu achten.
+  if (zug === 1 && D.leiste){ const o = document.getElementById('obenhaelfte'); if (o) o.classList.add('wsholz'); }
   zgrSchrittKlick(j => { if (j + 1 !== zug){ stand.e3zug = j + 1; sichern(); etappe3(); } });
   zgrAuftragKopf(3);
   const WT = D.weiter;
@@ -4474,11 +4814,16 @@ function etappe3(){
     const sl = document.getElementById('zgrsleiste');
     if (sl){ sl.classList.toggle('gedimmt', zug < 3 && !st.fertig[zug]); sl.title = zug < 3 && !st.fertig[zug] ? WT.gedimmt : ''; }
     // Ohne Uhr: Wer gerade schreibt, soll nicht weggefuehrt werden
+    // NEU (Fassung 20): beim ersten Mal das Fenster «Geschafft»
+    const WG = D.wegweiser;
     if (zug === 1 && st.fertig[1]) zgrFahne({notiz: WT.zug2Notiz, knopf: WT.zug2, uhr: false,
-      tun: () => { stand.e3zug = 2; sichern(); etappe3(); }});
+      tun: () => { stand.e3zug = 2; sichern(); etappe3(); }, schluessel: 'e3zug2', fenster: WG.zug2});
     else if (zug === 2 && st.fertig[2]) zgrFahne({notiz: WT.zug3Notiz, knopf: WT.zug3, uhr: false,
-      tun: () => { const f = document.querySelector('.zgr-wfenster'); if (f) f.remove(); stand.e3zug = 3; sichern(); etappe3(); }});
-    else if (zug === 3 && st.fertig[3]) zgrFahne({notiz: WT.mitnehmenNotiz, knopf: WT.mitnehmen, uhr: false, tun: () => { stand.etappe = 3; los(); }});
+      tun: () => { const f = document.querySelector('.zgr-wfenster'); if (f) f.remove(); stand.e3zug = 3; sichern(); etappe3(); },
+      schluessel: 'e3zug3', fenster: WG.zug3});
+    else if (zug === 3 && st.fertig[3]) zgrFahne({notiz: WT.mitnehmenNotiz, knopf: WT.mitnehmen, uhr: false, tun: () => { stand.etappe = 3; los(); },
+      schluessel: 'e3mitnehmen', fenster: WG.mitnehmen,
+      frei: [() => { const d = document.querySelector('.zgr-weitere'); if (d){ d.open = true; d.scrollIntoView({block: 'start', behavior: 'smooth'}); } }]});
     else zgrFahne(null);
   };
   window._zgrFertigHaken = (i, ok, vorher) => { if (i === zug) fahne3(); };
