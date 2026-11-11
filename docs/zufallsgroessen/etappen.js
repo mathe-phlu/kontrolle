@@ -831,6 +831,13 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
     .zgr-bude input{font:inherit;font-size:14px;width:56px;padding:2px 4px;border:1px solid var(--linie);border-radius:6px;text-align:right}
     .zgr-bude .zgr-bauk svg,.zgr-budebild svg{display:block;width:100%;max-width:440px;height:auto}
     .zgr-bude .zgr-bauk.fest{cursor:default}
+    /* NEU (11.11.): der Hinweis zum Ziehen, die Griffe wippen bis zum ersten Zug */
+    .zgr-ziehen{margin:2px 2px 4px;padding:5px 9px;font-size:14px;font-weight:600;color:#7a3d06;
+      background:#fdf1e4;border:1px solid #E09E5A;border-radius:6px}
+    .zgr-bauk .griff{transform-box:fill-box;transform-origin:center}
+    .zgr-bauk.neu .griff{animation:zgrgriff 1.3s ease-in-out infinite}
+    @keyframes zgrgriff{0%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}60%{transform:translateY(3px)}}
+    @media (prefers-reduced-motion: reduce){.zgr-bauk.neu .griff{animation:none}}
     .zgr-budetab{font-size:12.5px;margin:4px 0;max-width:440px;width:100%}
     .zgr-budetab th,.zgr-budetab td{padding:2px 3px;text-align:center}
     .zgr-budetab th:first-child{text-align:left;font-weight:600;white-space:nowrap}
@@ -4623,8 +4630,15 @@ function zgrBudeBalkenSvg(b, wahl, fest){
     const x = zgrBudeX(i);
     if (!fest) t.push(`<rect x="${x - bb / 2 - 4}" y="${ZBU.OBEN}" width="${bb + 8}" height="${ZBU.ACHSE - ZBU.OBEN}" fill="${wahl === i ? '#eef4fa' : '#f6f1e7'}" rx="4"/>`);
     if (v) t.push(`<rect x="${x - bb / 2}" y="${sy(v)}" width="${bb}" height="${ZBU.ACHSE - sy(v)}" fill="#0065A9" opacity=".8"/>`,
-      `<text x="${x}" y="${sy(v) - 4}" ${F} font-size="11.5" text-anchor="middle" fill="#2d2924">${zgrP2(v / n)}</text>`);
+      `<text x="${x}" y="${sy(v) - (fest ? 4 : 18)}" ${F} font-size="11.5" text-anchor="middle" fill="#2d2924">${zgrP2(v / n)}</text>`);
     t.push(`<text x="${x}" y="${ZBU.ACHSE + 18}" ${F} font-size="12" text-anchor="middle" fill="#6c6357">${BU.feld} ${i + 1}</text>`);
+    // NEU (11.11., Rike: Maurus hat das Ziehen nicht erkannt): ein Griff
+    // oben auf jedem Balken (bei 0 auf der Achse), mit Pfeil hoch und runter
+    if (!fest){
+      const y = v ? sy(v) : ZBU.ACHSE - 9;
+      t.push(`<g class="griff"><rect x="${x - 13}" y="${y - 9}" width="26" height="18" rx="5" fill="#fff" stroke="#b8540a" stroke-width="1.6"/>`
+        + `<path d="M${x - 4} ${y - 2}L${x} ${y - 6.5}L${x + 4} ${y - 2}ZM${x - 4} ${y + 2}L${x} ${y + 6.5}L${x + 4} ${y + 2}Z" fill="#b8540a"/></g>`);
+    }
   });
   t.push(`<line x1="${ZBU.L - 6}" x2="${ZBU.B - ZBU.R + 6}" y1="${ZBU.ACHSE}" y2="${ZBU.ACHSE}" stroke="#2d2924" stroke-width="2"/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${ZBU.B} ${ZBU.H}" width="${ZBU.B}" height="${ZBU.H}">${t.join('')}</svg>`;
@@ -4672,7 +4686,7 @@ function zgrBude(ziel, b, nachAenderung, nurEinsatz){
   wrap.innerHTML = `<div class="links"><div class="zgr-zeile zgr-einsatz"><label>${BU.einsatz} <input inputmode="decimal" value="${zgrFrText(b.einsatz)}" aria-label="${BU.einsatz} in Fr."> Fr.</label></div>`
     + `<div class="zgr-zart" style="margin:0 2px">${BU.wahrsch}</div>`
     // NEU (Fassung 20, Maurus 10.11.): dass man die Balken zieht, steht da
-    + (nurEinsatz ? '' : `<div class="zgr-ziehen" style="margin:0 2px;font-size:13.5px;font-weight:600;color:#0065A9">↕ ${BU.ziehen}</div>`)
+    + (nurEinsatz ? '' : `<div class="zgr-ziehen">${BU.ziehen}</div>`)
     + `<div class="zgr-schaetz zgr-bauk${nurEinsatz ? ' fest' : ''}" ${nurEinsatz ? '' : 'tabindex="0"'} role="group" aria-label="${BU.wahrsch} je ${BU.feld}. ${BU.tastatur}"><div class="bild"></div></div>`
     + '<table class="zgr-tabelle zgr-budetab"><tr><th></th>' + b.h.map((v, i) => `<th>${BU.feld} ${i + 1}</th>`).join('') + '</tr>'
     + `<tr><th>P</th>${b.h.map((v, i) => `<td data-p="${i}"></td>`).join('')}</tr>`
@@ -4682,6 +4696,9 @@ function zgrBude(ziel, b, nachAenderung, nurEinsatz){
     + `<div class="zgr-zeile"><button class="knopf leer klein zgr-budewaagen">${BU.waagen}</button></div></div>`;
   const box = wrap.querySelector('.zgr-bauk'), bild = box.querySelector('.bild');
   const zahlen = wrap.querySelector('.zgr-budezahlen'), gbild = wrap.querySelector('.zgr-budebild');
+  // Bis zum ersten Ziehen wippen die Griffe (stand.zgrGezogen)
+  if (!nurEinsatz && !stand.zgrGezogen) box.classList.add('neu');
+  const gezogen = () => { if (stand.zgrGezogen) return; stand.zgrGezogen = true; box.classList.remove('neu'); sichern(); };
   const zeichnen = () => {
     bild.innerHTML = zgrBudeBalkenSvg(b, nurEinsatz ? -1 : wahl, nurEinsatz);
     const n = b.h.reduce((s, v) => s + v, 0);
@@ -4720,7 +4737,7 @@ function zgrBude(ziel, b, nachAenderung, nurEinsatz){
     let zieht = false;
     const setzen = ev => { const l = lage(ev); wahl = l.i; b.h[l.i] = l.v; zeichnen(); };
     box.addEventListener('pointerdown', ev => {
-      zieht = true; box.setPointerCapture(ev.pointerId); box.focus({preventScroll: true});
+      zieht = true; gezogen(); box.setPointerCapture(ev.pointerId); box.focus({preventScroll: true});
       setzen(ev); ev.preventDefault();
     });
     box.addEventListener('pointermove', ev => { if (zieht) setzen(ev); });
@@ -4730,7 +4747,7 @@ function zgrBude(ziel, b, nachAenderung, nurEinsatz){
     box.addEventListener('keydown', ev => {
       const k = ev.key;
       if (k === 'ArrowLeft' || k === 'ArrowRight') wahl = Math.max(0, Math.min(N - 1, wahl + (k === 'ArrowRight' ? 1 : -1)));
-      else if (k === 'ArrowUp' || k === 'ArrowDown') b.h[wahl] = Math.max(0, Math.min(BU.stufen, b.h[wahl] + (k === 'ArrowUp' ? 1 : -1)));
+      else if (k === 'ArrowUp' || k === 'ArrowDown'){ gezogen(); b.h[wahl] = Math.max(0, Math.min(BU.stufen, b.h[wahl] + (k === 'ArrowUp' ? 1 : -1))); }
       else return;
       ev.preventDefault(); zeichnen();
       if (k === 'ArrowUp' || k === 'ArrowDown') nachAenderung();
