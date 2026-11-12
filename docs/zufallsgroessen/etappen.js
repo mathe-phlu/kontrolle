@@ -655,6 +655,20 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
         box-shadow:0 6px 20px rgba(0,0,0,.18);font-size:14px;animation:zgrfahne .25s ease-out}
     .zgr-fahne .notiz{font-weight:600;color:var(--tinte)}
     .zgr-fahne .knopf{font-size:14.5px;padding:6px 14px;white-space:nowrap}
+    /* NEU (2026-11-11): Bude - Nummern links, der aktuelle Auftrag gross */
+    .zgr-auftragnummern{display:grid;grid-template-columns:repeat(auto-fill,minmax(44px,1fr));gap:6px;margin:6px 10px 10px}
+    .zgr-anr{position:relative;font:600 17px "Fira Sans",sans-serif;height:42px;border:1.5px solid #c9bda8;background:#fffefb;border-radius:6px;cursor:pointer;color:var(--tinte)}
+    .zgr-anr.an{background:var(--akzent,#0065A9);border-color:var(--akzent,#0065A9);color:#fff}
+    .zgr-anr.ok{border-color:#007D57}
+    .zgr-anr .ok{position:absolute;right:3px;top:0;font-size:12px;color:#007D57}
+    .zgr-anr.an .ok{color:#fff}
+    .zgr-auftraggross{margin:4px 10px 8px;padding:8px 12px;border-left:4px solid var(--akzent,#0065A9);background:#eef4fa}
+    .zgr-auftraggross .von{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:#6c6357}
+    .zgr-auftraggross .text{font-size:17px;line-height:1.4}
+    /* NEU (2026-11-11): die Antworten unter den Baeumen, auf dem Holz als Blatt */
+    .zgr-e2unten{margin:10px 12px 4px;max-width:720px;background:#fffefb;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+    .zgr-e2unten:empty{display:none}
+    .zgr-e2unten .zgr-festwahl button{font-size:15px}
     /* NEU (Fassung 20): das Fenster «Geschafft» an den Uebergaengen */
     .zgr-wegweiser .kasten h2{color:#007D57}
     .zgr-wegweiser .unten{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
@@ -2873,8 +2887,11 @@ function zgrWegBaum(W, o){
   // Korbwurf haben beide Baeume dieselbe, damit sie sich decken.
   const breit = t => o.bx ? 2 * o.bx : String(t).length * 6.6 + 10;
   // Rechts so viel Rand, wie die breiteste Beschriftung der letzten Stufe braucht
+  // FEHLERBEHOBEN (2026-11-11, Rike: «Gewinn, Niete» kleben am Blattrand):
+  // Ursache: Rand genau halbe Etikettenbreite + 4 px, das Etikett endete am
+  // Rand des Blattes. Jetzt 14 px Luft.
   const rand = Math.max(A ? (o.fan ? 104 : 64) : 30, String(W.koepfe[T - 1] || '').length * 3.1 + 4,
-    ...W.knoten.filter(k => k.tiefe === T).map(k => breit(k.text) / 2 + 4));
+    ...W.knoten.filter(k => k.tiefe === T).map(k => breit(k.text) / 2 + 14));
   const x0 = 8, xs = d => Math.round(x0 + d * (w - x0 - rand) / T);
   const lage = {}, teile = [], oben = [];
   let r = 0;
@@ -3030,8 +3047,8 @@ function etappe2(){
   const wahr = (nr, aid) => { for (const k of P.baeume[nr]) for (const x of k.aeste) if (x.id === aid) return x; return null; };
   const gleichWert = (e, soll) => { const r = e ? zgrRechne(e) : null; return !!r && Math.abs(r.wert - zgrRechne(soll).wert) < 0.006; };
 
-  // Links: der blaue Satz, darunter beide Baeume
-  tisch.insertAdjacentHTML('beforeend', `<div class="zgr-teilen">${S.teilen}</div>`);
+  // ENTFALLEN (2026-11-11, Rike: Etappe 2 uebersichtlicher): der blaue
+  // Satz ueber den Baeumen (S.teilen). Jeder Baum hat einen kurzen Titel.
   const wege = document.createElement('div'); wege.className = 'zgr-wege';
   tisch.appendChild(wege);
   // Korbwurf: dieselbe Etikettenbreite in beiden Baeumen, damit sie sich decken
@@ -3051,7 +3068,8 @@ function etappe2(){
     [1, 2].forEach(nr => {
       const [titel, was] = D.e2.wege[nr];
       const box = document.createElement('div'); box.className = 'zgr-wegbox';
-      box.innerHTML = `<div class="titel"><b>${titel}</b> <span>${S.wegTitel[nr] || was}</span> <span class="zgr-stufenmarke">${KT.stufen}</span></div>`;
+      // GEAENDERT (2026-11-11): kurzer Titel, ohne «die ersten zwei Stufen»
+      box.innerHTML = `<div class="titel"><b>${titel}:</b> <span>${S.wegKurz[nr] || S.wegTitel[nr] || was}</span></div>`;
       const W = c['weg' + nr], eintr = kn[nr];
       const o = {breite: b, hoehe, pflicht: P.baeume[nr].map(k => k.weg), weg: String(nr), bx};
       box.style.flex = `0 1 ${b + 4}px`;
@@ -3091,12 +3109,15 @@ function etappe2(){
   // Rechts: Schritt 1, beim Korbwurf das Uebereinanderlegen, die Feststellung
   const sk = document.createElement('div'), sd = document.createElement('div'), s2 = document.createElement('div'), sv = document.createElement('div');
   [sk, sd, s2].forEach(x => { x.className = 'zgr-satz zgr-e2schritt'; feld.appendChild(x); });
-  feld.appendChild(sv);
-  const nrFest = S.decken ? 3 : 2;
+  // GEAENDERT (2026-11-11, Rike): die Antworten stehen unter den Baeumen,
+  // nicht rechts unten; die Verteilung gleich darunter
+  s2.classList.add('zgr-e2unten'); tisch.appendChild(s2);
+  sv.classList.add('zgr-e2unten'); tisch.appendChild(sv);
+  // ENTFALLEN (2026-11-11): die Nummern vor den Schritten
   function zeichneKn(meldung){
     const ok = knOk();
     sk.classList.toggle('ok', ok);
-    let h = `<div class="kopf">1 · ${KT.titel}${S.frei ? ` · ${SCH.frei}` : ''}</div><div>${KT.text}</div>`;
+    let h = `<div class="kopf">${KT.titel}${S.frei ? ` · ${SCH.frei}` : ''}</div><div>${KT.text}</div>`;
     if (!ok){
       const n1 = st.tipp[id + 'kn1'] || 0, n2 = st.tipp[id + 'kn2'] || 0;
       h += `<div class="zgr-zeile" style="padding:0;margin-top:5px"><button class="knopf zgr-e2pruefen">${SCH.pruefen}</button>`
@@ -3147,7 +3168,7 @@ function etappe2(){
     if (!S.decken) return;
     const fertig = !!st.deck[id];
     sd.classList.toggle('ok', fertig);
-    sd.innerHTML = `<div class="kopf">2 · ${DK.titel}</div>`
+    sd.innerHTML = `<div class="kopf">${DK.titel}</div>`
       + (fertig ? `<div class="zgr-decksatz">${DK.satz}</div><div class="warum">${DK.detail}</div>`
         : `<div>${DK.text}</div>` + (knOk() ? `<div class="zgr-zeile" style="padding:0;margin-top:5px"><button class="knopf" data-deck="1">${DK.knopf}</button></div>`
           : `<div class="zgr-zart">${DK.erst}</div>`));
@@ -3174,7 +3195,7 @@ function etappe2(){
       const n = st.tipp[id + 'fest'] || 1;
       urteil = `<div class="warum falsch" role="status">${SCH.nochNicht} ${c.tippFest.slice(0, n).join(' ')}</div>`;
     }
-    s2.innerHTML = `<div class="kopf">${nrFest} · ${SCH.fest}</div>`
+    s2.innerHTML = `<div class="kopf">${SCH.antwort}</div>`
       + `<div class="zgr-festwahl" role="group" aria-label="${SCH.fest}">`
       + D.e2.faelle.map(x => `<button data-f="${x.id}" aria-pressed="${f === x.id}">${x.name}</button>`).join('')
       + '</div>' + urteil;
@@ -4815,7 +4836,8 @@ function etappe3(){
   const oben = zgrSchrittleiste(Z.map((t, j) => ({t, jetzt: j + 1 === zug, ok: erledigt[j]}))) + zgrSammlungHtml();
   const auftrag = {rolle: a.rolle, rang: a.rang, titel, text};
   if (zug < 3) zgrEinFeld(auftrag, Z[zug - 1], leiste, oben);
-  else buehne(auftrag, 'Die Aufträge', D.e3.bude.titel, leiste, oben, '', [0.85, 1.5]);
+  // GEAENDERT (2026-11-11): links nur noch die Nummern, die Bude breiter
+  else buehne(auftrag, 'Die Aufträge', D.e3.bude.titel, leiste, oben, '', st.bude.a === 0 ? [0.85, 1.5] : [0.42, 1.7]);
   // NEU (Rike 2026-10-29, Tisch): In Zug 1 liegen die Buden als Karten
   // direkt auf dem Holz, ohne Blatt darunter.
   // FEHLERBEHOBEN (2026-10-29): Diese Zeile stand zuerst zwischen dem
@@ -4960,13 +4982,18 @@ function etappe3(){
   // neun Auftraege des Baukastens (Fassung 13).
   if (zug === 3){
     const BU = D.e3.bude, sb = st.bude;
-    const liste = document.createElement('div'); liste.className = 'zgr-auftraege';
+    // GEAENDERT (2026-11-11, Rike: «welcher Auftrag jetzt dran ist»): links
+    // nur die Nummern 1 bis 7 mit ✓, der aktuelle Auftrag steht gross
+    // ueber der Bude. Der volle Text steht im Tooltip der Nummer.
+    const liste = document.createElement('div'); liste.className = 'zgr-auftragnummern';
     BU.auftraege.forEach((af, j) => {
       const n = j + 1, ok = sb.ok[n];
       const b = document.createElement('button');
-      b.className = 'zgr-auftrag' + (sb.a === n ? ' an' : '') + (ok === true ? ' ok' : ok === false ? ' falsch' : '');
+      b.className = 'zgr-anr' + (sb.a === n ? ' an' : '') + (ok === true ? ' ok' : ok === false ? ' falsch' : '');
       b.setAttribute('aria-pressed', sb.a === n);
-      b.innerHTML = `<span class="nr">${n}</span><span>${af.text}${ok === true ? ' <span class="ok">✓</span>' : ''}</span>`;
+      b.title = af.text.replace(/<[^>]+>/g, '');
+      b.setAttribute('aria-label', BU.auftragVon.replace('{n}', n).replace('{m}', BU.auftraege.length) + ': ' + b.title);
+      b.innerHTML = `${n}${ok === true ? '<span class="ok">✓</span>' : ''}`;
       b.onclick = () => { sb.a = n; sichern(); etappe3(); };
       liste.appendChild(b);
     });
@@ -5021,7 +5048,9 @@ function etappe3(){
       };
     } else {
       const n = sb.a, af = BU.auftraege[n - 1], b = sb.b[n];
-      feld.insertAdjacentHTML('beforeend', `<div class="zgr-text">${n} · ${af.text}</div>`);
+      // GEAENDERT (2026-11-11): der aktuelle Auftrag gross ueber der Bude
+      feld.insertAdjacentHTML('beforeend', `<div class="zgr-auftraggross"><div class="von">${BU.auftragVon.replace('{n}', n).replace('{m}', BU.auftraege.length)}</div>`
+        + `<div class="text">${af.text}</div></div>`);
       if (af.start) feld.insertAdjacentHTML('beforeend', `<div class="zgr-text zgr-zart">${af.start}</div>`);
       zgrBude(feld, b, () => { sichern(); leeren(); }, n === 7);
       if (af.feld){
@@ -5041,13 +5070,23 @@ function etappe3(){
       document.getElementById('leeren').onclick = () => { sb.b[n] = zgrBudeStart(n); sichern(); etappe3(); };
       pruefen = () => {
         const u = zgrBudeUrteil(af.art, b, st.t['bude' + n]);
+        const neu = u.ok && sb.ok[n] !== true;
         sb.ok[n] = u.ok || sb.ok[n] === true; sichern();
         const fertig = ZGR_BUDE_N.filter(k => sb.ok[k] === true).length;
         const el = liste.children[n - 1];
         el.classList.remove('ok', 'falsch'); el.classList.add(sb.ok[n] ? 'ok' : 'falsch');
-        if (u.ok && !el.querySelector('.ok')) el.lastElementChild.insertAdjacentHTML('beforeend', ' <span class="ok">✓</span>');
+        if (u.ok && !el.querySelector('.ok')) el.insertAdjacentHTML('beforeend', '<span class="ok">✓</span>');
         zgrFertig(st, 3, zgrFertig3(st));
         befund(`${u.satz}${u.ok ? ` <b>${BU.erfuellt.replace('{n}', fertig).replace('{m}', ZGR_BUDE_N.length)}</b>` : ''}`);
+        // NEU (2026-11-11, Rike): erfuellt -> Fenster mit dem naechsten
+        // offenen Auftrag. Sind alle erfuellt, uebernimmt das Fenster
+        // «Geschafft» zum Mitnehmen (fahne3).
+        if (neu && fertig < ZGR_BUDE_N.length){
+          const m = [...ZGR_BUDE_N.filter(k => k > n), ...ZGR_BUDE_N.filter(k => k < n)].find(k => sb.ok[k] !== true);
+          zgrWegweiser({fenster: {text: BU.erfuelltFenster.replace('{n}', n),
+              jetzt: BU.naechsterFenster.replace('{n}', m).replace('{text}', BU.auftraege[m - 1].text)},
+            haupt: {knopf: BU.naechsterKnopf.replace('{n}', m), tun: () => { sb.a = m; sichern(); etappe3(); }}});
+        }
       };
     }
   }
