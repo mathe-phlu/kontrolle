@@ -500,6 +500,17 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
     .zgr-e1.eng .zgr-quer .zgr-zelle{width:62px}
     .zgr-e1.eng .zgr-quer td{padding:2px 2px 0}
     .zgr-quer .wert{font-size:12px;color:var(--matt);min-height:15px;line-height:15px;white-space:nowrap}
+    /* NEU (Fassung 22, Rike 2026-11-19: «die Rechnung bei 0, 1, 2, 3 ueber
+       die Pfadregeln eingeben, und dann wird es ausgerechnet»): Beim
+       Schreiben wird die Zelle breit und liegt ueber den Nachbarn; das
+       Ergebnis steht darunter gut lesbar. */
+    .zgr-quer .zelle{position:relative;height:26px}
+    .zgr-quer .zgr-zelle:focus{position:absolute;left:0;top:0;z-index:20;width:230px;box-shadow:0 3px 12px rgba(0,0,0,.2);background:#fff}
+    .zgr-quer td:nth-last-child(-n+2) .zgr-zelle:focus{left:auto;right:0}
+    .zgr-quer .wert{font-size:13.5px;font-weight:600;color:var(--tinte)}
+    /* NEU (Fassung 22): die Hilfe zum Zusammenklappen nach dem Pruefen */
+    .zgr-klapphilfe{margin:8px 0 2px;padding:8px 10px;border-left:3px solid #d4ac00;background:#fffbea;border-radius:4px;font-size:14.5px;line-height:1.45}
+    .zgr-klapphilfe .knopf{margin-top:6px}
     .zgr-quer .wert.warn{color:var(--falsch)}
     .zgr-qtext{font-size:12.5px;margin:0 2px 6px;line-height:1.35}
     .zgr-ebenen{margin:4px 6px 0}
@@ -2221,6 +2232,12 @@ function zgrE1Hinweise(e){
     }
     return i;
   });
+  // NEU (Fassung 22, Rike 2026-11-19): Stimmt der Baum nach Jacken, der
+  // nach richtig/falsch aber an einem Ast nicht (typisch: Ben nach «Anna
+  // falsch» mit 1/2), gibt es das Zusammenklappen als Hilfe.
+  const ij = info.find(i => i.art === 'jacke'), ir = info.find(i => i.art === 'rf');
+  const hilfe = !ij.leerA && !ij.falsch && !ir.leerA && !!ir.falsch;
+  const mit = r => (hilfe && !r.ok ? Object.assign(r, {hilfe: true}) : r);
   const leer = [];
   info.forEach(i => {
     const w = D.e1.wem[i.art];
@@ -2230,9 +2247,9 @@ function zgrE1Hinweise(e){
   });
   if (leer.length) return {key: 'leer', stufen: [H.leer.replace('{liste}', zgrUnd(leer))]};
   const xf = info.find(i => i.xFalsch);
-  if (xf) return {key: 'x' + xf.art, stufen: [H.xFalsch.replace('{baum}', D.e1.im[xf.art]), H.xTipp]};
+  if (xf) return mit({key: 'x' + xf.art, stufen: [H.xFalsch.replace('{baum}', D.e1.im[xf.art]), H.xTipp]});
   const tf = info.find(i => !i.passt);
-  if (tf) return {key: 'tab' + tf.art, stufen: [H.tabFalsch.replace('{wem}', D.e1.wem[tf.art]), H.tabTipp]};
+  if (tf) return mit({key: 'tab' + tf.art, stufen: [H.tabFalsch.replace('{wem}', D.e1.wem[tf.art]), H.tabTipp]});
   const gleich = ks.every(k => Math.abs(info[0].tab[k] - info[1].tab[k]) < 0.006);
   const richtig = info.every(i => i.richtig);
   // Zuerst der Baum nach richtig/falsch (thema.md), dann der nach Jacken
@@ -2240,9 +2257,9 @@ function zgrE1Hinweise(e){
   if (gleich && richtig && !fb) return {ok: true};
   const ast = fb ? zgrE1AstHinweise(fb.art, fb.T, fb.falsch) : [];
   const wo = fb ? fb.art + fb.falsch.id : '';
-  if (!gleich) return {key: 'ungleich' + wo, stufen: [H.ungleich, ...ast]};
-  if (!richtig) return {key: 'gleich' + wo, stufen: [H.gleichFalsch, ...ast]};
-  return {key: 'ast' + wo, stufen: ast};
+  if (!gleich) return mit({key: 'ungleich' + wo, stufen: [H.ungleich, ...ast]});
+  if (!richtig) return mit({key: 'gleich' + wo, stufen: [H.gleichFalsch, ...ast]});
+  return mit({key: 'ast' + wo, stufen: ast});
 }
 
 function etappe1(){
@@ -2347,15 +2364,19 @@ function etappe1(){
     // NEU (Rike 2026-10-30, Vorschlag Abschnitt 17 B): der eine Satz, was
     // jetzt zu tun ist (statt des Auftragsfensters beim Oeffnen)
     // GEAENDERT (Vorschlag A): der Hinweis zu den Zellen steht im Satz
-    zgrJetztSatz(!e.ok ? 'Tragen Sie in beiden Bäumen an jedem Ast die Wahrscheinlichkeit und an jedem Pfadende X ein. Rechnen Sie darunter P(X = …) aus, dann «Prüfen». In jede Zelle passt eine Rechnung, z. B. «1/3 · 1/2 + 1/3 · 1/2», oder eine Zahl.'
+    zgrJetztSatz(!e.ok && c.an ? D.e1.klapphilfe.satz
+      : !e.ok ? 'Tragen Sie in beiden Bäumen an jedem Ast die Wahrscheinlichkeit und an jedem Pfadende X ein. Rechnen Sie darunter P(X = …) aus, dann «Prüfen». In jede Zelle passt eine Rechnung, z. B. «1/3 · 1/2 + 1/3 · 1/2», oder eine Zahl.'
       : !c.an ? 'Beide Verteilungen stimmen. Klappen Sie jetzt den Baum nach Jacken zusammen.'
       : !c.fertig ? 'Klappen Sie den Baum nach Jacken Ebene für Ebene zusammen. Welche Äste verschmelzen?'
       : 'Wie hängen die beiden Bäume zusammen? Schreiben Sie es rechts auf.');
     nachher.innerHTML = '';
     // GEAENDERT (Fassung 12.2): Zusammenklappen statt Farbcodes
-    if (e.ok && c.an){
+    // GEAENDERT (Fassung 22, Rike 2026-11-19): Zusammenklappen auch vorher,
+    // als Hilfe (c.an aus dem Knopf nach «Pruefen»); Zusammenhang und
+    // Wette erst, wenn beide Verteilungen stimmen.
+    if (c.an){
       zgrKlappen(nachher, e, zeichneNachher, teile.jacke.baum.element);
-      if (c.fertig) zeichneZusammen();
+      if (c.fertig && e.ok) zeichneZusammen();
     }
     // GEAENDERT (Fassung 20): die Fenster «Geschafft» statt der Uhr
     const WG = D.wegweiser;
@@ -2463,6 +2484,16 @@ function etappe1(){
         const t = teile[b.dataset.abz];
         t.abz(t.T.knoten.find(k => k.id === b.dataset.id));
       });
+      // NEU (Fassung 22, Rike 2026-11-19): erst scheitern, dann die Hilfe -
+      // wie Anna eine fremde Jacke bekommt und was das fuer Ben heisst,
+      // dazu der Knopf zum Zusammenklappen.
+      if (u.hilfe && !e.klapp.an){
+        const KH = D.e1.klapphilfe, d = document.createElement('div');
+        d.className = 'zgr-klapphilfe';
+        d.innerHTML = `${KH.text}<br><button type="button" class="knopf">${KH.knopf}</button>`;
+        hinweis.appendChild(d);
+        d.querySelector('button').onclick = ev => { ev.target.remove(); deckungAn(); };
+      }
       passen();
     }
     const mehr = !u.ok && e.hinweis.stufe < u.stufen.length - 1;
@@ -2789,7 +2820,8 @@ function zgrLoesungE1(){
     + '<div class="zeile"><b>Prüfen</b> markiert nichts, solange etwas falsch ist, sondern gibt gestufte Hinweise: '
     + 'Leeres, dann X, dann Verteilung gegen den eigenen Baum, dann «stimmen nicht überein», «Ast nach …», '
     + '«Wie viele Rückgaben …?». Erst wenn beide stimmen, erscheint von selbst das Histogramm, dann das Zusammenklappen '
-    + 'Ebene für Ebene, dann Zusammenhang und Wette.</div>';
+    + 'Ebene für Ebene, dann Zusammenhang und Wette. Stimmt der Baum nach Jacken, der nach richtig/falsch aber nicht, '
+    + 'bietet «Prüfen» das Zusammenklappen schon vorher als Hilfe an, mit einem Satz dazu, wie Anna eine fremde Jacke bekommt.</div>';
 }
 
 /* ───────── Etappe 2 · Gibt es hier auch Weg 1 und Weg 2? (FASSUNG 15) ─────────
