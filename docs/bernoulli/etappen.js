@@ -950,6 +950,47 @@ const BN_SV = 8;                     // Kennung des Stands von Etappe 2 (FASSUNG
     .bn-etwa > span{font-weight:600}
     /* Bild auf einer eigenen Karte (kap7_<id>.png, nur wenn vorhanden) */
     .bn-k .bn-kk img{width:22px;height:22px;object-fit:cover;border-radius:4px;mix-blend-mode:multiply;margin-right:4px;vertical-align:middle}
+    /* NEU (FASSUNG 9, Rike 2026-11-19, wie Kapitel 6 und 8): die Karte im
+       Band immer offen, weiss mit Farbe nur am Rand, ohne Klappe und ohne
+       Auftragszeile; darin der Satz, was jetzt zu tun ist. */
+    body.ws-oben .wsleiste .bn-skarte{margin:0;background:#fff;border-radius:0;box-shadow:0 1px 2px rgba(60,40,20,.15),0 4px 14px rgba(60,40,20,.18);
+       border-left:7px solid var(--bn-ocker);padding:8px 14px 9px 14px}
+    body.ws-oben .wsleiste .bn-sklapp,body.ws-oben .wsleiste .bn-skurz,body.ws-oben .wsleiste .bn-snurzu,
+    body.ws-oben .wsleiste .bn-sauftragz{display:none !important}
+    body.ws-oben .wsleiste .bn-sbild{width:58px;height:58px}
+    body.ws-oben .wsleiste .bn-sganz{display:block !important}
+    body.ws-oben .bn-jetztsatz{margin:8px 0 0;padding:3px 0 3px 10px;border-left:3px solid var(--bn-ocker);font-size:15px;line-height:1.42;color:var(--tinte)}
+    body.ws-oben .wsleiste .bn-stifte{margin:6px 0 0;background:#fffefb}
+    /* die Teile von Etappe 2 als Reiter im Band (wie Kapitel 6, Etappe 3) */
+    .bn-zuege.imband{margin:0 0 8px}
+    .bn-zuege.imband button{border-radius:0;font-size:14px;padding:5px 12px;background:#fffefb}
+    .bn-zuege.imband button[aria-current=true]{background:var(--bn-ocker);border-color:var(--bn-ocker);color:#fff}
+    .bn-zuege.imband button[aria-current=true].fertig::after{color:#fff}
+    /* NEU (FASSUNG 9): das Fenster «Geschafft» an den Uebergaengen */
+    .bn-wegweiser .kasten h2{color:#007D57}
+    .bn-wegweiser .unten{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .bn-wegfrei{margin:10px 0 4px;padding:8px 10px;border-left:3px solid var(--bn-ocker);background:#fdf8f0;border-radius:4px}
+    .bn-wegfrei .was{font-weight:600;margin-bottom:6px}
+    .bn-wegfrei .zeile{display:flex;align-items:center;gap:10px;margin:4px 0;flex-wrap:wrap}
+    /* NEU (FASSUNG 9, wie die Bude in Kapitel 6): die Aufgaben als Nummern,
+       die aktuelle gross */
+    .bn-anrn{display:flex;gap:6px;margin:0 0 8px;align-items:center;flex-wrap:wrap}
+    .bn-anrn .was{font-size:13px;color:var(--matt);margin-right:4px}
+    .bn-anr{position:relative;font:600 17px "Fira Sans",sans-serif;width:44px;height:40px;border:1.5px solid #c9bda8;background:#fffefb;
+       border-radius:6px;cursor:pointer;color:var(--tinte)}
+    .bn-anr[aria-pressed=true]{background:var(--bn-ocker);border-color:var(--bn-ocker);color:#fff}
+    .bn-anr.fertig{border-color:var(--richtig)}
+    .bn-anr .ok{position:absolute;right:3px;top:1px;font:700 11px/1 "Fira Sans",sans-serif;color:var(--richtig)}
+    .bn-anr.fertig::after{content:none !important}
+    .bn-anr[aria-pressed=true] .ok{color:#fff}
+    .bn-ztvon{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--matt)}
+    .bn-box .kopf.gross{font-size:18px}
+    .bn-zttext{font-size:15.5px;line-height:1.45}
+    /* NEU (FASSUNG 9): Pruefen zeigt, wo - leere Felder rot umrandet */
+    .bn-luecke{outline:2.5px solid var(--falsch) !important;outline-offset:1px}
+    /* NEU (FASSUNG 9): Ziehbares sichtbar, bis man zum ersten Mal zieht */
+    .bn-ziehhinweis{position:absolute;z-index:30;left:12px;right:12px;top:4px;padding:6px 10px;font-size:13.5px;
+       background:#fffaf0;border:1.5px dashed var(--bn-ocker);border-radius:8px;color:var(--tinte);pointer-events:none}
   `;
   document.head.appendChild(s);
 })();
@@ -1860,16 +1901,35 @@ function bnSichtKnopf(){
 let _bnZug2Gezeigt = false;
 function bnE1Fahne(){
   if (document.body.classList.contains('loesungoffen') || stand.etappe !== 0) return bnFahne(null);
-  const s = bnStand();
-  if (s.sicht2) return bnFahne({notiz: BN_W.etappe2Notiz, knopf: BN_W.etappe2, tun: () => { stand.etappe = 1; los(); }});
-  if (s.sicht && bnSicht2Bereit().ja) return bnFahne({notiz: BN_W.sicht2Notiz, knopf: BN_W.sicht2, tun: bnSicht2Zeigen});
+  const s = bnStand(), WG = BN.wegweiser;
+  bnE1Satz();
+  // NEU (FASSUNG 9): an den Uebergaengen das Fenster «Geschafft»
+  const freiDa = () => BN.karten.filter(bnFreiwillig).some(k => { const st = stand.karten[k.id]; return !st || st.ort === 'tisch'; });
+  if (s.sicht2) return bnFahne({notiz: BN_W.etappe2Notiz, knopf: BN_W.etappe2, tun: () => { stand.etappe = 1; los(); },
+    fenster: WG.etappe2, schluessel: 'e1etappe2', frei: [freiDa() ? () => {
+      s.freiOffen = true; sichern();
+      if (window._neuzeichnen) window._neuzeichnen();
+      const k = document.querySelector('.bn-tfrei');
+      if (k) k.scrollIntoView({block: 'start', behavior: 'smooth'});
+    } : null]});
+  if (s.sicht && bnSicht2Bereit().ja) return bnFahne({notiz: BN_W.sicht2Notiz, knopf: BN_W.sicht2, tun: bnSicht2Zeigen,
+    fenster: WG.sicht2, schluessel: 'e1sicht2'});
   if (s.sicht && !_bnZug2Gezeigt) return bnFahne({notiz: BN_W.zug2Notiz, knopf: BN_W.zug2, tun: () => {
     _bnZug2Gezeigt = true; bnFahne(null);
     const k = document.querySelector('.bn-tkopf');
     if (k) k.scrollIntoView({block: 'start', behavior: 'smooth'});
   }});
-  if (!s.sicht && bnSichtBereit().ja) return bnFahne({notiz: BN_W.sichtNotiz, knopf: BN_W.sicht, tun: bnZug2Beginnen});
+  if (!s.sicht && bnSichtBereit().ja) return bnFahne({notiz: BN_W.sichtNotiz, knopf: BN_W.sicht, tun: bnZug2Beginnen,
+    fenster: WG.sicht, schluessel: 'e1sicht'});
   bnFahne(null);
+}
+/* NEU (FASSUNG 9): der Satz im Band, was jetzt zu tun ist; bis man zum
+   ersten Mal eine Karte zieht, darunter der Hinweis zum Ziehen. */
+function bnE1Satz(){
+  const s = bnStand();
+  const satz = s.sicht2 ? BN_SK.e1jetzt3 : s.sicht ? BN_SK.e1jetzt2 : BN_SK.e1jetzt;
+  bnJetztSatz(bnEsc(satz) + (s.gezogen || document.body.classList.contains('loesungoffen') ? ''
+    : `<span class="bn-noch" style="display:block;font-size:13.5px;color:var(--bn-ocker-t);margin-top:3px">✋ ${bnEsc(BN_SK.ziehen)}</span>`));
 }
 
 /* Setzt die Gruppen UNTEREINANDER, jede ueber die ganze Breite, darin
@@ -2041,9 +2101,35 @@ function bnKarteHtml(o){
 }
 /* Klappe und Automatik; `nachher` ordnet die Flaeche neu (die Hoehe
    der Arbeitsflaeche aendert sich). */
+/* NEU (FASSUNG 9, wie Kapitel 8): ein Satz in der Situationskarte, was
+   jetzt zu tun ist. Nur mit dem Band oben. */
+function bnJetztSatz(text){
+  if (D.leiste !== 'oben') return;
+  const inhalt = document.querySelector('#bnskarte .bn-sinhalt');
+  if (!inhalt) return;
+  let p = inhalt.querySelector(':scope > .bn-jetztsatz');
+  if (!p){ p = document.createElement('p'); p.className = 'bn-jetztsatz'; inhalt.appendChild(p); }
+  if (p.innerHTML !== text) p.innerHTML = text;
+}
 function bnKarteHaken(nr, nachher){
   const k = document.getElementById('bnskarte');
   if (!k) return;
+  // NEU (FASSUNG 9): Im Band ist die Situation immer ganz zu sehen (wie
+  // Kapitel 6 und 8); zugeklappt wird das Band selbst. Der lange Text
+  // steht hinter ⓘ neben dem Titel, oben bleiben Frage und Satz.
+  if (D.leiste === 'oben'){
+    k.classList.remove('zu');
+    k.querySelectorAll('.bn-auftragknopf').forEach(b => b.onclick = ev => { ev.stopPropagation(); bnAuftragFenster(nr); });
+    const t = k.querySelector('.bn-stext'), kopf = k.querySelector('.bn-skopf');
+    if (t && kopf && window.leisteInfo){
+      const i = document.createElement('span');
+      i.textContent = t.textContent;
+      kopf.insertBefore(i, kopf.querySelector('.bn-skurz'));
+      t.remove();
+      leisteInfo(i);
+    }
+    return;
+  }
   const id = k.dataset.sk, kn = k.querySelector('.bn-sklapp');
   k.querySelectorAll('.bn-auftragknopf').forEach(b => b.onclick = ev => { ev.stopPropagation(); bnAuftragFenster(nr); });
   const setzen = zu => {
@@ -2117,6 +2203,9 @@ function bnAuftragFenster(nr){
 /* Beim ersten Oeffnen einer Etappe das Fenster. Ein Stand ohne das Feld
    (bis Fassung 3) zeigt jedes Fenster einmal. */
 function bnAuftragBeimOeffnen(nr){
+  // GEAENDERT (FASSUNG 9, wie Kapitel 6 und 8): Mit dem Band oben oeffnet
+  // die Etappe direkt am Tisch; der Auftrag steht hinter «Auftrag».
+  if (D.leiste === 'oben') return;
   const s = bnStand();
   if (!s.auftrag || typeof s.auftrag !== 'object') s.auftrag = {};
   if (s.auftrag[nr] || document.body.classList.contains('loesungoffen')) return;
@@ -2140,10 +2229,82 @@ function bnMeldung(text, dauer){
    meldung, wache}; null nimmt sie weg. Dieselbe Fahne wird nicht neu
    gebaut (sonst liefe die Uhr nie ab). */
 let _bnUhr = null;
+let _bnWegWartet = null;   // FASSUNG 9: Fenster, das auf das Ende des Schreibens wartet
+const bnObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+/* NEU (FASSUNG 9, wie zgrFahne in Kapitel 6, Fassung 20): Mit o.fenster
+   und o.schluessel geht beim ersten Mal das Fenster «Geschafft» auf.
+   Wer gerade schreibt, wird nicht unterbrochen: Das Fenster wartet, bis
+   das Schreibfeld verlassen wird, und nur, wenn die Fahne dann noch steht. */
+function bnWegweiserMelden(o){
+  if (!o || !o.fenster || !o.schluessel || document.body.classList.contains('loesungoffen')) return;
+  if (!bnObj(stand.wegweiser)) stand.wegweiser = {};
+  if (stand.wegweiser[o.schluessel]) return;
+  const schreibt = a => a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type !== 'button' && a.type !== 'range'));
+  if (schreibt(document.activeElement)){
+    _bnWegWartet = o;
+    if (!window._bnWegHorcht){
+      window._bnWegHorcht = true;
+      document.addEventListener('focusout', () => setTimeout(() => {
+        const w = _bnWegWartet;
+        if (!w || schreibt(document.activeElement)) return;
+        _bnWegWartet = null;
+        const fa = document.getElementById('bnfahne');
+        if (!fa || !fa.isConnected || fa.dataset.sig !== w._sig || stand.wegweiser[w.schluessel]) return;
+        stand.wegweiser[w.schluessel] = true; sichern(); bnWegweiser(w);
+      }, 200), true);
+    }
+    return;
+  }
+  stand.wegweiser[o.schluessel] = true;
+  sichern();
+  bnWegweiser(o);
+}
+/* Das Fenster an einem Uebergang. o.fenster = {text, jetzt, frei:[{knopf,
+   text}]}; o.knopf/o.tun der Hauptknopf (o.haupt ersetzt ihn), o.frei =
+   [tun] die Handlungen der freiwilligen Knoepfe, in derselben Reihenfolge. */
+function bnWegweiser(o){
+  const alt = document.getElementById('bnwegweiser');
+  if (alt) alt.remove();
+  const WG = BN.wegweiser, F = o.fenster, haupt = o.haupt || {knopf: o.knopf, tun: o.tun};
+  const frei = (F.frei || []).filter((x, i) => o.frei && o.frei[i]);
+  const f = document.createElement('div');
+  f.className = 'bn-fenster bn-wegweiser'; f.id = 'bnwegweiser';
+  f.innerHTML = `<div class="kasten" role="dialog" aria-modal="true" aria-labelledby="bnwegtitel">
+    <button type="button" class="zu" aria-label="${bnEsc(WG.bleiben)}" title="${bnEsc(WG.bleiben)}">×</button>
+    <h2 id="bnwegtitel">✓ ${bnEsc(WG.titel)}</h2>
+    <p class="satz">${bnEsc(F.text)}</p>
+    <p class="schluss"><b>${bnEsc(WG.jetzt)}:</b> ${bnEsc(F.jetzt)}</p>
+    ${frei.length ? `<div class="bn-wegfrei"><div class="was">${bnEsc(WG.frei)}</div>`
+      + frei.map((x, i) => `<div class="zeile"><button type="button" class="knopf leer" data-frei="${i}">${bnEsc(x.knopf)}</button>`
+        + `<span>${bnEsc(x.text)}</span></div>`).join('') + '</div>' : ''}
+    <div class="unten"><button type="button" class="knopf leer bleiben">${bnEsc(WG.bleiben)}</button>`
+    + `<button type="button" class="knopf los">${bnEsc(String(haupt.knopf).replace(/\s*→$/, ''))} →</button></div></div>`;
+  const zu = () => { f.remove(); document.removeEventListener('keydown', taste, true); };
+  const taste = ev => {
+    if (!f.isConnected){ document.removeEventListener('keydown', taste, true); return; }
+    if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); zu(); }
+    else if (ev.key === 'Tab'){
+      const kn = [...f.querySelectorAll('button')], i = kn.indexOf(document.activeElement);
+      ev.preventDefault();
+      kn[(i + (ev.shiftKey ? kn.length - 1 : 1)) % kn.length].focus();
+    }
+  };
+  document.addEventListener('keydown', taste, true);
+  f.querySelector('.zu').onclick = zu;
+  f.querySelector('.bleiben').onclick = zu;
+  f.querySelector('.los').onclick = () => { zu(); haupt.tun(); };
+  f.querySelectorAll('[data-frei]').forEach(b => b.onclick = () => {
+    zu(); const i = (F.frei || []).indexOf(frei[+b.dataset.frei]); o.frei[i]();
+  });
+  f.addEventListener('click', ev => { if (ev.target === f) zu(); });
+  document.body.appendChild(f);
+  f.querySelector('.los').focus();
+}
 function bnFahne(o){
   const alt = document.getElementById('bnfahne');
   const sig = o ? o.notiz + '|' + o.knopf + '|' + !!o.uhr : '';
-  if (alt && alt.dataset.sig === sig && alt.isConnected){ if (o) alt._tun = o.tun; return; }
+  if (o) o._sig = sig;
+  if (alt && alt.dataset.sig === sig && alt.isConnected){ if (o){ alt._tun = o.tun; bnWegweiserMelden(o); } return; }
   clearTimeout(_bnUhr); _bnUhr = null;
   if (alt) alt.remove();
   if (!o) return;
@@ -2156,6 +2317,7 @@ function bnFahne(o){
   f._tun = o.tun;
   ziel.appendChild(f);
   f.querySelector('button').onclick = ev => { ev.stopPropagation(); clearTimeout(_bnUhr); f._tun(); };
+  bnWegweiserMelden(o);
   if (o.uhr) _bnUhr = setTimeout(() => {
     if (!f.isConnected || (o.wache && !o.wache())) return;
     if (o.meldung) bnMeldung(o.meldung);
@@ -2276,12 +2438,15 @@ function etappe1(){
   // Neu zeichnen, nicht nur ordnen: «Karten hierher ziehen» und das «×»
   // haengen daran, ob eine Gruppe Karten traegt.
   window._nachAblegen = () => {
+    // NEU (FASSUNG 9): Der Hinweis zum Ziehen verschwindet nach dem ersten Mal.
+    if (!s.gezogen){ s.gezogen = true; sichern(); }
     Object.values(els).forEach(bnUrteilWeg);
     zeichnen();
   };
   zeichnen();
   merken();
   bnKarteHaken(1, ordnen);
+  bnE1Satz();
   bnAuftragBeimOeffnen(1);
 
   document.getElementById('zurueck').onclick = () => {
@@ -2736,15 +2901,24 @@ function etappe2(){
   // GEAENDERT (FASSUNG 8): intern 0-3 (0 = Austesten), angezeigt zug + 1
   const zug = z.zug;
   const Z1 = BN_S.z1, Z2 = BN_S.z2, Z3 = BN_S.z3, WT = BN_S.w, ZT = BN_ZT;
-  const karte = bnKarteHtml({id: 'e2', nr: 2, name: BN_S.sname, text: BN_S.lage,
-    frage: BN_S.frage, bild: BN.sbild.wuerfelbude});
+  // Die Teile (FASSUNG 9: im Band als Reiter, ohne «Zug» und Nummer)
+  const frei = nr => bnZugFrei(z, nr, offen);
+  const zuege = `<div class="bn-zuege${D.leiste === 'oben' ? ' imband' : ''}" role="tablist" aria-label="Teile">${[0, 1, 2, 3].map(nr =>
+    `<button type="button" role="tab" data-zug="${nr}" aria-current="${nr === zug}" aria-selected="${nr === zug}"
+      class="${bnZugFertig(z, nr) ? 'fertig' : ''}"${frei(nr) ? '' : ' disabled title="Erst den Teil davor fertig machen"'}>${bnEsc(BN_S.zuege_kurz[String(nr + 1)])}</button>`).join('')}</div>`;
+  // GEAENDERT (FASSUNG 9): Beim Austesten nennt das Band die vier offenen
+  // Fragen, danach die Wuerfelbude. Die Teile stehen als Reiter darueber.
+  const karte = zug === 0
+    ? bnKarteHtml({id: 'e2', nr: 2, name: BN_S.zt_sname, text: BN_S.lage, frage: BN_S.zt_frage})
+    : bnKarteHtml({id: 'e2', nr: 2, name: BN_S.sname, text: BN_S.abk_lage,
+        frage: BN_S.frage, bild: BN.sbild.wuerfelbude});
   buehne({rolle: e.rolle, rang: e.rang, titel: 'Etappe 2 · ' + e.name, text: ''},
     BN_S.zuege[String(zug + 1)], 'Werkzeug · ' + (zug === 0 ? ZT.rechner : BN_S.werkzeug),
     `<button class="knopf leer" id="zurueckE1">← Etappe 1</button>
      <button class="knopf" id="pruefen">Prüfen</button>
      <span class="befund" id="befund"></span>
      <button class="knopf leer" id="weiter" style="margin-left:auto">Mitnehmen →</button>`,
-    karte, null, [1.1, 1.15]);
+    (D.leiste === 'oben' ? zuege : '') + karte, null, [1.1, 1.15]);
   window._zustaendig = () => false;         // diese Etappe hat keine Karten
   window._neuzeichnen = null;
   window._bnOrdnen = null;
@@ -2755,11 +2929,6 @@ function etappe2(){
   const merk = () => { if (!offen) sichern(); };
   const neu = () => { merk(); etappe2(); };
 
-  // Die Zuege oben links
-  const frei = nr => bnZugFrei(z, nr, offen);
-  const zuege = `<div class="bn-zuege" role="tablist" aria-label="Züge">${[0, 1, 2, 3].map(nr =>
-    `<button type="button" role="tab" data-zug="${nr}" aria-current="${nr === zug}" aria-selected="${nr === zug}"
-      class="${bnZugFertig(z, nr) ? 'fertig' : ''}"${frei(nr) ? '' : ' disabled title="Erst den Zug davor fertig machen"'}>Zug ${nr + 1} · ${bnEsc(BN_S.zuege_kurz[String(nr + 1)])}</button>`).join('')}</div>`;
   const schreib = (id, frage) => `<div class="bn-auftrag"><label for="${id}">${bnEsc(frage)}</label>
     <textarea id="${id}" spellcheck="true"></textarea></div>`;
   const tabelle = (id, kopf) => `<table class="bn-tab" id="${id}"><thead><tr>${kopf.map(t => `<th>${bnEsc(t)}</th>`).join('')}<th aria-label="streichen"></th></tr></thead><tbody></tbody></table>`;
@@ -2783,21 +2952,23 @@ function etappe2(){
   if (zug === 0){
     // NEU (FASSUNG 8): Zug 1 «Austesten» - die vier Aufgaben, je Aufgabe
     // Text, Antwort und «Ihre Versuche»; am Schluss «Was war mühsam?»
-    links = `<p>${bnEsc(ZT.text)}</p>
-      <div class="bn-wahl" id="bnztwahl" role="group" aria-label="Aufgaben">${BN_ZTS.reihe.map((id, i) =>
-        `<button type="button" data-i="${i}">${i + 1} · ${bnEsc(BN_KARTE[id].kurz)}</button>`).join('')}</div>
+    // GEAENDERT (FASSUNG 9, wie die Bude in Kapitel 6): die Aufgaben als
+    // Nummern mit ✓, die aktuelle gross; der Satz steht im Band.
+    links = `${D.leiste === 'oben' ? '' : `<p>${bnEsc(ZT.text)}</p>`}
+      <div class="bn-anrn" id="bnztwahl" role="group" aria-label="Aufgaben"><span class="was">Aufgaben</span>${BN_ZTS.reihe.map((id, i) =>
+        `<button type="button" class="bn-anr" data-i="${i}" title="${bnEsc(BN_KARTE[id].kurz)}">${i + 1}</button>`).join('')}</div>
       <div class="bn-box" id="bnztbox"></div>
       <div id="bnztschluss" style="display:none">${schreib('bnzttext', ZT.frage)}
         <div class="bn-hinweis" id="bnztabk" style="display:none">${bnEsc(ZT.abkuerzung)}</div></div>`;
   } else if (zug === 1){
-    links = `<p>${bnEsc(Z1.text)}</p>
+    links = `${D.leiste === 'oben' ? '' : `<p>${bnEsc(Z1.text)}</p>`}
       <div class="bn-box"><div class="kopf">${bnEsc(Z1.ben)}</div>
         <div class="zart" id="bnz1auf">${bnEsc(bnFuell(Z1.aufgabe, {m: Z1.mind}))}</div>
         ${tabelle('bnz1tab', [Z1.tab_n, Z1.tab_band, Z1.tab_P])}</div>
       <div id="bnz1schreib">${schreib('bnz1text', Z1.frage)}</div>
       <div class="bn-hinweis" id="bnz1sigma" style="display:none">${bnEsc(Z1.sigma)}</div>`;
   } else if (zug === 2){
-    links = `<p>${bnEsc(Z2.text)}</p>
+    links = `${D.leiste === 'oben' ? '' : `<p>${bnEsc(Z2.text)}</p>`}
       <div class="bn-box"><div class="bn-cwahl" id="bnc" role="group" aria-label="${bnEsc(Z2.wahl)}"><span>${bnEsc(Z2.wahl)}</span>
         ${BN_CS.map(c => `<button type="button" data-c="${c}">μ ± ${c}σ</button>`).join('')}</div>
         <div id="bnschaetz"></div></div>
@@ -2805,7 +2976,7 @@ function etappe2(){
       <div id="bnz2schreib">${schreib('bnz2text', Z2.frage)}</div>`;
   } else {
     const fe = Z3.felder.filter(f => f.w !== 'a' && f.w !== 'b');
-    links = `<p>${bnEsc(Z3.text)}</p>
+    links = `${D.leiste === 'oben' ? '' : `<p>${bnEsc(Z3.text)}</p>`}
       <div class="bn-wahl" id="bnansicht">${['95', '90', '99', 'abk'].map(w =>
         `<button type="button" data-w="${w}">${bnEsc(Z3.ansichten[w])}</button>`).join('')}</div>
       <div class="bn-box">${tabelle('bnz3tab', [Z3.tab_S, Z3.tab_ihr, Z3.tab_genau])}</div>
@@ -2824,9 +2995,9 @@ function etappe2(){
         ${schreib('bnz3text', Z3.frage)}
         <div class="bn-s2sicht" id="bns2sicht"></div></div>`;
   }
-  tisch.innerHTML = `<div class="bn-s2">${zuege}${links}</div>`;
+  tisch.innerHTML = `<div class="bn-s2">${D.leiste === 'oben' ? '' : zuege}${links}</div>`;
 
-  tisch.querySelectorAll('.bn-zuege button').forEach(k => k.onclick = () => {
+  document.querySelectorAll('.bn-zuege button').forEach(k => k.onclick = () => {
     const nr = Number(k.dataset.zug);
     if (nr === z.zug || k.disabled) return;
     z.zug = nr; bnFahne(null); neu();
@@ -3121,7 +3292,8 @@ function etappe2(){
       ? `<span class="bn-ab">[ <input id="bnzta" class="gr" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" aria-label="a">
           ; <input id="bnztb" class="gr" type="text" inputmode="numeric" spellcheck="false" autocomplete="off" aria-label="b"> ]</span>`
       : `<input id="bnztt" type="text" inputmode="${A.art === 'p' ? 'decimal' : 'numeric'}" spellcheck="false" autocomplete="off" aria-label="${bnEsc(ZT.antwort[A.art])}">`;
-    box.innerHTML = `<div class="kopf">${K.bild ? `<img src="${bnEsc(K.bild)}" alt="" aria-hidden="true" class="bn-ztbild">` : ''}${z.zt.auf + 1} · ${bnEsc(K.kurz)}</div>
+    box.innerHTML = `<div class="bn-ztvon">${bnEsc(bnFuell(BN_S.aufgabe_von, {n: z.zt.auf + 1, m: BN_ZTS.reihe.length}))}</div>
+      <div class="kopf gross">${K.bild ? `<img src="${bnEsc(K.bild)}" alt="" aria-hidden="true" class="bn-ztbild">` : ''}${bnEsc(K.kurz)}</div>
       <p class="bn-zttext">${bnEsc(K.text)}</p>
       <div class="bn-ztantw"><label for="${A.art === 'bereich' ? 'bnzta' : 'bnztt'}">${bnEsc(ZT.antwort[A.art])}</label> ${feld}${zus}
         <button type="button" class="knopf" id="bnztpruefen">${bnEsc(ZT.pruefen)}</button></div>
@@ -3134,7 +3306,7 @@ function etappe2(){
       i.value = x[w];
       if (offen) i.disabled = true;
       i.addEventListener('input', () => {
-        x[w] = i.value;
+        x[w] = i.value; i.classList.remove('bn-luecke');
         if (x.g){ x.g = false; ztUrteil(); zugKnoepfe(); e2Fahne(); ztSchluss(); ztWahl(); }
       });
       i.addEventListener('change', merk);
@@ -3146,9 +3318,31 @@ function etappe2(){
   function ztPruefen(){
     if (offen) return;
     const A = ztA(), x = z.zt.antw[A.id], u = bnZtUrteil(A, x), h = document.getElementById('bnzthinweis');
-    if (u.leer){ h.style.display = ''; h.className = 'bn-hinweis'; h.textContent = ZT.leer_antwort; return; }
+    if (u.leer){
+      h.style.display = ''; h.className = 'bn-hinweis'; h.textContent = ZT.leer_antwort;
+      // NEU (FASSUNG 9): Pruefen zeigt, wo - leere Felder rot umrandet
+      document.querySelectorAll('#bnztbox .bn-ztantw input').forEach(i => i.classList.toggle('bn-luecke', !i.value.trim()));
+      return;
+    }
     x.g = true; merk();
     ztUrteil(); ztWahl(); ztSchluss(); zugKnoepfe(); e2Fahne();
+    // NEU (FASSUNG 9): Stimmt die Aufgabe, nennt ein Fenster die naechste
+    // offene (einmal je Aufgabe). Nach der letzten uebernimmt e2Fahne.
+    if (u.ok && !bnZtAlle(z)){
+      const R = BN_ZTS.reihe, i0 = z.zt.auf;
+      let j = R.findIndex((id, i) => i > i0 && !bnZtOk(z, id));
+      if (j < 0) j = R.findIndex(id => !bnZtOk(z, id));
+      const WA = BN.wegweiser.aufgabe, o = {n: i0 + 1, m: j + 1, name: BN_KARTE[R[j]].kurz};
+      if (!bnObj(stand.wegweiser)) stand.wegweiser = {};
+      if (!stand.wegweiser['e2zt' + A.id]){
+        stand.wegweiser['e2zt' + A.id] = true; merk();
+        bnWegweiser({fenster: {text: bnFuell(WA.text, o), jetzt: bnFuell(WA.jetzt, o)},
+          knopf: bnFuell(WA.knopf, o), tun: () => {
+            z.zt.auf = j; merk(); ztBox(); rechts(); linksAuffrischen();
+            document.getElementById('befund').textContent = '';
+          }});
+      }
+    }
   }
   function ztUrteil(){
     const A = ztA(), x = z.zt.antw[A.id], h = document.getElementById('bnzthinweis');
@@ -3167,9 +3361,10 @@ function etappe2(){
   }
   function ztWahl(){
     tisch.querySelectorAll('#bnztwahl button').forEach(k => {
-      const i = Number(k.dataset.i);
+      const i = Number(k.dataset.i), ok = bnZtOk(z, BN_ZTS.reihe[i]);
       k.setAttribute('aria-pressed', String(i === z.zt.auf));
-      k.classList.toggle('fertig', bnZtOk(z, BN_ZTS.reihe[i]));
+      k.classList.toggle('fertig', ok);
+      k.innerHTML = `${i + 1}${ok ? '<span class="ok">✓</span>' : ''}`;
     });
   }
   function ztSchluss(){
@@ -3363,6 +3558,7 @@ function etappe2(){
       });
       inp.addEventListener('input', () => {
         const war = bnZ3Rechnet(z);
+        inp.classList.remove('bn-luecke');
         z.z3[inp.dataset.w] = inp.value; zug3Auffrischen();
         document.getElementById('befund').textContent = '';
         if (war !== bnZ3Rechnet(z) && abkAnsicht()) werkzeug();
@@ -3377,7 +3573,7 @@ function etappe2(){
   }
 
   function zugKnoepfe(){
-    tisch.querySelectorAll('.bn-zuege button').forEach(k => {
+    document.querySelectorAll('.bn-zuege button').forEach(k => {
       const nr = Number(k.dataset.zug);
       k.classList.toggle('fertig', bnZugFertig(z, nr));
       const f = frei(nr);
@@ -3392,6 +3588,8 @@ function etappe2(){
     if (zug === 0){ b.textContent = ''; ztPruefen(); return; }
     if (zug !== 3 || !(bnZ3Gefunden(z) || offen)){ b.textContent = 'Hier wird nichts geprüft.'; return; }
     z.z3.geprueft = true; merk(); zug3Auffrischen();
+    // NEU (FASSUNG 9): leere Felder rot umrandet
+    tisch.querySelectorAll('.bn-z3 input').forEach(i => i.classList.toggle('bn-luecke', !i.value.trim()));
     const da = Z3.felder.filter(f => String(z.z3[f.w]).trim()).length;
     const ok = Z3.felder.filter(f => BN_Z3_OK[f.w](z.z3[f.w])).length;
     b.textContent = !da ? 'Noch nichts eingetragen.' : `${ok} von ${Z3.felder.length} Feldern stimmen.`;
@@ -3406,14 +3604,17 @@ function etappe2(){
     const W = BN_W;
     if (z.sicht) return bnFahne({notiz: W.mitnehmenNotiz, knopf: W.mitnehmen,
       tun: () => { stand.etappe = ETAPPEN.length; los(); }});
+    // GEAENDERT (FASSUNG 9): an jedem Uebergang das Fenster «Geschafft»
+    const WG = BN.wegweiser;
     if (zug === 0 && bnZtFertig(z)) return bnFahne({notiz: W.e2zug2Notiz, knopf: W.e2zug2,
-      tun: () => { z.zug = 1; bnFahne(null); neu(); }});
+      tun: () => { z.zug = 1; bnFahne(null); neu(); }, fenster: WG.zt, schluessel: 'e2zt'});
     if (zug === 1 && bnZ1Fertig(z)) return bnFahne({notiz: W.e2zug3Notiz, knopf: W.e2zug3,
-      tun: () => { z.zug = 2; bnFahne(null); neu(); }});
+      tun: () => { z.zug = 2; bnFahne(null); neu(); }, fenster: WG.z1, schluessel: 'e2z1'});
     if (zug === 2 && bnZ2Fertig(z)) return bnFahne({notiz: W.e2zug4Notiz, knopf: W.e2zug4,
-      tun: () => { z.zug = 3; bnFahne(null); neu(); }});
+      tun: () => { z.zug = 3; bnFahne(null); neu(); }, fenster: WG.z2, schluessel: 'e2z2'});
     if (zug === 3 && bnZ3Fertig(z)) return bnFahne({notiz: W.e2sichtNotiz, knopf: W.e2sicht,
-      tun: () => { const k = document.querySelector('#bns2sicht button'); if (k) k.click(); }});
+      tun: () => { const k = document.querySelector('#bns2sicht button'); if (k){ k.click(); k.scrollIntoView && document.getElementById('bns2sicht').scrollIntoView({block: 'nearest', behavior: 'smooth'}); } },
+      fenster: WG.z3, schluessel: 'e2z3'});
     bnFahne(null);
   }
 
@@ -3425,8 +3626,9 @@ function etappe2(){
   rechts();
   linksAuffrischen();
   if (zug === 3) zug3Auffrischen();
-  zugKnoepfe(); e2Fahne();
   bnKarteHaken(2, null);
+  bnJetztSatz(bnEsc(BN_S.jetzt[String(zug + 1)]));
+  zugKnoepfe(); e2Fahne();
   bnAuftragBeimOeffnen(2);
 
   document.getElementById('zurueckE1').onclick = () => { stand.etappe = 0; los(); };
@@ -3489,23 +3691,23 @@ function bnLoesungE2(){
   const z3 = BN_Z3, wb = BN_Z3S.wuerfel;
   return '<h4>Etappe 2 · ' + bnEsc(D.etappen[1].name) + '</h4>'
     + '<div class="zeile matt">Regel für jedes Band: Es zählen die ganzen Trefferzahlen im Band, a = ⌈links⌉, b = ⌊rechts⌋. '
-    + `In Zug 4 passt «etwa ___», wenn es höchstens ${BN_S.toleranz_c} neben dem c liegt, ab dem P die Sicherheit bei den eingestellten n und p erreicht.</div>`
+    + `Bei «Umgekehrt gefragt» passt «etwa ___», wenn es höchstens ${BN_S.toleranz_c} neben dem c liegt, ab dem P die Sicherheit bei den eingestellten n und p erreicht.</div>`
     // NEU (FASSUNG 8): Zug 1 «Austesten»
-    + '<div class="zeile"><b>Zug 1</b> Austesten, je der kleinste Wert, bei dem P die Sicherheit erreicht: '
+    + '<div class="zeile"><b>Austesten</b> je der kleinste Wert, bei dem P die Sicherheit erreicht: '
     + BN_ZTS.aufgaben.map(A => `${bnEsc(BN_KARTE[A.id].kurz)} ${bnEsc(A.loesung_t)}, ${bnEsc(A.ereignis)} = ${A.Pt}`
       + ` (${A.nachbarn.map(e => `${bnEsc(e.wt)}: ${e.Pt}`).join(', ')})`).join(' · ')
     + '. Der Rechner beginnt bei ' + BN_ZTS.aufgaben.map(A => `B(${A.start.n}; ${bnEsc(A.start.p.t)}), ${bnEsc(bnZtForm(A.start))}`).join(' · ')
-    + '. Zug 1 ist fertig, wenn alle vier Antworten stimmen und «Was war mühsam?» beantwortet ist.</div>'
-    + '<div class="zeile"><b>Zug 2</b> Bens Band μ ± 10, p = 1/6: '
+    + '. Das Austesten ist fertig, wenn alle vier Antworten stimmen und «Was war mühsam?» beantwortet ist.</div>'
+    + '<div class="zeile"><b>Ein festes Band?</b> Bens Band μ ± 10, p = 1/6: '
     + BN_Z1S.soll.map(d => `n = ${d.n}: [${d.a}; ${d.b}] ${bnP1(d.P)}`).join(' · ') + '</div>'
-    + '<div class="zeile"><b>Zug 3</b> P im Band μ ± 1σ / 2σ / 3σ (Schätzungen werden nicht geprüft): '
+    + '<div class="zeile"><b>Das Band in σ</b> P im Band μ ± 1σ / 2σ / 3σ (Schätzungen werden nicht geprüft): '
     + BN_Z2S.beispiele.map(e => `${e.n}, ${bnEsc(e.p)}: ${BN_CS.map(c => bnP1(e['c' + c].P)).join(' / ')}`).join(' · ') + '</div>'
-    + '<div class="zeile"><b>Zug 4</b> Würfelbude (600, 1/6): '
+    + '<div class="zeile"><b>Umgekehrt gefragt</b> Würfelbude (600, 1/6): '
     + ['95', '90', '99'].map(S => `${S} % ab c = ${bnC(wb[S].c)} [${wb[S].a}; ${wb[S].b}]`).join(' · ')
     + '. Andere: ' + BN_Z3S.andere.map(d => `${d.n}, ${bnEsc(d.p)}: ${['95', '90', '99'].map(S => bnC(d.c[S])).join(' / ')}`).join(' · ')
     + `. Abkürzung: μ = ${z3.mu}, σ = √(600 · 1/6 · 5/6) ≈ ${bnZ2(z3.s)}, μ − 2σ ≈ ${bnZ2(z3.unten)}, `
     + `μ + 2σ ≈ ${bnZ2(z3.oben)}, nur ganze Balken: [${z3.a}; ${z3.b}], P = ${bnP1(z3.P)}. `
-    + `Ausgetestet in Zug 1: [${z3.test_a}; ${z3.test_b}].</div>`
+    + `Ausgetestet beim Austesten: [${z3.test_a}; ${z3.test_b}].</div>`
     + `<div class="zeile">${BN_S.sicht.map(bnEsc).join(' ')}</div>`;
 }
 
@@ -3743,7 +3945,7 @@ if (typeof mitnehmen === 'function'){
       const t = [];
       if (mitbringsel[1]) t.push('Etappe 1: Ihre Sortierung, mit Ihren Einträgen und Texten.');
       // GEAENDERT (FASSUNG 7, FASSUNG 8: mit Zug 1 «Austesten»)
-      if (mitbringsel[2]) t.push('Etappe 2: Ihre Antworten und Versuche aus dem Austesten, Ihre Tabellen zu Bens Band und zum Band in σ, Ihre Schätzungen, die gefundenen c, Ihre Rechnung aus Zug 4 und Ihre Antworten.');
+      if (mitbringsel[2]) t.push('Etappe 2: Ihre Antworten und Versuche aus dem Austesten, Ihre Tabellen zu Bens Band und zum Band in σ, Ihre Schätzungen, die gefundenen c, Ihre Rechnung zur Abkürzung und Ihre Antworten.');
       t.push('Für Ihre Notizen als PDF.');
       lage.textContent = t.join(' ');
     }
