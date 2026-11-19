@@ -286,6 +286,25 @@ function nvVorFassung3(s){
     .nv-meldung button{position:absolute;right:6px;top:4px;border:0;background:none;font-size:20px;cursor:pointer;color:var(--matt)}
     /* Rechnung unter einem direkt eingetragenen richtigen μ bzw. σ */
     .nv3rech{color:var(--richtig);font-size:12.5px;font-family:var(--druck)}
+    /* NEU (FASSUNG CHILBI 3, wie Kapitel 6): das Fenster «Geschafft» */
+    .nv-wegweiser .kasten h2{color:#007D57}
+    .nv-wegweiser .unten{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .nv-wegfrei{margin:10px 0 4px;padding:8px 10px;border-left:3px solid var(--nv-lila);background:#f7f2f9;border-radius:4px}
+    .nv-wegfrei .was{font-weight:600;margin-bottom:6px}
+    .nv-wegfrei .zeile{display:flex;align-items:center;gap:10px;margin:4px 0;flex-wrap:wrap}
+    /* NEU (FASSUNG CHILBI 3): die Aufgaben als Nummern, die aktuelle gross */
+    .nv3anrn{display:flex;gap:6px;margin:0 0 8px;align-items:center;flex-wrap:wrap}
+    .nv3anrn .was{font-size:13px;color:var(--matt);margin-right:4px}
+    .nv3anr{position:relative;font:600 17px "Fira Sans",sans-serif;width:44px;height:40px;border:1.5px solid #c9bda8;background:#fffefb;
+       border-radius:6px;cursor:pointer;color:var(--tinte)}
+    .nv3anr[aria-current=true]{background:var(--nv-lila);border-color:var(--nv-lila);color:#fff}
+    .nv3anr.fertig{border-color:var(--richtig)}
+    .nv3anr .ok{position:absolute;right:3px;top:1px;font:700 11px/1 "Fira Sans",sans-serif;color:var(--richtig)}
+    .nv3anr[aria-current=true] .ok{color:#fff}
+    .nv3von{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--matt)}
+    .nv3kk.gross b{font-size:19px}
+    /* NEU (FASSUNG CHILBI 3): Pruefen zeigt, wo - leere Plaetze rot umrandet */
+    .nv-luecke{outline:2.5px solid var(--falsch) !important;outline-offset:1px}
     /* Platz fuer die Fahne unter dem Inhalt */
     .nv3links,.nv3rechts{padding-bottom:70px}
   `;
@@ -437,11 +456,83 @@ function nvMeldung(text, dauer){
    wache}; null nimmt sie weg. Dieselbe Fahne wird nicht neu gebaut
    (sonst liefe die Uhr nie ab). */
 let _nvUhr = null;
+let _nvWegWartet = null;
+const nvObj = x => !!x && typeof x === 'object' && !Array.isArray(x);
+/* NEU (FASSUNG CHILBI 3, Rike 2026-11-19, wie zgrFahne in Kapitel 6,
+   Fassung 20): Mit o.fenster und o.schluessel geht beim ersten Mal das
+   Fenster «Geschafft» auf. Wer gerade schreibt, wird nicht unterbrochen. */
+function nvWegweiserMelden(o){
+  if (!o || !o.fenster || !o.schluessel || document.body.classList.contains('loesungoffen')) return;
+  if (!nvObj(stand.wegweiser)) stand.wegweiser = {};
+  if (stand.wegweiser[o.schluessel]) return;
+  const schreibt = a => a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type !== 'button' && a.type !== 'range'));
+  if (schreibt(document.activeElement)){
+    _nvWegWartet = o;
+    if (!window._nvWegHorcht){
+      window._nvWegHorcht = true;
+      document.addEventListener('focusout', () => setTimeout(() => {
+        const w = _nvWegWartet;
+        if (!w || schreibt(document.activeElement)) return;
+        _nvWegWartet = null;
+        const fa = document.getElementById('nvfahne');
+        if (!fa || !fa.isConnected || fa.dataset.sig !== w._sig || stand.wegweiser[w.schluessel]) return;
+        stand.wegweiser[w.schluessel] = true; sichern(); nvWegweiser(w);
+      }, 200), true);
+    }
+    return;
+  }
+  stand.wegweiser[o.schluessel] = true;
+  sichern();
+  nvWegweiser(o);
+}
+function nvWegweiser(o){
+  const alt = document.getElementById('nvwegweiser');
+  if (alt) alt.remove();
+  const WG = NV.wegweiser, F = o.fenster, haupt = o.haupt || {knopf: o.knopf, tun: o.tun};
+  const frei = (F.frei || []).filter((x, i) => o.frei && o.frei[i]);
+  const f = document.createElement('div');
+  f.className = 'nv-fenster nv-wegweiser'; f.id = 'nvwegweiser';
+  f.innerHTML = `<div class="kasten" role="dialog" aria-modal="true" aria-labelledby="nvwegtitel">
+    <button type="button" class="zu" aria-label="${nvEsc(WG.bleiben)}" title="${nvEsc(WG.bleiben)}">×</button>
+    <h2 id="nvwegtitel">✓ ${nvEsc(WG.titel)}</h2>
+    <p class="satz">${nvEsc(F.text)}</p>
+    <p class="schluss"><b>${nvEsc(WG.jetzt)}:</b> ${nvEsc(F.jetzt)}</p>
+    ${frei.length ? `<div class="nv-wegfrei"><div class="was">${nvEsc(WG.frei)}</div>`
+      + frei.map((x, i) => `<div class="zeile"><button type="button" class="knopf leer" data-frei="${i}">${nvEsc(x.knopf)}</button>`
+        + `<span>${nvEsc(x.text)}</span></div>`).join('') + '</div>' : ''}
+    <div class="unten"><button type="button" class="knopf leer bleiben">${nvEsc(WG.bleiben)}</button>`
+    + `<button type="button" class="knopf los">${nvEsc(String(haupt.knopf).replace(/\s*→$/, ''))} →</button></div></div>`;
+  const zu = () => { f.remove(); document.removeEventListener('keydown', taste, true); };
+  const taste = ev => {
+    if (!f.isConnected){ document.removeEventListener('keydown', taste, true); return; }
+    if (ev.key === 'Escape'){ ev.preventDefault(); ev.stopPropagation(); zu(); }
+    else if (ev.key === 'Tab'){
+      const kn = [...f.querySelectorAll('button')], i = kn.indexOf(document.activeElement);
+      ev.preventDefault();
+      kn[(i + (ev.shiftKey ? kn.length - 1 : 1)) % kn.length].focus();
+    }
+  };
+  document.addEventListener('keydown', taste, true);
+  f.querySelector('.zu').onclick = zu;
+  f.querySelector('.bleiben').onclick = zu;
+  f.querySelector('.los').onclick = () => { zu(); haupt.tun(); };
+  f.querySelectorAll('[data-frei]').forEach(b => b.onclick = () => {
+    zu(); const i = (F.frei || []).indexOf(frei[+b.dataset.frei]); o.frei[i]();
+  });
+  f.addEventListener('click', ev => { if (ev.target === f) zu(); });
+  document.body.appendChild(f);
+  f.querySelector('.los').focus();
+}
 function nvFahne(o){
   const alt = document.getElementById('nvfahne');
   if (o && document.body.classList.contains('loesungoffen')) o = null;
+  // GEAENDERT (FASSUNG CHILBI 3, Maurus zu Kapitel 6: «Die Loesungen
+  // verschwinden schnell wieder»): nie mehr von selbst weiter, o.uhr
+  // wird nicht mehr beachtet.
+  if (o) o.uhr = false;
   const sig = o ? o.notiz + '|' + o.knopf + '|' + !!o.uhr : '';
-  if (alt && alt.dataset.sig === sig && alt.isConnected){ if (o) alt._tun = o.tun; return; }
+  if (o) o._sig = sig;
+  if (alt && alt.dataset.sig === sig && alt.isConnected){ if (o){ alt._tun = o.tun; nvWegweiserMelden(o); } return; }
   clearTimeout(_nvUhr); _nvUhr = null;
   if (alt) alt.remove();
   if (!o) return;
@@ -454,6 +545,7 @@ function nvFahne(o){
   f._tun = o.tun;
   ziel.appendChild(f);
   f.querySelector('button').onclick = ev => { ev.stopPropagation(); clearTimeout(_nvUhr); f._tun(); };
+  nvWegweiserMelden(o);
   if (o.uhr) _nvUhr = setTimeout(() => {
     if (!f.isConnected || (o.wache && !o.wache())) return;
     f._tun();
@@ -586,6 +678,7 @@ function etappe1(){
       sel.onchange = () => {
         stand.nvgesucht[z.nr] = sel.value;
         w.querySelector('.nvwahlbild').textContent = 'gesucht: ' + nvGesuchtName(sel.value);
+        sel.classList.remove('nv-luecke');
         markenLoeschen(); sichern();
         if (!e1Fertig()) nvFahne(null);
       };
@@ -661,9 +754,17 @@ function etappe1(){
   };
   const e1Fahne = () => { e1Satz(); e1Fahne0(); };
   const e1Fahne0 = () => nvFahne(!stand.geprueft || !e1Fertig() || document.body.classList.contains('loesungoffen') ? null
-    : zug2 ? {notiz: NV_W.etappe2Notiz, knopf: NV_W.etappe2, tun: () => { stand.etappe = 1; los(); }}
-    : {notiz: NV_W.zug2Notiz, knopf: NV_W.zug2, tun: zug2Oeffnen});
-  window._nachAblegen = () => { if (!e1Fertig()) nvFahne(null); };
+    : zug2 ? {notiz: NV_W.etappe2Notiz, knopf: NV_W.etappe2, tun: () => { stand.etappe = 1; los(); },
+              fenster: NV.wegweiser.etappe2, schluessel: 'e1etappe2'}
+    : {notiz: NV_W.zug2Notiz, knopf: NV_W.zug2, tun: zug2Oeffnen,
+       fenster: NV.wegweiser.zug2, schluessel: 'e1zug2'});
+  window._nachAblegen = () => {
+    // NEU (FASSUNG CHILBI 3): Der Hinweis zum Ziehen verschwindet nach dem
+    // ersten Mal; eine rot umrandete Luecke, sobald sie gefuellt ist.
+    if (!stand.nvGezogen){ stand.nvGezogen = true; sichern(); e1Satz(); }
+    feld.querySelectorAll('.paar.nv-luecke').forEach(p => { if (p.querySelector(':scope > .k')) p.classList.remove('nv-luecke'); });
+    if (!e1Fertig()) nvFahne(null);
+  };
   e1Fahne();
   // NEU (Rike 2026-10-30, Vorschlag Abschnitt 17 B): der Satz geht mit
   // der Fahne (nach Pruefen und beim Laden).
@@ -671,7 +772,9 @@ function etappe1(){
     ? (zug2 ? 'Alle Zeilen stimmen. Weiter zu Etappe 2.' : 'An der Chilbi stimmt alles. Weiter zu den Aufgaben aus dem Skript.')
     : 'Ziehen Sie zu jeder Situation das passende Bild und die passende Gleichung aus dem Vorrat auf ihre Plätze. '
       + 'Wählen Sie am Ende der Zeile, was gesucht ist. Dann «Prüfen».'
-      + (zug2 ? '' : ' <span class="nv-noch">Die erste Zeile, die Quizbude, ist als Beispiel fertig.</span>')); }
+      + (zug2 ? '' : ' <span class="nv-noch">Die erste Zeile, die Quizbude, ist als Beispiel fertig.</span>')
+      + (stand.nvGezogen || document.body.classList.contains('loesungoffen') ? ''
+        : ` <span class="nv-noch" style="color:var(--nv-lila-t)">✋ ${nvEsc(NV.ziehen)}</span>`)); }
 
   /* GEAENDERT (FASSUNG CHILBI 2): In Zug 2 gehen nur die Karten zurueck,
      die in Zeilen von Zug 2 liegen oder zu Zug 2 gehoeren; Zug 1 bleibt. */
@@ -693,6 +796,7 @@ function etappe1(){
      von jetzt - nichts von vorhin. Die Beispielzeile zaehlt nicht mit. */
   function pruefen(){
     markenLoeschen();
+    feld.querySelectorAll('.nv-luecke').forEach(x => x.classList.remove('nv-luecke'));
     const zeilenSoll = zeilenSicht.filter(z => !z.beispiel);
     let paarOk = 0, paarFalsch = 0, sitOk = 0, sitFalsch = 0, offen = 0, gesOk = 0, gesFalsch = 0, gesOffen = 0;
     zeilenSoll.forEach(z => {
@@ -702,6 +806,9 @@ function etappe1(){
       const pg = zeile.querySelector(`[data-ort="z${z.nr}/gl"]`);
       const kB = pb.querySelector(':scope > .k'), kG = pg.querySelector(':scope > .k');
       const teile = [];
+      // NEU (FASSUNG CHILBI 3): leere Plaetze rot umrandet
+      if (!kB) pb.classList.add('nv-luecke');
+      if (!kG) pg.classList.add('nv-luecke');
       if (!kB && !kG){ offen++; teile.push(['offen', 'Bild und Gleichung fehlen noch']); }
       else if (!kB || !kG){
         offen++; (kB || kG).classList.add('halb');
@@ -730,7 +837,7 @@ function etappe1(){
       const sel = zeile.querySelector('select');
       sel.classList.remove('ok', 'falsch');
       const w = stand.nvgesucht[z.nr] || '';
-      if (!w){ gesOffen++; teile.push(['offen', '«gesucht» fehlt noch']); }
+      if (!w){ gesOffen++; sel.classList.add('nv-luecke'); teile.push(['offen', '«gesucht» fehlt noch']); }
       else if (w === z.gesucht){ gesOk++; sel.classList.add('ok'); teile.push(['ok', '«gesucht» stimmt']); }
       else { gesFalsch++; sel.classList.add('falsch'); teile.push(['falsch', '«gesucht» stimmt nicht']); }
       const u = document.createElement('div');
@@ -2059,8 +2166,9 @@ function etappe2(){
   /* ── links: Reiter, Textmarker, Aufgabe mit den Feldern darunter ── */
   const st = nv3Stuecke(t.text);
   tisch.innerHTML = `<div class="nv3links">
-    <div class="nv3reiter">${NV3.aufgaben.map(x => `<button data-id="${x.id}"
-       aria-current="${x.id === t.id}">${nv3Esc(x.titel)}${S.a[x.id].okAlles ? '<span class="ok">✓</span>' : ''}</button>`).join('')}</div>
+    <div class="nv3anrn"><span class="was">Aufgaben</span>${NV3.aufgaben.map((x, i) => `<button type="button" class="nv3anr${S.a[x.id].okAlles ? ' fertig' : ''}" data-id="${x.id}"
+       title="${nv3Esc(x.titel)}" aria-label="Aufgabe ${i + 1}: ${nv3Esc(x.titel)}"
+       aria-current="${x.id === t.id}">${i + 1}${S.a[x.id].okAlles ? '<span class="ok">✓</span>' : ''}</button>`).join('')}</div>
     <div class="nv3stifte" id="nv3stifte" role="toolbar" aria-label="Textmarker"
       title="Erst den Stift wählen, dann über den Text streichen oder Wörter anklicken.">
       <span class="was">Textmarker</span>
@@ -2070,14 +2178,15 @@ function etappe2(){
       <span class="zart">Erst den Stift wählen, dann über den Text streichen.</span></div>
     ${fuehr('marken', !z.angabenOk)}
     <div class="nv3karte">
-      <div class="nv3kk"><b>${t.titel}</b><span>${nvQuelle(t.titel, t.quelle)}</span></div>
+      <div class="nv3von">${nvEsc(NV.aufgabe_von.replace('{n}', NV3.aufgaben.indexOf(t) + 1).replace('{m}', NV3.aufgaben.length))}</div>
+      <div class="nv3kk gross"><b>${t.titel}</b><span>${nvQuelle(t.titel, t.quelle)}</span></div>
       <div class="nv3text" id="nv3text">${st.html}</div>
       <div class="nv3felder" id="nv3felder"></div>
     </div>
     <p class="nv3zart">Die Markierung wird nicht geprüft — sie ist Ihr Arbeitsmittel.</p>
     <div id="nv3kasper"></div></div>`;
   const links = tisch.querySelector('.nv3links');
-  tisch.querySelectorAll('.nv3reiter button').forEach(b => b.onclick = () => { S.akt = b.dataset.id; merk(); etappe2(); });
+  tisch.querySelectorAll('.nv3anrn button').forEach(b => b.onclick = () => { S.akt = b.dataset.id; merk(); etappe2(); });
   const stiftSetzen = () => {
     links.classList.toggle('stift-an', !!S.stift);
     tisch.querySelectorAll('#nv3stifte button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stift === S.stift)));
@@ -2627,10 +2736,18 @@ function nvE2Bedienung(t, z){
   if (z.okAlles){
     const ids = NV3.aufgaben.map(x => x.id), i = ids.indexOf(t.id);
     const offen = ids.slice(i + 1).concat(ids.slice(0, i)).find(id => !S.a[id].okAlles);
+    // GEAENDERT (FASSUNG CHILBI 3): Ist eine Aufgabe geloest, nennt ein
+    // Fenster «Geschafft» die naechste offene (einmal je Aufgabe).
+    const WA = NV.wegweiser.aufgabe, j = ids.indexOf(offen);
+    const o = {n: i + 1, m: j + 1, name: offen ? NV3.aufgaben[j].titel : ''};
+    const f = s => s.replace('{n}', o.n).replace('{m}', o.m).replace('{name}', o.name);
     if (offen) nvFahne({notiz: W.naechsteNotiz, knopf: W.naechste,
-      tun: () => { nvFahne(null); S.akt = offen; sichern(); etappe2(); }});
+      tun: () => { nvFahne(null); S.akt = offen; sichern(); etappe2(); },
+      fenster: {text: f(WA.text), jetzt: f(WA.jetzt)}, schluessel: 'e2' + t.id,
+      haupt: {knopf: f(WA.knopf), tun: () => { nvFahne(null); S.akt = offen; sichern(); etappe2(); }}});
     else nvFahne({notiz: W.mitnehmenNotiz, knopf: W.mitnehmen,
-      tun: () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); }});
+      tun: () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); },
+      fenster: NV.wegweiser.fertig, schluessel: 'e2fertig'});
     return;
   }
   if (frisch === 'bild') return nvFahne({notiz: W.bildNotiz, knopf: W.bild, uhr: true, wache,
