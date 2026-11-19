@@ -1,0 +1,169 @@
+/* Leseleiste fuer die Reflexionen (Strategiewerkstatt Teil B).
+   NEU (gemeinsam entschieden, Rike 2026-10-29). Siehe leiste.js.
+   Alles haengt an body.ws-leiste - ohne die Klasse wirkt hier nichts. */
+
+/* ── Kopf in der Kapitelfarbe ── */
+body.ws-leiste header{background:var(--wskopf,#333);color:#fff;border-bottom:0}
+body.ws-leiste header h1{color:#fff}
+body.ws-leiste header .streifen{background:#fff;opacity:.8}
+body.ws-leiste nav button{background:transparent;color:#fff;border-color:rgba(255,255,255,.45)}
+body.ws-leiste nav button:hover{background:rgba(255,255,255,.12)}
+body.ws-leiste header .rueckoeffner{color:#fff;border-color:rgba(255,255,255,.6);background:transparent;opacity:1}
+body.ws-leiste header .rueckoeffner:hover,body.ws-leiste header .rueckoeffner.an{background:#fff;color:var(--wskopf,#333)}
+body.ws-leiste nav button[aria-current=true]{background:#fff;color:var(--wskopf,#333);border-color:#fff;font-weight:600}
+
+/* ── Etappenzeile: Titel gross, wie eine Ueberschrift auf dem Blatt ── */
+body.ws-leiste .auftrag{background:var(--karte);align-items:center;flex-wrap:wrap;
+  row-gap:6px;padding:10px 18px;border-bottom:1px solid var(--linie)}
+body.ws-leiste .auftrag .titel{font-size:23px;line-height:1.2;white-space:normal}
+
+/* ── Rumpf: Leiste links, Arbeit rechts ── */
+.wsrumpf{flex:1 1 auto;display:flex;min-height:0;position:relative}
+.wsrumpf > .buehne{flex:1 1 auto;min-width:0}
+.wsleiste{flex:0 0 var(--wsbreit,clamp(270px,26vw,370px));min-width:0;overflow-y:auto;
+  overflow-x:hidden;background:var(--creme);border-right:1px solid var(--linie);
+  padding:8px 12px 14px;display:flex;flex-direction:column;gap:10px;box-sizing:border-box}
+.wsrumpf.ohne > .wsleiste{display:none}
+
+.wsgriff{align-self:flex-end;font:inherit;font-size:12px;color:var(--matt);background:none;
+  border:1px solid transparent;border-radius:6px;padding:2px 8px;cursor:pointer;flex:0 0 auto}
+.wsgriff:hover{border-color:var(--linie);color:var(--akzent);background:var(--karte)}
+.wsgriff .auf{display:none}
+
+/* Zugeklappt: ein schmaler Streifen, der Griff steht quer darin. */
+body.ws-leiste-zu .wsleiste{flex-basis:30px;padding:8px 0;overflow:hidden}
+body.ws-leiste-zu .wsleiste > :not(.wsgriff){display:none !important}
+body.ws-leiste-zu .wsgriff{align-self:center;writing-mode:vertical-rl;padding:8px 2px}
+body.ws-leiste-zu .wsgriff .zu{display:none}
+body.ws-leiste-zu .wsgriff .auf{display:inline}
+
+/* Schmale Schirme: Leiste oben statt links, mit eigener Hoehe. */
+@media (max-width:760px){
+  .wsrumpf{flex-direction:column}
+  .wsleiste{flex:0 0 auto;max-height:38vh;border-right:0;border-bottom:1px solid var(--linie)}
+  body.ws-leiste-zu .wsleiste{flex-basis:auto;max-height:none}
+  body.ws-leiste-zu .wsgriff{writing-mode:horizontal-tb}
+}
+
+/* ── Fusszeile ruhiger ── */
+body.ws-leiste .leiste{padding:7px 14px;gap:8px}
+
+@media print{ .wsleiste{display:none !important} }
+
+/* Kopf im schmalen Fenster: eine Zeile, das Entwurfsschild weicht zuerst. */
+body.ws-leiste header h1,body.ws-leiste nav button{white-space:nowrap}
+@media (max-width:1000px){
+  body.ws-leiste header{gap:8px;padding:7px 12px}
+  body.ws-leiste header .entwurf{display:none}
+  body.ws-leiste nav{gap:4px}
+  body.ws-leiste nav button{padding:4px 9px}
+}
+
+/* ── Tisch (Rike 2026-10-29, «Ja, so einbauen») ──
+   Der Eichentisch liegt unter jeder Arbeitsflaeche, gedaempft wie bei
+   SORT (heller Schleier 38 %). Was ausgefuellt wird, liegt als Blatt
+   Papier darauf. Karten liegen direkt auf dem Holz: Eine Haelfte mit der
+   Klasse .wsholz ist durchsichtig (setzen die Kapitel). */
+body.ws-leiste .wsrumpf > .buehne{
+  background-image:linear-gradient(rgba(248,242,230,.38),rgba(248,242,230,.38)),url(eiche.jpg);
+  background-size:auto,720px auto;background-color:#c9a77c}
+body.ws-leiste .wsrumpf > .buehne > .haelfte,
+body.ws-leiste .wsrumpf > .buehne > .unten > .haelfte{
+  background:var(--karte);border-color:rgba(90,60,30,.18);border-radius:6px;
+  box-shadow:0 1px 2px rgba(60,40,20,.18),0 6px 18px rgba(60,40,20,.22)}
+body.ws-leiste .wsrumpf > .buehne .haelfte > .marke{background:linear-gradient(var(--karte) 70%,transparent)}
+body.ws-leiste .wsrumpf > .buehne > .haelfte.wsholz{background:transparent;border-color:transparent;box-shadow:none}
+body.ws-leiste .wsrumpf > .buehne > .haelfte.wsholz > .marke{background:none;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.45)}
+body.ws-leiste .wsrumpf > .buehne > .teiler{opacity:.5}
+
+/* ── Kopf: «Auftrag» ganz rechts ── */
+body.ws-leiste .auftrag .wsauftrag{margin-left:auto;order:99;font:inherit;font-size:13.5px;font-weight:700;
+  padding:5px 14px;border-radius:8px;border:2px solid var(--akzent);color:var(--akzent);background:#fff;cursor:pointer;white-space:nowrap}
+body.ws-leiste .auftrag .wsauftrag::before{content:'☰ ';font-weight:400}
+body.ws-leiste .auftrag .wsauftrag:hover{background:var(--akzent);color:#fff}
+body.ws-leiste .wsleiste [class*=auftragknopf]{display:none !important}
+body.ws-leiste .auftrag > .text:empty{display:none}
+
+/* ── Leiste: Ueberschriften und «Jetzt» ── */
+.wskopfzeile{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--matt);
+  font-weight:600;margin:2px 0 4px}
+.wsjetzt{order:50;background:var(--karte);border:1px solid var(--linie);border-radius:8px;padding:8px 11px;
+  font-size:13.5px;line-height:1.45}
+.wsjetzt .wsjetzttext{margin-bottom:6px}
+.wsjetzt > button{margin-top:4px}
+.wsgriff{order:-1}
+
+/* ── Fusszeile: Zurueck links, Pruefen und Weiter rechts, dann «⋯» ── */
+/* FEHLERBEHOBEN (2026-10-29): Im schmalen Fenster rutschte «⋯» in eine
+   zweite Zeile. Ursache: Ein langer Befund nahm seine ganze Textbreite;
+   jetzt bricht er in sich um. */
+body.ws-leiste .leiste .befund{order:2;flex:1 1 0;min-width:0}
+body.ws-leiste .leiste .wspruefen{order:7}
+body.ws-leiste .leiste .wsweiter{order:8;margin-left:0 !important}
+body.ws-leiste .leiste .wsrechts{margin-left:auto !important}
+body.ws-leiste .leiste .wsmenue{order:9;position:relative}
+.wsmenue .wsmehr{font-size:18px;line-height:1;padding:5px 12px}
+.wsmliste{position:absolute;right:0;bottom:calc(100% + 6px);z-index:200;display:flex;flex-direction:column;
+  align-items:stretch;gap:6px;background:var(--karte);border:1px solid var(--linie);border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);padding:10px;min-width:230px}
+.wsmliste[hidden]{display:none}
+.wsmliste > .knopf{text-align:left}
+.wsmliste .groesse{display:flex;align-items:center;gap:6px;opacity:1}
+.wsmliste .wsbeschr{font-size:12.5px;color:var(--matt);margin-right:auto}
+
+/* ── Band oben statt Spalte links (daten["leiste"] = "oben") ──
+   NEU (Rike 2026-10-29). Die Kapitel ordnen die Teile im Band selbst
+   (Raster in ihrer etappen.js); hier nur Lage, Hoehe und Griff. */
+body.ws-oben .wsrumpf{flex-direction:column}
+/* Pop-ups (Details) duerfen aus dem Band herausragen. */
+body.ws-oben .wsleiste{overflow:visible !important;max-height:none !important;z-index:20}
+body.ws-oben .wsleiste{flex:0 0 auto;max-height:42vh;width:auto;border-right:0;
+  border-bottom:1px solid var(--linie);padding:8px 16px 10px;position:relative}
+body.ws-oben .wsgriff{position:absolute;right:10px;top:6px;z-index:3}
+body.ws-oben.ws-leiste-zu .wsleiste{flex-basis:auto;padding:4px 16px;max-height:none}
+body.ws-oben.ws-leiste-zu .wsgriff{position:static;writing-mode:horizontal-tb;align-self:flex-start;padding:2px 8px}
+
+/* ── Hinweise als ⓘ mit Blase (leisteInfo) ── */
+.wsinfo{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;
+  font-size:13px;color:var(--akzent);cursor:pointer;user-select:none;margin-left:4px;flex:0 0 auto}
+.wsinfo:hover,.wsinfo:focus{background:var(--akzent);color:#fff;outline:none}
+.wsblase{position:fixed;z-index:3000;max-width:320px;background:var(--karte);color:var(--tinte);
+  border:1px solid var(--linie);border-left:4px solid var(--akzent);border-radius:8px;padding:7px 11px;
+  font-size:13.5px;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+
+/* ── Karten wie bei SORT (Rike 2026-10-29: «nur am Rand Farbe, mehr
+   Schatten, so gross wie moeglich, eher alles ohne abgerundete Seiten»,
+   Kapitel 5-8) ──
+   Vorbild in der Gestaltung, nicht im Code: der SORT-Kartentisch
+   (weisse Karte, Farbstreifen links, Schlagschatten, alles eckig). */
+body.ws-leiste *,body.ws-leiste *::before,body.ws-leiste *::after{border-radius:0 !important}
+/* Was ein Kreis ist, bleibt ein Kreis (Knoten, Nummern, ⓘ, «?»). */
+body.ws-leiste :is(.wsinfo,.bwfrag,.bwzug .nr,.zgr-knoten:not(.lang),.zgr-punkt,.zgr-plus:not(.gross),
+  .zgr-fortschritt .pkt,.zgr-nrkreis,.zgr-bk .nr,.zgr-bmarke .nr){border-radius:50% !important}
+body.ws-leiste .zgr-kreis{border-radius:18px !important}
+
+/* Situationskarte im Band: weiss, Farbe nur im Streifen links. */
+body.ws-leiste .wsleiste :is(.bwskarte,.zgr-skarte){background:#fff !important;border:0 !important;
+  border-left:7px solid var(--akzent) !important;
+  box-shadow:0 1px 2px rgba(60,40,20,.16),0 4px 14px rgba(60,40,20,.16) !important}
+
+/* Karten zum Legen und Waehlen (Kap 5 Saetze und Kaertchen, Kap 6 Buden
+   und Karten). Bewusst schwache Spezifitaet (body + Klasse): Die Zustaende
+   der Kapitel (gewaehlt, ok, falsch: zwei Klassen) zeichnen weiter ihren
+   Rand darueber. */
+body:where(.ws-leiste) :is(.bw3satz,.bw3k2,.zgr-bk),body:where(.ws-leiste) :where(.zgr-vier,.zgr-fuenf) .karte{
+  background:#fff;border-color:transparent;border-left:6px solid var(--akzent);
+  box-shadow:0 1px 2px rgba(60,40,20,.2),0 5px 14px rgba(60,40,20,.2)}
+
+/* ── Niedrige Fenster (etwa 800 x 570) mit dem Band oben ──
+   NEU (Rike 2026-10-29, wie in Kapitel 5): Band und Arbeit passen nicht
+   uebereinander. Dann rollt das Band weg, die Arbeit bekommt die Hoehe
+   des Fensters ueber der Fusszeile, die Fusszeile bleibt unten stehen.
+   Kapitel 5 (.bwnur) regelt das selbst, dort waechst das Brett frei. */
+@media (max-height:700px){
+  body.ws-oben #buehne:has(> .wsrumpf > .buehne:not(.bwnur)){overflow-y:auto}
+  body.ws-oben .wsrumpf:has(> .buehne:not(.bwnur)){flex:0 0 auto}
+  body.ws-oben .wsrumpf > .buehne:not(.bwnur){flex:0 0 auto;height:calc(100vh - 112px);min-height:300px}
+  body.ws-oben #buehne:has(> .wsrumpf > .buehne:not(.bwnur)) > .leiste{position:sticky;bottom:0;z-index:30}
+}
