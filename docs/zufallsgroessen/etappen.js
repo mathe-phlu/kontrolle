@@ -504,7 +504,8 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
        die Pfadregeln eingeben, und dann wird es ausgerechnet»): Beim
        Schreiben wird die Zelle breit und liegt ueber den Nachbarn; das
        Ergebnis steht darunter gut lesbar. */
-    .zgr-quer .zelle{position:relative;height:26px}
+    .zgr-quer .zelle{position:relative;height:26px;width:84px}
+    .zgr-e1.eng .zgr-quer .zelle{width:62px}
     .zgr-quer .zgr-zelle:focus{position:absolute;left:0;top:0;z-index:20;width:230px;box-shadow:0 3px 12px rgba(0,0,0,.2);background:#fff}
     .zgr-quer td:nth-last-child(-n+2) .zgr-zelle:focus{left:auto;right:0}
     .zgr-quer .wert{font-size:13.5px;font-weight:600;color:var(--tinte)}
@@ -2564,6 +2565,26 @@ function zgrVertQuer(ziel, ks, werte, o){
       if (nachAenderung) nachAenderung(); if (window.sichern) sichern();
     };
   });
+  // NEU (Fassung 22.1, Rike 2026-11-20: «Zahlen und Brueche werden nicht
+  // erkannt»): Die breite Zelle beim Schreiben liegt ueber den Nachbarn.
+  // Ein Klick auf eine Nachbarzelle traf sonst die alte Zelle, und die
+  // Eingaben liefen dort zusammen («1/31/2»). Jetzt geht der Klick in die
+  // Zelle, die an dieser Stelle steht.
+  box.addEventListener('mousedown', ev => {
+    const f = ev.target;
+    if (!f.classList || !f.classList.contains('zgr-zelle') || f !== document.activeElement) return;
+    const eigen = f.parentElement.getBoundingClientRect();
+    if (ev.clientX >= eigen.left && ev.clientX <= eigen.right && ev.clientY >= eigen.top && ev.clientY <= eigen.bottom) return;
+    const ziel = [...box.querySelectorAll('.zelle')].find(z => {
+      const r = z.getBoundingClientRect();
+      return z !== f.parentElement && ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+    });
+    if (!ziel) return;
+    ev.preventDefault();
+    const neu = ziel.querySelector('input');
+    neu.focus();
+    neu.setSelectionRange(neu.value.length, neu.value.length);
+  }, true);
   zeigen();
   return {
     set nachAenderung(fn){ nachAenderung = fn; },
