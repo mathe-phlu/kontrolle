@@ -156,6 +156,15 @@ const zgrX = r => [...r].filter((j, i) => j === zgrEigene(i)).length;
     .zgr-x{position:absolute;margin-top:-12px;display:flex;align-items:center;gap:4px;
         font-size:13.5px;white-space:nowrap}
     .zgr-x .zgr-feld{position:static;width:36px;margin:0}
+    /* NEU (Fassung 23): P am Pfadende, vor X */
+    .zgr-x .zgr-feld.zgr-pfeld{width:50px;margin-right:2px}
+    .zgr-rleiste{position:fixed;z-index:60;display:none;gap:4px;padding:4px;background:#fff;
+        border:1px solid var(--linie);border-radius:8px;box-shadow:0 3px 12px rgba(0,0,0,.18)}
+    .zgr-rleiste.an{display:flex;align-items:center}
+    .zgr-rleiste .zgr-rltext{font-size:13.5px;color:var(--matt);margin:0 4px 0 6px}
+    .zgr-rleiste button{font:600 16px var(--druck);min-width:34px;height:30px;border:1px solid var(--linie);
+        border-radius:6px;background:#faf6ef;color:var(--tinte);cursor:pointer}
+    .zgr-rleiste button:hover{border-color:var(--akzent);background:#fff}
     .zgr-rechnung{position:absolute;margin-top:-13px;font-size:14px;white-space:nowrap;
         line-height:26px;color:var(--tinte)}
     .zgr-hinweisx{position:absolute;margin-top:12px;font-size:11.5px;color:var(--falsch);
@@ -1179,7 +1188,7 @@ function zgrBaum(ziel, T, m, opt){
   opt = opt || {};
   const COL = opt.col || 120, aendern = !opt.nurLesen;
   let H = opt.h || 38;
-  ['p', 'x', 's'].forEach(f => { if (!m[f] || typeof m[f] !== 'object') m[f] = {}; });
+  ['p', 'x', 's', 'q'].forEach(f => { if (!m[f] || typeof m[f] !== 'object') m[f] = {}; });
   const bau = document.createElement('div');
   bau.className = 'zgr-bau';
   ziel.appendChild(bau);
@@ -1213,7 +1222,8 @@ function zgrBaum(ziel, T, m, opt){
     const hoehe = y + 6;
     const xk = t => ZGB.X0 + t * COL;
     const xEnde = xk(stufen) + 10 + Math.max(12, ...T.knoten.filter(k => k.blatt && k.tiefe === stufen).map(HALB));
-    const breite = xEnde + (opt.ohneRechnung ? 62 : 70 + (opt.rechnung || 150));
+    // GEAENDERT (Fassung 23): mit opt.pFeld steht am Pfadende P vor X
+    const breite = xEnde + (opt.ohneRechnung ? 62 + (opt.pFeld ? 80 : 0) : 70 + (opt.rechnung || 150));
     const baum = document.createElement('div');
     baum.className = 'zgr-baum';
     baum.style.width = breite + 'px'; baum.style.height = hoehe + 'px';
@@ -1278,7 +1288,7 @@ function zgrBaum(ziel, T, m, opt){
     });
     const kx = document.createElement('div');
     kx.className = 'zgr-kopf'; kx.style.left = (xEnde + 8) + 'px'; kx.style.transform = 'none';
-    kx.textContent = opt.ohneRechnung ? 'X' : 'X  ·  Wahrscheinlichkeit des Pfads';
+    kx.textContent = opt.pFeld ? 'Pfad' : opt.ohneRechnung ? 'X' : 'X  ·  Wahrscheinlichkeit des Pfads';
     baum.appendChild(kx);
 
     T.knoten.forEach(k => {
@@ -1333,6 +1343,19 @@ function zgrBaum(ziel, T, m, opt){
       xf.setAttribute('aria-label', 'X am Pfadende ' + kette.join(', '));
       xFeldFarbe(xf, k);
       xf.oninput = () => { m.x[k.id] = xf.value; xFeldFarbe(xf, k); linienNeu(); geaendert(); };
+      // NEU (Fassung 23, Rike 2026-11-20: «Ja, P und X»): die
+      // Wahrscheinlichkeit des Pfads vor X, wie Maurus es intuitiv tat
+      if (opt.pFeld){
+        x.innerHTML = '';
+        const pf = document.createElement('input');
+        pf.className = 'zgr-feld zgr-pfeld'; pf.dataset.id = k.id;
+        pf.value = m.q[k.id] || ''; pf.placeholder = '?'; pf.disabled = !aendern;
+        pf.autocomplete = 'off'; pf.spellcheck = false;
+        pf.setAttribute('aria-label', 'Wahrscheinlichkeit des Pfads ' + kette.join(', '));
+        pf.title = pf.value;
+        pf.oninput = () => { m.q[k.id] = pf.value; pf.title = pf.value; geaendert(); };
+        x.append('P =', pf, 'X =');
+      }
       x.appendChild(xf);
       baum.appendChild(x);
       if (opt.ohneRechnung) return;
@@ -2037,7 +2060,7 @@ function zgrE1(){
   ['b', 't', 'hinweis', 'klapp'].forEach(k => { if (!zgrObj(e[k])) e[k] = {}; });
   ZGR_ARTEN.forEach(a => {
     if (!zgrObj(e.b[a])) e.b[a] = {};
-    ['p', 'x'].forEach(f => { if (!zgrObj(e.b[a][f])) e.b[a][f] = {}; });
+    ['p', 'x', 'q'].forEach(f => { if (!zgrObj(e.b[a][f])) e.b[a][f] = {}; });
     if (!zgrObj(e.t[a])) e.t[a] = {};
   });
   // GEAENDERT (Fassung 12.2): das Zusammenklappen statt der Farbcodes. Der
@@ -2069,9 +2092,10 @@ function zgrFertig(st, i, ok){
 function zgrE1Loesung(){
   const b = {}, t = {};
   ZGR_ARTEN.forEach(a => {
-    const T = D.e1.baeume[a], m = b[a] = {p: {}, x: {}};
+    const T = D.e1.baeume[a], m = b[a] = {p: {}, x: {}, q: {}};
     T.knoten.forEach(k => { if (k.eltern !== null) m.p[k.id] = zgrBruchText(k.w); if (k.blatt) m.x[k.id] = String(k.x); });
     const pf = zgrBaumPfade(T, m), ta = t[a] = {};
+    pf.forEach(p => { m.q[p.id] = zgrBruchText(p.faktoren.reduce((s, w) => zgrMal(s, w), [1, 1])); });
     D.e1.verteilung.forEach(([k]) => {
       const teile = pf.filter(p => +p.x === k).map(p => zgrBruchText(p.faktoren.reduce((s, w) => zgrMal(s, w), [1, 1])));
       ta[k] = teile.length ? teile.join(' + ') : '0';
@@ -2189,7 +2213,7 @@ const zgrUnd = xs => xs.length < 2 ? (xs[0] || '') : xs.slice(0, -1).join(', ') 
 /* Die zwei Saetze zu einem falschen Ast: wo schauen, und wie abzaehlen.
    k = der flachste falsche Ast. Beim typischen Fehler (Ben nach «Anna
    falsch» im Baum nach richtig/falsch) sind es die Saetze aus thema.md. */
-function zgrE1AstHinweise(art, T, k){
+function zgrE1AstHinweise(art, T, k, roh){
   const H = D.e1.hinweise, nach = zgrBaumNach(T), e = nach[k.eltern];
   const weg = [];
   for (let j = e; j.eltern !== null; j = nach[j.eltern]) weg.unshift(j.lang);
@@ -2197,12 +2221,18 @@ function zgrE1AstHinweise(art, T, k){
   const person = D.e1.personen[k.tiefe - 1], poss = D.e1.possessiv[k.tiefe - 1];
   const ersetze = t => t.replace('{baum}', D.e1.im[art]).replace('{nach}', w).replace('{person}', person)
     .replace('{poss}', poss).replace('{jacke}', k.kurz);
-  const wo = ersetze(start ? H.astStart : H.ast);
+  // NEU (Fassung 23, Rike 2026-11-20): der erkennbare Fehler - nach
+  // «Anna falsch» fuer Ben halb-halb - bekommt einen eigenen Satz
+  const lw = zgrLies(roh), halb = !!lw && Math.abs(zgrZahl(lw) - 0.5) < 0.006;
+  const ben = art === 'rf' && k.tiefe === 2 && e.id === 'F' && halb;
+  const wo = ben ? H.benHalb : ersetze(start ? H.astStart : H.ast);
   const frage = ersetze(art === 'rf' ? (start ? H.abzaehlenRfStart : H.abzaehlenRf)
     : (start ? H.abzaehlenJackeStart : H.abzaehlenJacke));
   const knopf = `<br><button class="zgr-hilfe" data-abz="${art}" data-id="${zgrEsc(e.id)}">`
     + `${ersetze(start ? H.abzaehlenKnopfStart : H.abzaehlenKnopf)}</button>`;
-  return [wo, frage + knopf];
+  const st = [wo, frage + knopf];
+  st.ben = ben;
+  return st;
 }
 
 /* Was «Pruefen» in Etappe 1 sagt. Gibt {ok, key, stufen:[Satz]} zurueck;
@@ -2212,6 +2242,8 @@ function zgrE1AstHinweise(art, T, k){
 function zgrE1Hinweise(e){
   const H = D.e1.hinweise, ks = D.e1.verteilung.map(([k]) => k), soll = zgrSollAus(D.e1.verteilung);
   const ganz = t => /^\d+$/.test(String(t || '').trim());
+  // NEU (Fassung 23): P am Pfadende
+  const rr = t => { t = String(t || '').trim(); return t ? zgrRechne(t) : null; };
   const info = ZGR_ARTEN.map(art => {
     const T = D.e1.baeume[art], m = e.b[art];
     const aeste = T.knoten.filter(k => k.eltern !== null), blaetter = T.knoten.filter(k => k.blatt);
@@ -2222,8 +2254,17 @@ function zgrE1Hinweise(e){
       leerX: blaetter.filter(k => !ganz(m.x[k.id])).length,
       leerT: ks.filter(k => tab[k] === null).length,
       xFalsch: blaetter.some(k => ganz(m.x[k.id]) && +String(m.x[k.id]).trim() !== k.x),
+      xBruch: blaetter.filter(k => String(m.x[k.id] || '').trim() && !ganz(m.x[k.id])).length,
+      leerP: blaetter.filter(k => !rr((m.q || {})[k.id])).length,
+      pFalsch: zgrBaumPfade(T, m).some(p => {
+        const r = rr((m.q || {})[p.id]);
+        if (!r || !p.faktoren.every(w => w)) return false;
+        return Math.abs(r.wert - p.faktoren.reduce((s, w) => s * zgrZahl(w), 1)) >= 0.006;
+      }),
       tab,
-      falsch: aeste.filter(k => !zgrTrifft(zgrLies(m.p[k.id]), k.w)).sort((a, b) => a.tiefe - b.tiefe)[0] || null};
+      falsch: aeste.filter(k => !zgrTrifft(zgrLies(m.p[k.id]), k.w)).sort((a, b) => a.tiefe - b.tiefe)[0] || null,
+      // NEU (Fassung 23): der flachste eingetragene, aber falsche Ast
+      falschDa: aeste.filter(k => zgrLies(m.p[k.id]) && !zgrTrifft(zgrLies(m.p[k.id]), k.w)).sort((a, b) => a.tiefe - b.tiefe)[0] || null};
     if (!i.leerA && !i.leerX && !i.leerT){
       const aus = {};
       zgrBaumPfade(T, m).forEach(p => { aus[+p.x] = (aus[+p.x] || 0) + p.faktoren.reduce((s, w) => s * zgrZahl(w), 1); });
@@ -2239,16 +2280,34 @@ function zgrE1Hinweise(e){
   const ij = info.find(i => i.art === 'jacke'), ir = info.find(i => i.art === 'rf');
   const hilfe = !ij.leerA && !ij.falsch && !ir.leerA && !!ir.falsch;
   const mit = r => (hilfe && !r.ok ? Object.assign(r, {hilfe: true}) : r);
+  // NEU (Fassung 23, Maurus 20.11.: 1/6 bei X): ein Bruch bei X zuerst
+  if (info.some(i => i.xBruch)) return {key: 'xbruch', stufen: [H.xBruch]};
+  // NEU (Fassung 23, Rike 2026-11-20: «ich darf erst pruefen, wenn ich
+  // alles ausgefuellt habe»): Was schon dasteht, wird zuerst geprueft -
+  // ein falscher Ast (zuerst im Baum nach richtig/falsch), ein falsches X,
+  // ein P, das nicht zu den Aesten passt. Erst dann, was noch fehlt.
+  const fd = info.find(i => i.art === 'rf' && i.falschDa) || info.find(i => i.falschDa);
+  if (fd){
+    const st = zgrE1AstHinweise(fd.art, fd.T, fd.falschDa, e.b[fd.art].p[fd.falschDa.id]);
+    return mit({key: 'da' + fd.art + fd.falschDa.id, ben: st.ben, stufen: st});
+  }
+  const xd = info.find(i => i.xFalsch);
+  if (xd) return mit({key: 'x' + xd.art, stufen: [H.xFalsch.replace('{baum}', D.e1.im[xd.art]), H.xTipp]});
+  const pd = info.find(i => i.pFalsch);
+  if (pd) return mit({key: 'p' + pd.art, stufen: [H.pFalsch.replace('{baum}', D.e1.im[pd.art]), H.pTipp]});
   const leer = [];
   info.forEach(i => {
     const w = D.e1.wem[i.art];
     if (i.leerA) leer.push(`${i.leerA} ${i.leerA > 1 ? 'Äste' : 'Ast'} im ${w}`);
+    if (i.leerP) leer.push(`${i.leerP} P am Pfadende im ${w}`);
     if (i.leerX) leer.push(`${i.leerX} X am Pfadende im ${w}`);
     if (i.leerT) leer.push(`${i.leerT} ${i.leerT > 1 ? 'Einträge' : 'Eintrag'} in der Verteilung unter dem ${w}`);
   });
   if (leer.length) return {key: 'leer', stufen: [H.leer.replace('{liste}', zgrUnd(leer))]};
   const xf = info.find(i => i.xFalsch);
   if (xf) return mit({key: 'x' + xf.art, stufen: [H.xFalsch.replace('{baum}', D.e1.im[xf.art]), H.xTipp]});
+  const pfi = info.find(i => i.pFalsch);
+  if (pfi) return mit({key: 'p' + pfi.art, stufen: [H.pFalsch.replace('{baum}', D.e1.im[pfi.art]), H.pTipp]});
   const tf = info.find(i => !i.passt);
   if (tf) return mit({key: 'tab' + tf.art, stufen: [H.tabFalsch.replace('{wem}', D.e1.wem[tf.art]), H.tabTipp]});
   const gleich = ks.every(k => Math.abs(info[0].tab[k] - info[1].tab[k]) < 0.006);
@@ -2256,8 +2315,10 @@ function zgrE1Hinweise(e){
   // Zuerst der Baum nach richtig/falsch (thema.md), dann der nach Jacken
   const fb = info.find(i => i.art === 'rf' && i.falsch) || info.find(i => i.falsch);
   if (gleich && richtig && !fb) return {ok: true};
-  const ast = fb ? zgrE1AstHinweise(fb.art, fb.T, fb.falsch) : [];
+  const ast = fb ? zgrE1AstHinweise(fb.art, fb.T, fb.falsch, e.b[fb.art].p[fb.falsch.id]) : [];
   const wo = fb ? fb.art + fb.falsch.id : '';
+  // NEU (Fassung 23): Ben halb-halb nach «Anna falsch» sofort beim Namen
+  if (ast.ben) return mit({key: 'ben' + wo, ben: true, stufen: ast});
   if (!gleich) return mit({key: 'ungleich' + wo, stufen: [H.ungleich, ...ast]});
   if (!richtig) return mit({key: 'gleich' + wo, stufen: [H.gleichFalsch, ...ast]});
   return mit({key: 'ast' + wo, stufen: ast});
@@ -2294,6 +2355,7 @@ function etappe1(){
   brett.append(links, rechts);
   feld.appendChild(brett);
   brett.addEventListener('input', ev => { if (ev.target.classList) ev.target.classList.remove('fehlt'); });
+  zgrRechenleiste();
 
   // Masse nach dem Platz (Fassung 10). Pfadabstand H so, dass Baum
   // (Kopf 44 + 8 Pfade), Titel und Tabelle in die Hoehe passen;
@@ -2302,7 +2364,8 @@ function etappe1(){
   const nMax = Math.max(...ZGR_ARTEN.map(blaetter));
   const hoch = oben ? oben.clientHeight : 600, breit = feld.clientWidth || 1000;
   let H = Math.max(26, Math.min(36, Math.floor((hoch - 44 - 157) / nMax)));
-  const COL = breit >= 1100 ? 100 : Math.max(74, Math.min(100, Math.floor((breit / 2 - 30 - 98) / 3)));
+  // GEAENDERT (Fassung 23): 80 px mehr am Pfadende fuer P, dazu etwas Luft
+  const COL = breit >= 1300 ? 100 : Math.max(70, Math.min(100, Math.floor((breit / 2 - 30 - 98 - 116) / 3)));
   // Schmal: auch die Zellen der Tabelle schmaler, sonst rutscht der
   // zweite Baum unter den ersten
   if (COL < 100) brett.classList.add('eng');
@@ -2317,7 +2380,7 @@ function etappe1(){
     zgrTitel(sp, D.e1.namen[art]);
     const T = D.e1.baeume[art];
     const abz = zgrAbzaehlen(T, D.e1.rueckgaben, D.e1.abzText);
-    const opt = {col: COL, h: H * nMax / blaetter(art), abzaehlen: abz, ohneRechnung: true,
+    const opt = {col: COL, h: H * nMax / blaetter(art), abzaehlen: abz, ohneRechnung: true, pFeld: true,
                  xFarben: ZGR_XFARBEN, nachAenderung: () => { befund(''); }};
     const baum = zgrBaum(sp, T, e.b[art], opt);
     const tab = zgrVertQuer(sp, ks, e.t[art], {name: D.e1.wem[art], soll: zgrSollAus(D.e1.verteilung), xFarben: ZGR_XFARBEN,
@@ -2366,7 +2429,7 @@ function etappe1(){
     // jetzt zu tun ist (statt des Auftragsfensters beim Oeffnen)
     // GEAENDERT (Vorschlag A): der Hinweis zu den Zellen steht im Satz
     zgrJetztSatz(!e.ok && c.an ? D.e1.klapphilfe.satz
-      : !e.ok ? 'Tragen Sie in beiden Bäumen an jedem Ast die Wahrscheinlichkeit und an jedem Pfadende X ein. Rechnen Sie darunter P(X = …) aus, dann «Prüfen». In jede Zelle passt eine Rechnung, z. B. «1/3 · 1/2 + 1/3 · 1/2», oder eine Zahl.'
+      : !e.ok ? 'Tragen Sie in beiden Bäumen an jedem Ast die Wahrscheinlichkeit ein, am Pfadende P und X. Rechnen Sie darunter P(X = …) aus, dann «Prüfen». In jede Zelle passt eine Rechnung, z. B. «1/3 · 1/2 + 1/3 · 1/2», oder eine Zahl.'
       : !c.an ? 'Beide Verteilungen stimmen. Klappen Sie jetzt den Baum nach Jacken zusammen.'
       : !c.fertig ? 'Klappen Sie den Baum nach Jacken Ebene für Ebene zusammen. Welche Äste verschmelzen?'
       : 'Wie hängen die beiden Bäume zusammen? Schreiben Sie es rechts auf.');
@@ -2469,12 +2532,27 @@ function etappe1(){
     } else {
       // NEU (Fassung 20, Maurus 09.11.): Was fehlt, wird rot umrandet -
       // die Meldung allein sagte nicht, wo.
-      if (u.key === 'leer') brett.querySelectorAll('input').forEach(f => {
-        const v = String(f.value || '').trim();
-        const fehlt = f.classList.contains('zgr-xfeld') ? !/^\d+$/.test(v)
-          : f.classList.contains('zgr-ast') ? !zgrLies(v)
-          : f.classList.contains('zgr-zelle') ? !zgrRechne(v) : false;
-        f.classList.toggle('fehlt', fehlt);
+      // GEAENDERT (Fassung 23, Rike 2026-11-20: «Man kann pruefen
+      // zwischendrin und bekommt die falschen rot markiert»): Jedes
+      // ausgefuellte Kaestchen, das falsch ist, wird rot umrandet - Aeste,
+      // P und X am Pfadende, die Zellen P(X = …). Leere nur, wenn die
+      // Meldung «Es fehlt noch etwas» lautet.
+      const sollV = zgrSollAus(D.e1.verteilung);
+      brett.querySelectorAll('.zgr-spalte').forEach(sp => {
+        const T = D.e1.baeume[sp.dataset.art], nach = zgrBaumNach(T);
+        const pfad = id => { let w = 1; for (let k = nach[id]; k.eltern !== null; k = nach[k.eltern]) w *= zgrZahl(k.w); return w; };
+        sp.querySelectorAll('input').forEach(f => {
+          const v = String(f.value || '').trim(), k = f.dataset.id !== undefined ? nach[f.dataset.id] : null;
+          const r = v ? zgrRechne(v) : null;
+          let falsch = false;
+          if (!v) falsch = u.key === 'leer' && (f.classList.contains('zgr-ast') || f.classList.contains('zgr-xfeld')
+            || f.classList.contains('zgr-pfeld') || f.classList.contains('zgr-zelle'));
+          else if (f.classList.contains('zgr-ast')) falsch = !zgrLies(v) || !zgrTrifft(zgrLies(v), k.w);
+          else if (f.classList.contains('zgr-xfeld')) falsch = !/^\d+$/.test(v) || +v !== k.x;
+          else if (f.classList.contains('zgr-pfeld')) falsch = !r || Math.abs(r.wert - pfad(k.id)) >= 0.006;
+          else if (f.classList.contains('zgr-zelle')) falsch = !r || Math.abs(r.wert - zgrZahl(sollV[f.dataset.k] || [0, 1])) >= 0.006;
+          f.classList.toggle('fehlt', falsch);
+        });
       });
       if (e.hinweis.key === u.key) e.hinweis.stufe = Math.min((e.hinweis.stufe || 0) + 1, u.stufen.length - 1);
       else e.hinweis = {key: u.key, stufe: 0};
@@ -2491,7 +2569,7 @@ function etappe1(){
       if (u.hilfe && !e.klapp.an){
         const KH = D.e1.klapphilfe, d = document.createElement('div');
         d.className = 'zgr-klapphilfe';
-        d.innerHTML = `${KH.text}<br><button type="button" class="knopf">${KH.knopf}</button>`;
+        d.innerHTML = `${u.ben ? KH.kurz : KH.text}<br><button type="button" class="knopf">${KH.knopf}</button>`;
         hinweis.appendChild(d);
         d.querySelector('button').onclick = ev => { ev.target.remove(); deckungAn(); };
       }
@@ -2590,6 +2668,55 @@ function zgrVertQuer(ziel, ks, werte, o){
     set nachAenderung(fn){ nachAenderung = fn; },
     gruen(){ box.querySelectorAll('input').forEach(f => f.classList.add('ok')); },
   };
+}
+
+/* NEU (Fassung 23, Rike 2026-11-20: «eine Leiste, wo sie die Operatoren
+   wie + anklicken koennen»): Beim Schreiben in P am Pfadende oder in
+   P(X = …) steht darunter eine Leiste mit · + / ( ). Ein Klick setzt das
+   Zeichen dort ein, wo man schreibt; der Fokus bleibt im Feld. */
+function zgrRechenleiste(){
+  if (window._zgrRL) return;
+  const rl = document.createElement('div');
+  rl.className = 'zgr-rleiste'; rl.setAttribute('role', 'toolbar'); rl.setAttribute('aria-label', 'Rechenzeichen');
+  const Z = [['·', ' · ', 'mal'], ['+', ' + ', 'plus'], ['/', '/', 'Bruchstrich'], ['(', '(', 'Klammer auf'], [')', ')', 'Klammer zu']];
+  rl.innerHTML = '<span class="zgr-rltext">Rechenzeichen:</span>' + Z.map(([z, , t], i) => `<button type="button" data-i="${i}" title="${t}" tabindex="-1">${z}</button>`).join('');
+  document.body.appendChild(rl);
+  window._zgrRL = rl;
+  let feld = null;
+  const passt = el => el && el.matches && el.matches('.zgr-e1 .zgr-zelle, .zgr-e1 .zgr-pfeld') && !el.disabled;
+  // Die Leiste steht unten links in der Leiste mit «Pruefen» - unter dem
+  // Feld verdeckte sie die naechste Zeile des Baums.
+  const legen = () => {
+    if (!feld || !feld.isConnected){ rl.classList.remove('an'); return; }
+    const pr = document.getElementById('pruefen'), unten = pr && pr.parentElement;
+    rl.classList.add('an');
+    if (unten){
+      const u = unten.getBoundingClientRect();
+      rl.style.left = (u.left + 12) + 'px';
+      rl.style.top = (u.top + (u.height - rl.offsetHeight) / 2) + 'px';
+    } else {
+      const r = feld.getBoundingClientRect();
+      rl.style.left = r.left + 'px'; rl.style.top = (r.bottom + 4) + 'px';
+    }
+  };
+  document.addEventListener('focusin', ev => { if (passt(ev.target)){ feld = ev.target; legen(); } });
+  document.addEventListener('focusout', ev => {
+    if (ev.target !== feld) return;
+    setTimeout(() => { if (document.activeElement !== feld){ feld = null; rl.classList.remove('an'); } }, 0);
+  });
+  document.addEventListener('scroll', () => { if (feld) legen(); }, true);
+  window.addEventListener('resize', () => { if (feld) legen(); });
+  rl.addEventListener('mousedown', ev => ev.preventDefault());
+  rl.addEventListener('click', ev => {
+    const b = ev.target.closest('button');
+    if (!b || !feld) return;
+    const t = Z[+b.dataset.i][1];
+    const a = feld.selectionStart ?? feld.value.length, e = feld.selectionEnd ?? a;
+    feld.setRangeText(t, a, e, 'end');
+    feld.dispatchEvent(new Event('input', {bubbles: true}));
+    feld.focus();
+    legen();
+  });
 }
 
 /* ───────── Zusammenklappen im Baum nach Jacken (FASSUNG 12.2) ─────────
