@@ -2063,6 +2063,16 @@ function zgrE1(){
     ['p', 'x', 'q'].forEach(f => { if (!zgrObj(e.b[a][f])) e.b[a][f] = {}; });
     if (!zgrObj(e.t[a])) e.t[a] = {};
   });
+  // NEU (Fassung 23.1, Rike 2026-11-23: «Ja, ausfuellen»): Wer Etappe 1
+  // vor Fassung 23 schon geloest hat, hat am Pfadende noch kein P. Die
+  // Aeste stimmten - P kommt aus ihnen, damit «Pruefen» nichts vermisst.
+  if (e.ok) ZGR_ARTEN.forEach(a => {
+    const m = e.b[a];
+    zgrBaumPfade(D.e1.baeume[a], m).forEach(p => {
+      if (String(m.q[p.id] || '').trim() || !p.faktoren.every(w => w)) return;
+      m.q[p.id] = zgrBruchText(p.faktoren.reduce((s, w) => zgrMal(s, w), [1, 1]));
+    });
+  });
   // GEAENDERT (Fassung 12.2): das Zusammenklappen statt der Farbcodes. Der
   // alte Stand der Farbcodes (e.code) faellt still weg; Tabellen und Baeume
   // bleiben.
