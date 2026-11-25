@@ -628,6 +628,17 @@ const BN_SV = 8;                     // Kennung des Stands von Etappe 2 (FASSUNG
     .bn-felder .falsch{border-color:var(--falsch)!important;background:#fbeeec!important}
     .bn-felder .halb{border-color:var(--fast)!important;border-style:dashed!important;background:#fdf4e4!important}
     .bn-k .bn-hinweis{font-size:12px;line-height:1.35;color:var(--matt);padding:0 9px 7px}
+    /* NEU (Fassung 10): die Formel auf der Karte */
+    .bn-k .bn-formel{display:none;font:13px/1.7 var(--druck);color:var(--tinte);padding:4px 9px 7px;
+        margin:0 6px 6px;background:#fffaf2;border:1px dashed #d9c7a6;border-radius:6px}
+    .bn-k .bn-formel.an{display:block}
+    .bn-k .bn-formel .was{display:block;font:600 11.5px var(--druck);color:var(--matt);letter-spacing:.02em}
+    .bn-k .bn-formel mark{background:var(--mf,#d4ac00);color:var(--mt,#2d2924);font-weight:600;padding:0 3px;border-radius:3px}
+    .bn-k .bn-formel sup{font-size:.72em}
+    .bn-k .bn-formel .bn-sig{display:inline-flex;align-items:center;gap:1px;font-size:1.15em}
+    .bn-k .bn-formel .bn-sig>span{display:inline-flex;flex-direction:column;font-size:.62em;line-height:1.05;margin-left:1px}
+    .bn-k .bn-formel .bn-sig sub,.bn-k .bn-formel .bn-sig sup{font-size:1em;vertical-align:baseline}
+    .bn-k.klein .bn-formel{font-size:12px;margin:0 5px 5px;padding:3px 7px 5px}
     .bn-k .bn-hinweis:empty{display:none}
     .bn-k .bn-hinweis.falsch{color:var(--falsch)} .bn-k .bn-hinweis.ok{color:var(--richtig)}
     .bn-k .bn-hinweis.halb{color:var(--fast)}
@@ -1000,6 +1011,8 @@ function bnStand(){
   stand.bn = stand.bn || {};
   const s = stand.bn;
   s.f = s.f || {}; s.mark = s.mark || {};
+  // NEU (Fassung 10): Karten, deren Formel schon erschienen ist
+  if (!s.formel || typeof s.formel !== 'object') s.formel = {};
   if (s.stift === undefined) s.stift = null;
   // Marken der ersten Fassung hiessen «iv» - jetzt «k».
   Object.values(s.mark).forEach(m => Object.keys(m).forEach(i => { if (m[i] === 'iv') m[i] = 'k'; }));
@@ -1514,11 +1527,13 @@ function bnKarte(k){
     <div class="bn-text">${bnStuecke(k.text)}</div>
     <div class="bn-felder"></div>
     <div class="bn-hinweis"></div>
+    <div class="bn-formel"></div>
     <div class="bn-kurz"><div class="bn-kz"><b>${bnEsc(k.kurz)}</b><button type="button" class="bn-auf"
       aria-expanded="false" title="Den ganzen Aufgabentext und die Felder zeigen">Text ▾</button></div>
       <div class="bn-chips bn-kw"></div></div>`;
   const text = el.querySelector('.bn-text');
   bnMalen(text, s.mark[k.id] || {});
+  bnFormelSetzen(el);
 
   // NEU (FASSUNG 7): «Text ▾» klappt das eingeordnete Kaertchen auf.
   // Wer es anfasst, zieht nicht.
@@ -1702,6 +1717,17 @@ function bnKurzAuffrischen(el){
   const k = BN_KARTE[el.dataset.id], f = bnFelder(k.id);
   el.querySelector('.bn-kw').innerHTML = bnChips(f);
   el.title = k.quelle + ': ' + k.text;
+}
+/* NEU (Fassung 10, Rike 2026-11-25, nach Maurus): die Bernoulli-Formel
+   auf der Karte, das Gesuchte gelb - erst, wenn die Karte einmal richtig
+   ausgefuellt war (oder in der Loesung). k.formel kommt aus
+   inhalte.formel_html(). */
+function bnFormelSetzen(el){
+  const k = BN_KARTE[el.dataset.id], f = el.querySelector('.bn-formel');
+  if (!k || !f) return;
+  const an = !!k.formel && (!!bnStand().formel[k.id] || document.body.classList.contains('loesungoffen'));
+  f.classList.toggle('an', an);
+  f.innerHTML = an ? `<span class="was">${bnEsc(BN.formelKopf)}</span>${k.formel}` : '';
 }
 function bnUrteilWeg(el){
   el.querySelectorAll('.bn-felder .ok,.bn-felder .falsch,.bn-felder .halb,.bn-chip.ok,.bn-chip.falsch,.bn-chip.halb')
@@ -2485,6 +2511,8 @@ function bnPruefenE1(els){
     h.textContent = u.text; h.className = 'bn-hinweis ' + art;
     if (u.art === 'offen'){ if (u.mehr) mehr++; else offen++; }
     else { fDa++; if (u.art === 'ok') fOk++; if (u.art === 'halb') fHalb++; }
+    // NEU (Fassung 10): richtig ausgefuellt - die Formel erscheint und bleibt
+    if (u.art === 'ok' && k.formel){ bnStand().formel[k.id] = true; bnFormelSetzen(el); }
   });
   bnNachFeldern();
   stand.geprueft = true;
