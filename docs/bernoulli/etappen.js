@@ -634,10 +634,16 @@ const BN_SV = 8;                     // Kennung des Stands von Etappe 2 (FASSUNG
     .bn-k .bn-formel.an{display:block}
     .bn-k .bn-formel .was{display:block;font:600 11.5px var(--druck);color:var(--matt);letter-spacing:.02em}
     .bn-k .bn-formel mark{background:var(--mf,#d4ac00);color:var(--mt,#2d2924);font-weight:600;padding:0 3px;border-radius:3px}
-    .bn-k .bn-formel sup{font-size:.72em}
+    .bn-k .bn-formel sup{font-size:.72em;white-space:nowrap}
     .bn-k .bn-formel .bn-sig{display:inline-flex;align-items:center;gap:1px;font-size:1.15em}
     .bn-k .bn-formel .bn-sig>span{display:inline-flex;flex-direction:column;font-size:.62em;line-height:1.05;margin-left:1px}
     .bn-k .bn-formel .bn-sig sub,.bn-k .bn-formel .bn-sig sup{font-size:1em;vertical-align:baseline}
+    /* GEAENDERT (Fassung 10.2): Binomialkoeffizient gestapelt in Klammern */
+    .bn-k .bn-formel .bn-binom{display:inline-flex;align-items:center;vertical-align:middle;margin:0 1px}
+    .bn-k .bn-formel .bn-binom::before,.bn-k .bn-formel .bn-binom::after{font-size:2em;font-weight:300;line-height:1;transform:scaleX(.7)}
+    .bn-k .bn-formel .bn-binom::before{content:'('}
+    .bn-k .bn-formel .bn-binom::after{content:')'}
+    .bn-k .bn-formel .bn-binom>span{display:inline-flex;flex-direction:column;align-items:center;font-size:.82em;line-height:1.1}
     .bn-k.klein .bn-formel{font-size:12px;margin:0 5px 5px;padding:3px 7px 5px}
     .bn-k .bn-hinweis:empty{display:none}
     .bn-k .bn-hinweis.falsch{color:var(--falsch)} .bn-k .bn-hinweis.ok{color:var(--richtig)}
