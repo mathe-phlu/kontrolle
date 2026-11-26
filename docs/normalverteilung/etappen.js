@@ -2415,7 +2415,8 @@ function etappe2(){
     felderBauen();
     if (z.angabenGeprueft) angabenUrteil();
     document.getElementById('nv3pruefen').onclick = () => {};
-    document.getElementById('weiter').onclick = () => { stand.etappe = ETAPPEN.length; los(); };
+    // GEAENDERT (FASSUNG CHILBI 4): weiter zu Etappe 3
+    document.getElementById('weiter').onclick = () => { stand.etappe = 2; los(); };
     loesungsKnopf(() => etappe2());
     nvE2Bedienung(t, z);
     return;
@@ -2706,7 +2707,8 @@ function etappe2(){
       ? 'Angaben, Bild, c und Gleichung stimmen.'
       : `${p.u.filter(x => x[0]).length} von ${p.u.length} Punkten stimmen.`;
   };
-  document.getElementById('weiter').onclick = () => { stand.etappe = ETAPPEN.length; los(); };
+  // GEAENDERT (FASSUNG CHILBI 4): weiter zu Etappe 3
+  document.getElementById('weiter').onclick = () => { stand.etappe = 2; los(); };
   loesungsKnopf(() => etappe2());
   nvE2Bedienung(t, z);
 }
@@ -2745,8 +2747,9 @@ function nvE2Bedienung(t, z){
       tun: () => { nvFahne(null); S.akt = offen; sichern(); etappe2(); },
       fenster: {text: f(WA.text), jetzt: f(WA.jetzt)}, schluessel: 'e2' + t.id,
       haupt: {knopf: f(WA.knopf), tun: () => { nvFahne(null); S.akt = offen; sichern(); etappe2(); }}});
-    else nvFahne({notiz: W.mitnehmenNotiz, knopf: W.mitnehmen,
-      tun: () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); },
+    // GEAENDERT (FASSUNG CHILBI 4): nach der letzten Aufgabe zu Etappe 3
+    else nvFahne({notiz: W.mitnehmenNotiz, knopf: W.etappe3,
+      tun: () => { nvFahne(null); stand.etappe = 2; los(); },
       fenster: NV.wegweiser.fertig, schluessel: 'e2fertig'});
     return;
   }
@@ -2933,6 +2936,261 @@ function nv3BildE2(){
   return Promise.all(warte).then(() => c);
 }
 
+/* ───────── Etappe 3 · Dasselbe Bild, eine andere Frage ─────────
+   NEU (gemeinsam entschieden): FASSUNG CHILBI 4 (2026-11-26, Rike: «Ja,
+   beide Teile»). Spezifikation thema.md, Daten D.e3 (inhalte.E3_*).
+     Teil 1  Aufgabenkarten in vier Spalten (die Fragen des Skripts).
+             Ziehen oder antippen + Spalte antippen. «Prüfen» umrandet
+             falsch liegende Karten rot und nennt eine Rueckfrage der
+             richtigen Spalte, nicht die Spalte selbst.
+     Teil 2  Sechs Saetze: stimmt / stimmt nicht, Feld «Warum?». Nach dem
+             Pruefen je Satz «Eine mögliche Begründung», am Schluss
+             «Eine mögliche Sicht».
+   Stand: stand.nvE3 = {lage: {Karte: Spalte}, geprueft, teil, wahl:
+   {Satz: 'ja'|'nein'}, d2geprueft}; Texte in stand.texte (e3s_<Spalte>,
+   e3w_<Satz>). Gerechnet wird hier nichts. */
+const NV8 = D.e3, NV8T = NV8.texte;
+(function(){
+  const s = document.createElement('style');
+  s.textContent = `
+    .nv8vorrat{display:flex;flex-direction:column;gap:8px;padding:10px;min-height:120px}
+    .nv8vorrat.leer::after{content:'Alle Karten liegen in einer Spalte.';color:var(--matt);font-size:13px;padding:8px}
+    .nv8k{display:block;width:100%;text-align:left;font:inherit;font-size:13.5px;line-height:1.4;color:var(--tinte);
+      background:#fff;border:1px solid var(--linie);border-left:4px solid var(--nv-lila);border-radius:6px;
+      padding:7px 10px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+    .nv8k .t{display:block;font-weight:600;color:var(--nv-lila-t);font-size:12.5px;margin-bottom:2px}
+    .nv8k .q{font-weight:400;color:var(--matt)}
+    .nv8k.gewaehlt{outline:3px solid var(--nv-lila);outline-offset:1px}
+    .nv8k.falsch{border-color:#c0392b;box-shadow:0 0 0 2px #c0392b}
+    .nv8k.richtig{border-left-color:#3a7d44}
+    .nv8k .rf{display:block;margin-top:5px;color:#a3301f;font-size:12.5px}
+    .nv8k.schwebt{position:fixed;z-index:200;pointer-events:none;opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:grabbing}
+    .nv8spalten{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
+    .nv8sp{display:flex;flex-direction:column;border:1px dashed #c9bda8;border-radius:8px;background:#fbf8f2;min-height:150px}
+    .nv8sp.ziel{background:#f1e8f4;border-color:var(--nv-lila)}
+    .nv8sp > button.kopf{font:inherit;text-align:left;background:none;border:0;border-bottom:1px solid var(--linie);
+      padding:8px 10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--tinte)}
+    .nv8sp > button.kopf .n{display:block;font-weight:400;font-size:12px;color:var(--matt)}
+    .nv8sp .inhalt{display:flex;flex-direction:column;gap:6px;padding:8px;flex:1}
+    .nv8sp textarea{margin:0 8px 8px;font:inherit;font-size:13px;min-height:44px;resize:vertical;border:1px solid var(--linie);border-radius:5px;padding:5px}
+    .nv8sp .fr{margin:0 10px 3px;font-size:12px;color:var(--matt)}
+    .nv8sp .sicht{margin:0 10px 8px;font-size:12.5px;color:var(--nv-lila-t)}
+    .nv8teile{display:inline-flex;gap:4px;margin-right:8px}
+    .nv8teile button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
+    .nv8saetze{display:flex;flex-direction:column;gap:12px;padding:12px}
+    .nv8satz{background:#fff;border:1px solid var(--linie);border-radius:8px;padding:10px 12px}
+    .nv8satz.falsch{box-shadow:0 0 0 2px #c0392b}
+    .nv8satz .s{font-size:14.5px;line-height:1.45;margin:0 0 8px}
+    .nv8satz .wahl{display:flex;gap:8px;margin-bottom:6px}
+    .nv8satz .wahl button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
+    .nv8satz textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;min-height:40px;resize:vertical;border:1px solid var(--linie);border-radius:5px;padding:5px}
+    .nv8satz .bg{margin:6px 0 0;font-size:13px;color:var(--nv-lila-t)}
+    .nv8satz .bg b{display:block;font-size:12px}
+    .nv8sicht{padding:12px 14px;font-size:14px;line-height:1.5}
+    .nv8sicht h3{margin:0 0 8px;font-size:15px;color:var(--nv-lila-t)}
+    .nv8sicht.zu{color:var(--matt);font-size:13px}
+  `;
+  document.head.appendChild(s);
+})();
+
+function nvE3Stand(){
+  const S = stand.nvE3 = nvObj(stand.nvE3) ? stand.nvE3 : {};
+  if (!nvObj(S.lage)) S.lage = {};
+  if (!nvObj(S.wahl)) S.wahl = {};
+  if (S.teil !== 2) S.teil = 1;
+  NV8.karten.forEach(k => { if (S.lage[k.id] && !NV8.spalten.some(s => s.id === S.lage[k.id])) delete S.lage[k.id]; });
+  return S;
+}
+function nvE3Loesung(){
+  const lage = {}, wahl = {};
+  NV8.karten.forEach(k => lage[k.id] = k.spalte);
+  NV8.saetze.forEach(x => wahl[x.id] = x.stimmt ? 'ja' : 'nein');
+  const alt = nvObj(stand.nvE3) ? stand.nvE3 : {};
+  return {nvE3: {lage, wahl, geprueft: true, d2geprueft: true, teil: alt.teil === 2 ? 2 : 1}};
+}
+const nvE3Alle = S => NV8.karten.every(k => S.lage[k.id] === k.spalte);
+const nvE3SaetzeOk = S => NV8.saetze.every(x => S.wahl[x.id] === (x.stimmt ? 'ja' : 'nein'));
+
+function etappe3(){
+  const a = D.etappen[2];
+  loesungAnwenden(nvE3Loesung);
+  const S = nvE3Stand();
+  const gesperrt = !!(window.KASPER_RUECKMELDUNG && stand.loesungOffen);
+  const merk = () => { if (!gesperrt) sichern(); };
+  if (!nvObj(stand.texte)) stand.texte = {};
+  const sk = nvKarteHtml({id: 'e3', nr: 3, name: NV_SK.e3name, text: NV_SK.e3text, frage: NV_SK.e3frage, bild: ''});
+  const teil1 = S.teil === 1;
+  const leiste = `<span class="nv8teile" role="group" aria-label="Teile">
+      <button type="button" class="knopf leer" data-teil="1" aria-pressed="${teil1}">${nvEsc(NV8T.teil1)}${nvE3Alle(S) && S.geprueft ? ' ✓' : ''}</button>
+      <button type="button" class="knopf leer" data-teil="2" aria-pressed="${!teil1}">${nvEsc(NV8T.teil2)}${S.d2geprueft && nvE3SaetzeOk(S) ? ' ✓' : ''}</button></span>
+    <button class="knopf" id="nv8pruefen">${nvEsc(NV8T.pruefen)}</button>
+    <span class="befund" id="befund"></span>
+    <button class="knopf leer" id="weiter" style="margin-left:auto">Fertig →</button>`;
+  if (teil1) buehne({rolle: a.rolle, rang: a.rang, titel: 'Etappe 3 · ' + a.name, text: ''},
+    NV8T.vorrat, NV8T.teil1, leiste, sk, '', [0.8, 1.6]);
+  else buehne({rolle: a.rolle, rang: a.rang, titel: 'Etappe 3 · ' + a.name, text: ''},
+    NV8T.teil2, NV8T.sicht, leiste, sk, '', [1.5, 0.9]);
+  window._zustaendig = () => false;     // keine Karten des Kerns
+  window._neuzeichnen = () => etappe3();
+  const tisch = document.getElementById('tisch'), feld = document.getElementById('feld');
+  document.querySelectorAll('.nv8teile [data-teil]').forEach(b => b.onclick = () => {
+    nvFahne(null); S.teil = +b.dataset.teil; merk(); etappe3();
+  });
+  document.getElementById('weiter').onclick = () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); };
+  const befund = document.getElementById('befund');
+  const textFeld = (el, schluessel) => {
+    el.value = stand.texte[schluessel] || '';
+    el.disabled = gesperrt;
+    el.addEventListener('input', () => { stand.texte[schluessel] = el.value; merk(); });
+  };
+
+  if (teil1){
+    let gewaehlt = null;
+    const karteHtml = k => {
+      const falsch = S.geprueft && S.lage[k.id] && S.lage[k.id] !== k.spalte;
+      const richtig = S.geprueft && S.lage[k.id] === k.spalte;
+      const rf = falsch ? NV8.spalten.find(s => s.id === k.spalte).hinweis : '';
+      return `<button type="button" class="nv8k${falsch ? ' falsch' : ''}${richtig ? ' richtig' : ''}" data-k="${k.id}"${gesperrt ? ' disabled' : ''}>`
+        + `<span class="t">${nvEsc(k.titel)}${k.quelle && !k.titel.startsWith(k.quelle.replace(/^(Skript|Aufgabe) /, '')) ? ` <span class="q">· ${nvEsc(k.quelle)}</span>` : ''}${richtig ? ' ✓' : ''}</span>`
+        + `${nvEsc(k.text)}${rf ? `<span class="rf">${nvEsc(rf)}</span>` : ''}</button>`;
+    };
+    const zeichnen = () => {
+      const frei = NV8.karten.filter(k => !S.lage[k.id]);
+      tisch.innerHTML = `<div class="nv8vorrat${frei.length ? '' : ' leer'}" data-ziel="">${frei.map(karteHtml).join('')}</div>`;
+      feld.innerHTML = `<div class="nv8spalten">${NV8.spalten.map(sp => {
+        const drin = NV8.karten.filter(k => S.lage[k.id] === sp.id);
+        const fertig = S.geprueft && nvE3Alle(S);
+        return `<div class="nv8sp" data-ziel="${sp.id}">
+          <button type="button" class="kopf" data-spalte="${sp.id}">${nvEsc(sp.frage)}<span class="n">${nvEsc(sp.name)}</span></button>
+          <div class="inhalt">${drin.map(karteHtml).join('')}</div>
+          <p class="fr">${nvEsc(NV8.spaltenfrage)}</p>
+          <textarea data-text="e3s_${sp.id}" rows="2" aria-label="${nvEsc(sp.frage + ': ' + NV8.spaltenfrage)}"></textarea>
+          ${fertig ? `<p class="sicht"><b>${nvEsc(NV8T.sicht)}:</b> ${nvEsc(sp.sicht)}</p>` : ''}
+        </div>`;
+      }).join('')}</div>`;
+      feld.querySelectorAll('textarea[data-text]').forEach(t => textFeld(t, t.dataset.text));
+      binden();
+    };
+    const legen = (kid, ziel) => {
+      if (gesperrt) return;
+      if (ziel) S.lage[kid] = ziel; else delete S.lage[kid];
+      if (S.geprueft && !nvE3Alle(S)) S.geprueft = false;
+      gewaehlt = null; merk(); nvFahne(null); zeichnen();
+      befund.textContent = '';
+      jetzt();
+    };
+    const binden = () => {
+      document.querySelectorAll('.nv8k').forEach(el => {
+        el.onclick = () => {
+          if (el._gezogen){ el._gezogen = false; return; }
+          gewaehlt = gewaehlt === el.dataset.k ? null : el.dataset.k;
+          document.querySelectorAll('.nv8k').forEach(x => x.classList.toggle('gewaehlt', x.dataset.k === gewaehlt));
+        };
+        el.onpointerdown = ev => ziehen(ev, el);
+      });
+      document.querySelectorAll('.nv8sp > button.kopf').forEach(b => b.onclick = () => { if (gewaehlt) legen(gewaehlt, b.dataset.spalte); });
+      const vorrat = tisch.querySelector('.nv8vorrat');
+      vorrat.onclick = ev => { if (gewaehlt && !ev.target.closest('.nv8k')) legen(gewaehlt, ''); };
+      document.querySelectorAll('.nv8sp .inhalt').forEach(i => i.onclick = ev => {
+        if (gewaehlt && !ev.target.closest('.nv8k')) legen(gewaehlt, i.parentElement.dataset.ziel);
+      });
+    };
+    const zielUnter = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      const z = el && el.closest('[data-ziel]');
+      return z ? z.dataset.ziel : null;
+    };
+    const ziehen = (ev, el) => {
+      if (gesperrt || ev.button > 0) return;
+      const r = el.getBoundingClientRect(), dx = ev.clientX - r.left, dy = ev.clientY - r.top;
+      const x0 = ev.clientX, y0 = ev.clientY;
+      let geist = null;
+      const bewegen = e => {
+        if (!geist){
+          if (Math.hypot(e.clientX - x0, e.clientY - y0) < 6) return;
+          geist = el.cloneNode(true); geist.classList.add('schwebt'); geist.style.width = r.width + 'px';
+          document.body.appendChild(geist); el.style.opacity = '.35';
+          if (!stand.nvE3Gezogen){ stand.nvE3Gezogen = true; merk(); }
+        }
+        geist.style.left = (e.clientX - dx) + 'px'; geist.style.top = (e.clientY - dy) + 'px';
+        const z = zielUnter(e.clientX, e.clientY);
+        document.querySelectorAll('.nv8sp').forEach(s => s.classList.toggle('ziel', s.dataset.ziel === z));
+      };
+      const los_ = e => {
+        removeEventListener('pointermove', bewegen); removeEventListener('pointerup', los_); removeEventListener('pointercancel', los_);
+        if (!geist) return;
+        geist.remove(); el.style.opacity = ''; el._gezogen = true;
+        document.querySelectorAll('.nv8sp').forEach(s => s.classList.remove('ziel'));
+        const z = zielUnter(e.clientX, e.clientY);
+        if (z !== null) legen(el.dataset.k, z);
+      };
+      addEventListener('pointermove', bewegen); addEventListener('pointerup', los_); addEventListener('pointercancel', los_);
+    };
+    const jetzt = () => nvJetztSatz(S.geprueft && nvE3Alle(S) ? NV8T.satz_fertig.replace('«Eine mögliche Sicht»', '«Eine mögliche Sicht» unter den Spalten') + ' Danach weiter zu den Sätzen.'
+      : NV8T.satz1 + (stand.nvE3Gezogen ? '' : ' <span class="zart">' + nvEsc(NV8T.antippen) + '</span>'));
+    document.getElementById('nv8pruefen').onclick = () => {
+      if (gesperrt) return;
+      const liegt = NV8.karten.filter(k => S.lage[k.id]);
+      const ok = liegt.filter(k => S.lage[k.id] === k.spalte).length;
+      S.geprueft = true; merk(); zeichnen(); jetzt();
+      const offen = NV8.karten.length - liegt.length;
+      befund.textContent = `${ok} von ${NV8.karten.length} Karten liegen richtig.` + (offen ? ` ${offen} liegen noch bei den Aufgaben.` : '');
+      if (nvE3Alle(S)) fahne1();
+    };
+    const fahne1 = () => nvFahne({notiz: NV_W.teil2Notiz, knopf: NV_W.teil2,
+      tun: () => { nvFahne(null); S.teil = 2; merk(); etappe3(); },
+      fenster: NV.wegweiser.e3teil2, schluessel: 'e3teil2'});
+    zeichnen();
+    nvKarteHaken(3, null);
+    jetzt();
+    if (S.geprueft && nvE3Alle(S)) fahne1(); else nvFahne(null);
+  } else {
+    const zeichnen = () => {
+      tisch.innerHTML = `<div class="nv8saetze">${NV8.saetze.map((x, i) => {
+        const w = S.wahl[x.id], soll = x.stimmt ? 'ja' : 'nein';
+        const falsch = S.d2geprueft && w !== soll;
+        return `<div class="nv8satz${falsch ? ' falsch' : ''}" data-s="${x.id}">
+          <p class="s">${i + 1}. ${nvEsc(x.satz)}${S.d2geprueft && w === soll ? ' ✓' : ''}</p>
+          <div class="wahl" role="group" aria-label="stimmt oder stimmt nicht">
+            <button type="button" class="knopf leer" data-w="ja" aria-pressed="${w === 'ja'}"${gesperrt ? ' disabled' : ''}>${nvEsc(NV8T.stimmt)}</button>
+            <button type="button" class="knopf leer" data-w="nein" aria-pressed="${w === 'nein'}"${gesperrt ? ' disabled' : ''}>${nvEsc(NV8T.stimmt_nicht)}</button></div>
+          <textarea data-text="e3w_${x.id}" rows="2" placeholder="${nvEsc(NV8T.warum)}" aria-label="${nvEsc(NV8T.warum)}"></textarea>
+          ${S.d2geprueft && w ? `<p class="bg"><b>${nvEsc(NV8T.begruendung)}</b>${nvEsc(x.warum)}</p>` : ''}
+        </div>`;
+      }).join('')}</div>`;
+      const fertig = S.d2geprueft && nvE3SaetzeOk(S);
+      feld.innerHTML = fertig
+        ? `<div class="nv8sicht"><h3>${nvEsc(NV8T.sicht)}</h3>${NV8.sicht.map(p => `<p>${nvEsc(p)}</p>`).join('')}</div>`
+        : `<div class="nv8sicht zu">«${nvEsc(NV8T.sicht)}» erscheint hier, sobald alle Sätze richtig beurteilt sind.</div>`;
+      tisch.querySelectorAll('textarea[data-text]').forEach(t => textFeld(t, t.dataset.text));
+      tisch.querySelectorAll('.nv8satz').forEach(d => d.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
+        if (gesperrt) return;
+        S.wahl[d.dataset.s] = b.dataset.w;
+        if (S.d2geprueft && !nvE3SaetzeOk(S)) S.d2geprueft = false;
+        merk(); nvFahne(null); befund.textContent = '';
+        d.querySelectorAll('[data-w]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        d.classList.remove('falsch');
+      }));
+      nvJetztSatz(fertig ? NV8T.satz_fertig : NV8T.satz2);
+    };
+    const fahne2 = () => nvFahne({notiz: NV_W.e3fertigNotiz, knopf: NV_W.mitnehmen,
+      tun: () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); },
+      fenster: NV.wegweiser.e3fertig, schluessel: 'e3fertig'});
+    document.getElementById('nv8pruefen').onclick = () => {
+      if (gesperrt) return;
+      const ok = NV8.saetze.filter(x => S.wahl[x.id] === (x.stimmt ? 'ja' : 'nein')).length;
+      const leer = NV8.saetze.filter(x => !S.wahl[x.id]).length;
+      S.d2geprueft = true; merk(); zeichnen();
+      befund.textContent = `${ok} von ${NV8.saetze.length} Sätzen richtig beurteilt.` + (leer ? ` ${leer} noch offen.` : '');
+      if (nvE3SaetzeOk(S)) fahne2();
+    };
+    zeichnen();
+    nvKarteHaken(3, null);
+    if (S.d2geprueft && nvE3SaetzeOk(S)) fahne2(); else nvFahne(null);
+  }
+  loesungsKnopf(() => etappe3());
+}
+
 if (typeof mitnehmen === 'function'){
   const _nvMitnehmenKern = mitnehmen;
   // eslint-disable-next-line no-global-assign
@@ -2956,4 +3214,4 @@ if (typeof mitnehmen === 'function'){
   };
 }
 
-ETAPPEN.push(etappe1, etappe2);
+ETAPPEN.push(etappe1, etappe2, etappe3);
