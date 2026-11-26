@@ -1651,7 +1651,17 @@ function bnFelderBauen(el){
     x.addEventListener('pointerdown', e => e.stopPropagation());
     x.addEventListener('click', e => e.stopPropagation());
   });
-  const geaendert = () => { bnUrteilWeg(el); bnKurzAuffrischen(el); sichern(); };
+  // GEAENDERT (Fassung 10.1, Rike 2026-11-26): Die Formel erscheint, sobald
+  // die Karte richtig ausgefuellt ist - nicht erst nach «Pruefen».
+  const geaendert = () => {
+    bnUrteilWeg(el); bnKurzAuffrischen(el);
+    const k = BN_KARTE[el.dataset.id];
+    if (k && k.formel && !bnStand().formel[k.id]){
+      const u = bnUrteil(k, bnFelder(k.id));
+      if (u && u.art === 'ok'){ bnStand().formel[k.id] = true; bnFormelSetzen(el); bnNachFeldern(); }
+    }
+    sichern();
+  };
   box.querySelectorAll('.bn-frow input').forEach(inp => inp.addEventListener('input', () => {
     if (inp.dataset.g === 'P') f.P = inp.value; else f[inp.dataset.g][+inp.dataset.i] = inp.value;
     bnIvAuffrischen(el); geaendert();
