@@ -562,6 +562,11 @@ function nvStoerNr(id){
 }
 const nvHeim = id => id[0] === 'B' ? 'tischB' : 'tischG';
 const nvGesuchtName = w => (NV1.gesucht.find(g => g.wert === w) || {}).name || '…';
+/* NEU (FASSUNG CHILBI 6, Rike 2026-11-27): Die Auswahl fragt nach den drei
+   Fragen des Skripts. stand.nvgesucht traegt jetzt prognose / umfang /
+   konfidenz; ein alter Eintrag (ab, k, n, p) wird beim Lesen uebersetzt. */
+const nvFrageSoll = z => NV1.frage_von[z.gesucht];
+const nvFrageWert = w => NV1.frage_von[w] || w || '';
 
 function _nvLoesungE1(){
   const karten = {}, gesucht = {};
@@ -569,7 +574,7 @@ function _nvLoesungE1(){
   NV1.zeilen.filter(z => !z.beispiel).forEach(z => {
     karten['B' + z.nr] = {ort: `z${z.nr}/bild`, x: 4, y: 4, rot: 0};
     karten['G' + z.nr] = {ort: `z${z.nr}/gl`,   x: 4, y: 4, rot: 0};
-    gesucht[z.nr] = z.gesucht;
+    gesucht[z.nr] = nvFrageSoll(z);
   });
   return {karten, nvgesucht: gesucht, nvZug2: true};
 }
@@ -578,6 +583,7 @@ function etappe1(){
   const a = D.etappen[0];
   loesungAnwenden(_nvLoesungE1);
   if (!stand.nvgesucht || typeof stand.nvgesucht !== 'object') stand.nvgesucht = {};
+  Object.keys(stand.nvgesucht).forEach(nr => { stand.nvgesucht[nr] = nvFrageWert(stand.nvgesucht[nr]); });
   const loesungZu = !!(window.KASPER_RUECKMELDUNG && stand.loesungOffen);
 
   // GEAENDERT (FASSUNG CHILBI): Die graue Leiste traegt nur «Etappe 1 ·
@@ -620,7 +626,7 @@ function etappe1(){
   function zeilen(){
     feld.querySelectorAll('.nvzeile').forEach(d => d.remove());
     const kb = kbw(), slotW = kb + 8, slotH = kb * NV1.hoch + 8;
-    const PAD = 8, GAP = 12, WAHL = 112, URTEIL = 18;
+    const PAD = 8, GAP = 12, WAHL = 176, URTEIL = 18;
     const platz = (feld.parentElement.clientWidth || 700) - 24;
     const sitW = Math.max(kb * 1.25, Math.min(kb * 2.6, platz - 2 * PAD - 2 * slotW - WAHL - 3 * GAP));
     const zeileW = 2 * PAD + sitW + 2 * slotW + WAHL + 3 * GAP;
@@ -667,17 +673,17 @@ function etappe1(){
       const w = document.createElement('label');
       w.className = 'nvwahl';
       w.style.left = xWahl + 'px'; w.style.top = (oben + slotH / 2 - 26) + 'px'; w.style.width = WAHL + 'px';
-      const wert = z.beispiel ? z.gesucht : (stand.nvgesucht[z.nr] || '');
-      w.innerHTML = `<span>gesucht:</span>
-        <select aria-label="gesucht in Zeile ${z.kurz}" ${z.beispiel || loesungZu ? 'disabled' : ''}>
+      const wert = z.beispiel ? nvFrageSoll(z) : (stand.nvgesucht[z.nr] || '');
+      w.innerHTML = `<span>Welche Frage?</span>
+        <select aria-label="Welche Frage stellt ${z.kurz}?" ${z.beispiel || loesungZu ? 'disabled' : ''}>
           <option value="">…</option>
-          ${NV1.gesucht.map(g => `<option value="${g.wert}"${g.wert === wert ? ' selected' : ''}>${g.name}</option>`).join('')}
+          ${NV1.gesucht.map(g => `<option value="${g.wert}" title="${nvEsc(g.lang)}"${g.wert === wert ? ' selected' : ''}>${g.name}</option>`).join('')}
         </select>
-        <span class="nvwahlbild" data-alsbild>gesucht: ${nvGesuchtName(wert)}</span>`;
+        <span class="nvwahlbild" data-alsbild>${nvGesuchtName(wert)}</span>`;
       const sel = w.querySelector('select');
       sel.onchange = () => {
         stand.nvgesucht[z.nr] = sel.value;
-        w.querySelector('.nvwahlbild').textContent = 'gesucht: ' + nvGesuchtName(sel.value);
+        w.querySelector('.nvwahlbild').textContent = nvGesuchtName(sel.value);
         sel.classList.remove('nv-luecke');
         markenLoeschen(); sichern();
         if (!e1Fertig()) nvFahne(null);
@@ -743,7 +749,7 @@ function etappe1(){
      Karten im Vorrat erkennt. Gelesen wird der Stand, nicht der DOM, damit
      die Fahne auch beim Laden richtig steht. */
   const zeileFertig = z => (stand.karten['B' + z.nr] || {}).ort === `z${z.nr}/bild`
-    && (stand.karten['G' + z.nr] || {}).ort === `z${z.nr}/gl` && stand.nvgesucht[z.nr] === z.gesucht;
+    && (stand.karten['G' + z.nr] || {}).ort === `z${z.nr}/gl` && stand.nvgesucht[z.nr] === nvFrageSoll(z);
   const e1Fertig = () => zeilenSicht.filter(z => !z.beispiel).every(zeileFertig);
   // NEU (FASSUNG CHILBI 2): Erst Zug 2 oeffnen, dann weiter zu Etappe 2
   const zug2Oeffnen = () => {
@@ -771,7 +777,8 @@ function etappe1(){
   function e1Satz(){ nvJetztSatz(stand.geprueft && e1Fertig()
     ? (zug2 ? 'Alle Zeilen stimmen. Weiter zu Etappe 2.' : 'An der Chilbi stimmt alles. Weiter zu den Aufgaben aus dem Skript.')
     : 'Ziehen Sie zu jeder Situation das passende Bild und die passende Gleichung aus dem Vorrat auf ihre Plätze. '
-      + 'Wählen Sie am Ende der Zeile, was gesucht ist. Dann «Prüfen».'
+      + 'Wählen Sie am Ende der Zeile, welche Frage die Aufgabe stellt: Mit welchem Ergebnis können wir rechnen? '
+      + 'Wie gross muss die Stichprobe sein? Welche Anteile passen zum Ergebnis? Dann «Prüfen».'
       + (zug2 ? '' : ' <span class="nv-noch">Die erste Zeile, die Quizbude, ist als Beispiel fertig.</span>')
       + (stand.nvGezogen || document.body.classList.contains('loesungoffen') ? ''
         : ` <span class="nv-noch" style="color:var(--nv-lila-t)">✋ ${nvEsc(NV.ziehen)}</span>`)); }
@@ -837,9 +844,9 @@ function etappe1(){
       const sel = zeile.querySelector('select');
       sel.classList.remove('ok', 'falsch');
       const w = stand.nvgesucht[z.nr] || '';
-      if (!w){ gesOffen++; sel.classList.add('nv-luecke'); teile.push(['offen', '«gesucht» fehlt noch']); }
-      else if (w === z.gesucht){ gesOk++; sel.classList.add('ok'); teile.push(['ok', '«gesucht» stimmt']); }
-      else { gesFalsch++; sel.classList.add('falsch'); teile.push(['falsch', '«gesucht» stimmt nicht']); }
+      if (!w){ gesOffen++; sel.classList.add('nv-luecke'); teile.push(['offen', 'Die Frage fehlt noch']); }
+      else if (w === nvFrageSoll(z)){ gesOk++; sel.classList.add('ok'); teile.push(['ok', 'Die Frage stimmt']); }
+      else { gesFalsch++; sel.classList.add('falsch'); teile.push(['falsch', 'Die Frage stimmt nicht']); }
       const u = document.createElement('div');
       u.className = 'sitmarke nvurteil';
       u.style.left = pb.style.left;
@@ -1263,8 +1270,22 @@ function nv3Term(roh){
     if (t.v){ vars.add(t.v); return e => e[t.v]; }
     if (t.o === '('){ const f = summe(); if (!ist(')')) throw 0; i++; return f; }
     if (t.o === '√'){
+      // FEHLERBEHOBEN (2026-11-27, Rike): «√300 · 0.4 · 0.6» zog nur die
+      // 300 unter die Wurzel, weil ein ausgeschriebenes «·» die Wurzel
+      // beendete; man musste Klammern setzen und wusste das nicht.
+      // Ursache: Nur ein Faktor ohne Zeichen setzte die Wurzel fort.
+      // Jetzt gilt: Steht nach √ eine Klammer, wirkt √ auf die Klammer;
+      // sonst auf das ganze Produkt bis zum naechsten + oder - .
+      if (ist('(')){ const a = potenz(); return e => Math.sqrt(a(e)); }
       let f = potenz();
-      while (faktor()){ const a = f, g = potenz(); f = e => a(e) * g(e); }
+      for (;;){
+        let o;
+        if (ist('*') || ist('/')) o = tok[i++].o;
+        else if (faktor() || ist('(')) o = '*';
+        else break;
+        const a = f, g = potenz();
+        f = o === '*' ? e => a(e) * g(e) : e => a(e) / g(e);
+      }
       const a = f;
       return e => Math.sqrt(a(e));
     }
@@ -1910,13 +1931,14 @@ function nv3LoesungEintrag(t){
   z.mu = A.mu_t; z.sigma = A.s_t;
   z.seiten = A.seiten; z.lage = A.lage || ''; z.frage = A.frage; z.c = String(A.c);
   z.form = A.seiten === 'zwei' ? 'betrag' : A.lage;
+  z.frage3 = nv3FrageSoll(t);
   z.gl = {g: A.grenze === null ? '' : nv3Z(A.grenze), mu: A.mu_t, c: String(A.c), s: A.s_t};
   z.angabenGeprueft = true; z.angabenOk = true;
   z.geprueft = true; z.ok = true; z.okAlles = true;
   z.bild = nv3BildSoll(t); z.bildGeprueft = true; z.bildOk = true;
   // NEU (FASSUNG CHILBI 2): Ergebnis eingetragen, Rechenschritte offen
   const E = t.erg;
-  z.erg = E.art === 'ab' ? {w: '', a: String(E.w[0]), b: String(E.w[1])} : {w: String(E.w), a: '', b: ''};
+  z.erg = (E.art === 'ab' || E.art === 'pp') ? {w: '', a: String(E.w[0]), b: String(E.w[1])} : {w: String(E.w), a: '', b: ''};
   z.ergGeprueft = true; z.ergOk = true; z.rechnung = true;
   return z;
 }
@@ -2033,10 +2055,19 @@ function nv3PruefeGl(t, z){
 }
 /* Schritt 6, das Pruefen am Schluss: stimmen die Angaben, steht dort eine
    Zeile; die Gleichung einzeln. */
+/* NEU (FASSUNG CHILBI 6): Die Frage des Skripts gehoert zum Loesen. */
+const nv3FrageSoll = t => NV1.frage_von[t.typ];
+function nv3PruefeFrage(t, z){
+  if (!z.frage3) return [false, 'Wählen Sie noch, welche Frage die Aufgabe stellt.', 'frage3'];
+  if (z.frage3 === nv3FrageSoll(t)) return [true, 'Die Frage stimmt.', 'frage3'];
+  return [false, {prognose: 'Ist hier wirklich ein Ergebnis vorherzusagen? Was ist gegeben, was gesucht?',
+    umfang: 'Wird hier nach der Zahl der Versuche gefragt?',
+    konfidenz: 'Ist hier schon ein Ergebnis beobachtet, zu dem passende Anteile gesucht sind?'}[z.frage3], 'frage3'];
+}
 function nv3Pruefe(t, z){
-  const a = nv3PruefeAngaben(t, z), g = nv3PruefeGl(t, z);
+  const a = nv3PruefeAngaben(t, z), g = nv3PruefeGl(t, z), f = nv3PruefeFrage(t, z);
   const u = a.alles ? [[true, 'Die Angaben links stimmen.', null]] : a.u.filter(x => !x[0]);
-  return {u: u.concat(g.u), alles: a.alles && g.alles, angaben: a};
+  return {u: u.concat(g.u, [f]), alles: a.alles && g.alles && f[0], angaben: a};
 }
 
 /* ── NEU (gemeinsam entschieden): FASSUNG CHILBI 2, nach der Gleichung ──
@@ -2050,16 +2081,19 @@ function nv3PruefeErg(t, z){
   const E = t.erg, e = z.erg || {};
   const lies = x => nv3Wert(nv3Zahl(x));
   const leer = x => !String(x ?? '').trim();
-  const runden = {ab: 'abgerundet', auf: 'aufgerundet', aussen: 'nach aussen gerundet'}[E.runden] || '';
-  const tolRoh = E.art === 'p' ? 6e-4 : (E.art === 'n' ? 0.1 : 0.051);
+  // NEU (FASSUNG CHILBI 6): art 'pp' = zwei Grenzen fuer p (zweiseitig),
+  // nach innen gerundet (Chilbi-Umfrage).
+  const istP = E.art === 'p' || E.art === 'pp', zwei = E.art === 'ab' || E.art === 'pp';
+  const runden = {ab: 'abgerundet', auf: 'aufgerundet', aussen: 'nach aussen gerundet', innen: 'nach innen gerundet'}[E.runden] || '';
+  const tolRoh = istP ? 6e-4 : (E.art === 'n' ? 0.1 : 0.051);
   const eins = (roh, soll, rohSoll, name, richtung) => {
     const v = lies(roh);
     if (!nv3Num(v)) return [false, `${name}: Hier gehört eine Zahl hin.`];
-    if (E.art === 'p' ? Math.abs(v - soll) < 5e-4 : nv3Gleich(v, soll))
+    if (istP ? Math.abs(v - soll) < 5e-4 : nv3Gleich(v, soll))
       return [true, `${name} stimmt.`];
     if (Math.abs(v - rohSoll) <= tolRoh)
-      return [true, `${name}: Gerechnet stimmt das. Damit die Sicherheit bleibt, wird ${runden}: ${nv3Esc(E.art === 'p' ? soll.toFixed(3) : String(soll))}.`];
-    const schritt = E.art === 'p' ? 0.001 : 1;
+      return [true, `${name}: Gerechnet stimmt das. ${E.runden === 'innen' ? 'Damit jedes p darin verträglich ist' : 'Damit die Sicherheit bleibt'}, wird ${runden}: ${nv3Esc(istP ? soll.toFixed(3) : String(soll))}.`];
+    const schritt = istP ? 0.001 : 1;
     if (Math.abs(v - (soll - richtung * schritt)) < 1e-6)
       return [false, `${name}: Fast. Runden Sie auf die sichere Seite — hier wird ${runden}.`];
     return [false, `${name} stimmt noch nicht. Die Rechenschritte zeigen, wie man rechnet.`];
@@ -2067,9 +2101,11 @@ function nv3PruefeErg(t, z){
   // richtung: +1, wenn aufgerundet wird (der Fehler waere eins weniger)
   const r = E.runden === 'auf' ? 1 : -1;
   let u;
-  if (E.art === 'ab'){
+  if (zwei){
     if (leer(e.a) && leer(e.b)) return {leer: true};
-    u = [eins(e.a, E.w[0], E.roh[0], 'a', -1), eins(e.b, E.w[1], E.roh[1], 'b', 1)];
+    u = E.art === 'pp'
+      ? [eins(e.a, E.w[0], E.roh[0], 'Die untere Grenze', 1), eins(e.b, E.w[1], E.roh[1], 'Die obere Grenze', -1)]
+      : [eins(e.a, E.w[0], E.roh[0], 'a', -1), eins(e.b, E.w[1], E.roh[1], 'b', 1)];
   } else {
     if (leer(e.w)) return {leer: true};
     u = [eins(e.w, E.w, E.roh, E.art, r)];
@@ -2334,8 +2370,18 @@ function etappe2(){
       if (!sp) return;
       const roh = String(z[f] || '').trim();
       const direkt = /^\d+(?:[.,]\d+)?$/.test(roh);
-      sp.textContent = R && z.angabenOk && direkt && nv3PruefeMuS(roh, w, t.angaben, name)[0]
-        ? NV.rechnung.zb + name + ' = ' + R[w] : '';
+      const ok = R && z.angabenOk && nv3PruefeMuS(roh, w, t.angaben, name)[0];
+      // NEU (2026-11-27, Rike): Wer die Rechnung eintraegt («300 · 0.4»),
+      // bekommt das Ergebnis darunter, statt dass nur die Rechnung stehen
+      // bleibt. Nur wo n und p gegeben sind (sonst ist es ein Term).
+      let erg = '';
+      if (ok && !direkt){
+        const teile = nv3Teile(roh), r = nv3Term(teile[teile.length - 1]);
+        const x = r.f && !r.vars.size ? r.f({}) : NaN;
+        if (isFinite(x) && teile.length === 1)
+          erg = name + (Math.abs(x - Math.round(x)) < 1e-9 ? ' = ' : ' ≈ ') + nv3Z(x);
+      }
+      sp.textContent = ok && direkt ? NV.rechnung.zb + name + ' = ' + R[w] : erg;
     });
   }
   function angabenUrteil(){
@@ -2389,6 +2435,9 @@ function etappe2(){
     <div class="nv3wahl nv3formwahl" role="group" data-feld="form">${NV3FORM.map(f => `<button type="button" data-form="${f.k}"
        aria-pressed="${z.form === f.k}">${f.name}</button>`).join('')}</div>
     <div class="nv3glbau" id="nv3glbau"></div>
+    <div class="nv3schritt">Welche Frage stellt die Aufgabe?</div>
+    <div class="nv3wahl nv3fragewahl" role="group" data-feld="frage3">${NV1.gesucht.map(g => `<button type="button" data-frage3="${g.wert}"
+       aria-pressed="${z.frage3 === g.wert}" title="${nvEsc(g.name)}">${nvEsc(g.lang)}</button>`).join('')}</div>
     <ul class="nv3urteil" id="nv3urteil"></ul>
     <div id="nv3ergebnis"></div>` : ''}</div>`;
   /* Die Zeigen-Knoepfe des gefuehrten Beispiels */
@@ -2421,6 +2470,12 @@ function etappe2(){
     nvE2Bedienung(t, z);
     return;
   }
+  // NEU (FASSUNG CHILBI 6): welche der drei Fragen des Skripts
+  feld.querySelectorAll('[data-frage3]').forEach(k => k.onclick = () => {
+    if (gesperrt) return;
+    z.frage3 = k.dataset.frage3; merk();
+    feld.querySelectorAll('[data-frage3]').forEach(x => x.setAttribute('aria-pressed', String(x === k)));
+  });
   feld.querySelectorAll('[data-c]').forEach(k => k.onclick = () => {
     z.c = String(z.c) === k.dataset.c ? '' : k.dataset.c;
     feld.querySelectorAll('[data-c]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.c === String(z.c))));
@@ -2431,7 +2486,7 @@ function etappe2(){
     feld.querySelectorAll('[data-form]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.form === z.form)));
     glBauen(); geaendert();
   });
-  if (gesperrt) feld.querySelectorAll('[data-c],[data-form]').forEach(x => { x.disabled = true; });
+  if (gesperrt) feld.querySelectorAll('[data-c],[data-form],[data-frage3]').forEach(x => { x.disabled = true; });
   zeigenBinden(feld);
 
   const richtig = () => z.geprueft && z.ok;
@@ -2640,6 +2695,7 @@ function etappe2(){
           autocomplete="off" aria-label="Ergebnis ${name}" ${gesperrt ? 'disabled' : ''}></span>`;
     const felder = E.art === 'ab'
       ? `${inp('a', 'a =')}${inp('b', 'b =')}`
+      : E.art === 'pp' ? `${inp('a', 'p ≥')}${inp('b', 'p ≤')}`
       : inp('w', E.art === 'k' ? 'k =' : `${E.art} ${E.rel}`);
     e.innerHTML = `<div class="nv3ergebnis">
       <div class="nv3okzeile">✓ Die Gleichung stimmt.</div>${nv3GlHtml({zeilen: t.gleichung})}
@@ -2661,7 +2717,7 @@ function etappe2(){
       const p = nv3PruefeErg(t, z);
       if (p.leer){ u.innerHTML = `<li>${nvEsc(EF.leer)}</li>`; return; }
       u.innerHTML = listeHtml(p.u);
-      const f = E.art === 'ab' ? ['a', 'b'] : ['w'];
+      const f = (E.art === 'ab' || E.art === 'pp') ? ['a', 'b'] : ['w'];
       p.u.forEach(([ok], i) => { const el = e.querySelector(`[data-feld="erg-${f[i]}"]`); if (el) el.classList.add(ok ? 'ok' : 'falsch'); });
     };
     urteil();
@@ -2823,7 +2879,8 @@ function nv3AngabenText(z){
 /* NEU (FASSUNG CHILBI 2): das eigene Ergebnis fuers Mitnehmen */
 function nv3ErgText(t, z){
   const e = z.erg || {}, E = t.erg, v = x => String(x ?? '').trim();
-  const roh = E.art === 'ab' ? (v(e.a) || v(e.b) ? `a = ${v(e.a) || '…'}, b = ${v(e.b) || '…'}` : '')
+  const roh = E.art === 'pp' ? (v(e.a) || v(e.b) ? `${v(e.a) || '…'} ≤ p ≤ ${v(e.b) || '…'}` : '')
+    : E.art === 'ab' ? (v(e.a) || v(e.b) ? `a = ${v(e.a) || '…'}, b = ${v(e.b) || '…'}` : '')
     : (v(e.w) ? `${E.art === 'k' ? 'k =' : E.art + ' ' + E.rel} ${v(e.w)}` : '');
   if (!roh) return '';
   return 'Ihr Ergebnis: ' + roh + (z.ergGeprueft ? (z.ergOk ? '  ✓' : '  ✗') : '');
@@ -2936,80 +2993,209 @@ function nv3BildE2(){
   return Promise.all(warte).then(() => c);
 }
 
-/* ───────── Etappe 3 · Dasselbe Bild, eine andere Frage ─────────
-   NEU (gemeinsam entschieden): FASSUNG CHILBI 4 (2026-11-26, Rike: «Ja,
-   beide Teile»). Spezifikation thema.md, Daten D.e3 (inhalte.E3_*).
-     Teil 1  Aufgabenkarten in vier Spalten (die Fragen des Skripts).
-             Ziehen oder antippen + Spalte antippen. «Prüfen» umrandet
-             falsch liegende Karten rot und nennt eine Rueckfrage der
-             richtigen Spalte, nicht die Spalte selbst.
-     Teil 2  Sechs Saetze: stimmt / stimmt nicht, Feld «Warum?». Nach dem
-             Pruefen je Satz «Eine mögliche Begründung», am Schluss
-             «Eine mögliche Sicht».
-   Stand: stand.nvE3 = {lage: {Karte: Spalte}, geprueft, teil, wahl:
-   {Satz: 'ja'|'nein'}, d2geprueft}; Texte in stand.texte (e3s_<Spalte>,
-   e3w_<Satz>). Gerechnet wird hier nichts. */
+/* ───────── Etappe 3 · Glauben wir es noch? ─────────
+   GEAENDERT (FASSUNG CHILBI 5, Rike 2026-11-27, «Ja, so bauen»; ersetzt
+   «Dasselbe Bild, eine andere Frage» aus Chilbi 4). Spezifikation
+   thema.md, Daten D.e3 (inhalte.E3_*). Vier Teile als Reiter:
+     (einstieg «Vier Fragen» bis Chilbi 5; seit Chilbi 6 weg, die Fragen
+      des Skripts stehen in Etappe 1 und 2)
+     test      sechs Behauptungen: Behauptung, Seite, Bereich (c, mu,
+               sigma, Grenzen, Spielraum +-1), Bild mit X, Entscheid
+     irrtum    Vierfeldertafel Wirklichkeit x Entscheid, acht Geschichten,
+               danach Namen der Felder und eine Frage
+     deuten    sechs Saetze stimmt / stimmt nicht mit Begruendung, Sicht
+   Stand: stand.nvE3 = {v: 5, teil, lage, geprueft, akt, t: {Id: {...}},
+   irr: {lage, geprueft, frage}, wahl, d2geprueft}; Texte in stand.texte
+   (e3t_<Id>, e3w_<Satz>). Ein Stand der Fassung Chilbi 4 (ohne v) wird
+   verworfen. */
 const NV8 = D.e3, NV8T = NV8.texte;
 (function(){
   const s = document.createElement('style');
   s.textContent = `
     .nv8vorrat{display:flex;flex-direction:column;gap:8px;padding:10px;min-height:120px}
-    .nv8vorrat.leer::after{content:'Alle Karten liegen in einer Spalte.';color:var(--matt);font-size:13px;padding:8px}
+    .nv8vorrat.leer::after{content:'Alle Karten liegen.';color:var(--matt);font-size:13px;padding:8px}
     .nv8k{display:block;width:100%;text-align:left;font:inherit;font-size:13.5px;line-height:1.4;color:var(--tinte);
       background:#fff;border:1px solid var(--linie);border-left:4px solid var(--nv-lila);border-radius:6px;
       padding:7px 10px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
     .nv8k .t{display:block;font-weight:600;color:var(--nv-lila-t);font-size:12.5px;margin-bottom:2px}
-    .nv8k .q{font-weight:400;color:var(--matt)}
     .nv8k.gewaehlt{outline:3px solid var(--nv-lila);outline-offset:1px}
     .nv8k.falsch{border-color:#c0392b;box-shadow:0 0 0 2px #c0392b}
     .nv8k.richtig{border-left-color:#3a7d44}
     .nv8k .rf{display:block;margin-top:5px;color:#a3301f;font-size:12.5px}
     .nv8k.schwebt{position:fixed;z-index:200;pointer-events:none;opacity:.92;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:grabbing}
     .nv8spalten{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px}
-    .nv8sp{display:flex;flex-direction:column;border:1px dashed #c9bda8;border-radius:8px;background:#fbf8f2;min-height:150px}
+    .nv8sp{display:flex;flex-direction:column;border:1px dashed #c9bda8;border-radius:8px;background:#fbf8f2;min-height:120px}
     .nv8sp.ziel{background:#f1e8f4;border-color:var(--nv-lila)}
     .nv8sp > button.kopf{font:inherit;text-align:left;background:none;border:0;border-bottom:1px solid var(--linie);
       padding:8px 10px;cursor:pointer;font-weight:600;font-size:14px;color:var(--tinte)}
     .nv8sp > button.kopf .n{display:block;font-weight:400;font-size:12px;color:var(--matt)}
     .nv8sp .inhalt{display:flex;flex-direction:column;gap:6px;padding:8px;flex:1}
-    .nv8sp textarea{margin:0 8px 8px;font:inherit;font-size:13px;min-height:44px;resize:vertical;border:1px solid var(--linie);border-radius:5px;padding:5px}
-    .nv8sp .fr{margin:0 10px 3px;font-size:12px;color:var(--matt)}
-    .nv8sp .sicht{margin:0 10px 8px;font-size:12.5px;color:var(--nv-lila-t)}
-    .nv8teile{display:inline-flex;gap:4px;margin-right:8px}
+    .nv8hinweis{margin:4px 10px 10px;padding:8px 10px;background:#f1e8f4;border-radius:6px;font-size:13.5px;color:var(--nv-lila-t)}
+    .nv8teile{display:inline-flex;gap:4px;margin-right:8px;flex-wrap:wrap}
     .nv8teile button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
+    .nv8tafel{display:grid;grid-template-columns:110px 1fr 1fr;gap:8px;padding:10px}
+    .nv8tafel .kopf{font-weight:600;font-size:13.5px;padding:6px;text-align:center;align-self:end}
+    .nv8tafel .zk{font-weight:600;font-size:13.5px;padding:6px;align-self:center}
+    .nv8tafel .nv8sp > .fname{padding:6px 10px;font-weight:600;color:var(--nv-lila-t);font-size:13px;border-bottom:1px solid var(--linie)}
+    .nv8tafel .nv8sp > .fname.leer{color:var(--matt);font-weight:400}
+    .nv8frage{margin:6px 10px 12px;padding:10px 12px;background:#fff;border:1px solid var(--linie);border-radius:8px;font-size:14px}
+    .nv8frage .wahl{display:flex;gap:8px;margin-top:6px}
+    .nv8frage .wahl button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
     .nv8saetze{display:flex;flex-direction:column;gap:12px;padding:12px}
     .nv8satz{background:#fff;border:1px solid var(--linie);border-radius:8px;padding:10px 12px}
     .nv8satz.falsch{box-shadow:0 0 0 2px #c0392b}
     .nv8satz .s{font-size:14.5px;line-height:1.45;margin:0 0 8px}
     .nv8satz .wahl{display:flex;gap:8px;margin-bottom:6px}
     .nv8satz .wahl button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
-    .nv8satz textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;min-height:40px;resize:vertical;border:1px solid var(--linie);border-radius:5px;padding:5px}
-    .nv8satz .bg{margin:6px 0 0;font-size:13px;color:var(--nv-lila-t)}
-    .nv8satz .bg b{display:block;font-size:12px}
+    .nv8satz textarea, .nv8test textarea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;min-height:40px;resize:vertical;border:1px solid var(--linie);border-radius:5px;padding:5px}
+    .nv8bg{margin:6px 0 0;font-size:13px;color:var(--nv-lila-t)}
+    .nv8bg b{display:block;font-size:12px}
     .nv8sicht{padding:12px 14px;font-size:14px;line-height:1.5}
     .nv8sicht h3{margin:0 0 8px;font-size:15px;color:var(--nv-lila-t)}
     .nv8sicht.zu{color:var(--matt);font-size:13px}
+    .nv8nr{display:flex;gap:6px;flex-wrap:wrap;padding:10px 12px 0}
+    .nv8nr button{min-width:38px}
+    .nv8nr button[aria-current=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
+    .nv8aufg{padding:10px 12px}
+    .nv8aufg .von{font-size:12.5px;color:var(--matt)}
+    .nv8aufg h3{margin:2px 0 8px;font-size:17px;color:var(--nv-lila-t)}
+    .nv8aufg .txt{font-size:14.5px;line-height:1.5;background:#fff;border:1px solid var(--linie);border-radius:8px;padding:10px 12px}
+    .nv8test{padding:10px 12px;display:flex;flex-direction:column;gap:12px}
+    .nv8schritt{background:#fff;border:1px solid var(--linie);border-radius:8px;padding:8px 12px}
+    .nv8schritt h4{margin:0 0 6px;font-size:14px;color:var(--nv-lila-t);display:flex;align-items:center;gap:8px}
+    .nv8schritt h4 .zeigen{margin-left:auto;font-size:12.5px;padding:2px 10px}
+    .nv8schritt .fue{margin:0 0 6px;font-size:13px;color:var(--matt)}
+    .nv8zeile{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:14px}
+    .nv8zeile label{display:inline-flex;align-items:center;gap:5px}
+    .nv8zeile input{font:inherit;font-size:14px;width:7.5em;padding:3px 6px;border:1px solid var(--linie);border-radius:5px}
+    .nv8zeile input.rot, .nv8zeile .wahl.rot{box-shadow:0 0 0 2px #c0392b;border-radius:5px}
+    .nv8zeile input.gruen{border-color:#3a7d44;background:#f2f8f2}
+    .nv8zeile .wahl{display:inline-flex;gap:4px;flex-wrap:wrap}
+    .nv8zeile .wahl button{font-size:13px;padding:3px 10px}
+    .nv8zeile .wahl button[aria-pressed=true]{background:var(--nv-lila);color:#fff;border-color:var(--nv-lila)}
+    .nv8meld{margin:6px 0 0;padding:0;list-style:none;font-size:13px}
+    .nv8meld li{color:#a3301f;margin:2px 0}
+    .nv8meld li.ok{color:#3a7d44}
+    .nv8bild svg{width:100%;height:auto;display:block;background:#fffefb;border:1px solid var(--linie);border-radius:6px}
+    .nv8ent{font-size:13.5px;margin-top:6px}
+    .nv8ent.ok{color:#3a7d44}.nv8ent.nein{color:#a3301f}
   `;
   document.head.appendChild(s);
 })();
 
+const NV8TEILE = NV8T.teile.map(t => t[0]);
 function nvE3Stand(){
-  const S = stand.nvE3 = nvObj(stand.nvE3) ? stand.nvE3 : {};
+  let S = nvObj(stand.nvE3) ? stand.nvE3 : null;
+  if (!S || S.v !== 5) S = stand.nvE3 = {v: 5};
+  if (!NV8TEILE.includes(S.teil)) S.teil = NV8TEILE[0];
   if (!nvObj(S.lage)) S.lage = {};
+  if (!nvObj(S.t)) S.t = {};
+  NV8.tests.forEach(t => { if (!nvObj(S.t[t.id])) S.t[t.id] = {}; });
+  if (!NV8.tests.some(t => t.id === S.akt)) S.akt = NV8.tests[0].id;
+  if (!nvObj(S.irr)) S.irr = {};
+  if (!nvObj(S.irr.lage)) S.irr.lage = {};
   if (!nvObj(S.wahl)) S.wahl = {};
-  if (S.teil !== 2) S.teil = 1;
-  NV8.karten.forEach(k => { if (S.lage[k.id] && !NV8.spalten.some(s => s.id === S.lage[k.id])) delete S.lage[k.id]; });
   return S;
 }
-function nvE3Loesung(){
-  const lage = {}, wahl = {};
-  NV8.karten.forEach(k => lage[k.id] = k.spalte);
-  NV8.saetze.forEach(x => wahl[x.id] = x.stimmt ? 'ja' : 'nein');
-  const alt = nvObj(stand.nvE3) ? stand.nvE3 : {};
-  return {nvE3: {lage, wahl, geprueft: true, d2geprueft: true, teil: alt.teil === 2 ? 2 : 1}};
+const nvE3Zahl = x => Math.abs(x - Math.round(x)) < 1e-9 ? String(Math.round(x)) : String(+x.toFixed(2));
+function nvE3Richtig(t){
+  return {n: String(t.n), p: t.p_text, x: String(t.x), seite: t.seite, c: String(t.c),
+          mu: nvE3Zahl(t.mu), s: nvE3Zahl(t.s),
+          a: t.a === null ? '' : String(t.a), b: t.b === null ? '' : String(t.b)};
 }
-const nvE3Alle = S => NV8.karten.every(k => S.lage[k.id] === k.spalte);
+function nvE3Loesung(){
+  const lage = {}, wahl = {}, irr = {};
+  NV8.geschichten.forEach(g => irr[g.id] = g.feld);
+  NV8.saetze.forEach(x => wahl[x.id] = x.stimmt ? 'ja' : 'nein');
+  const t = {};
+  NV8.tests.forEach(x => t[x.id] = Object.assign(nvE3Richtig(x), {ok: true, geprueft: true, ent: x.entscheid}));
+  const alt = nvObj(stand.nvE3) ? stand.nvE3 : {};
+  return {nvE3: {v: 5, teil: NV8TEILE.includes(alt.teil) ? alt.teil : NV8TEILE[0], akt: alt.akt || NV8.tests[0].id,
+    lage, geprueft: true, t, irr: {lage: irr, geprueft: true, frage: NV8.irrtum_frage.richtig}, wahl, d2geprueft: true}};
+}
+const nvE3IrrOk = S => NV8.geschichten.every(g => S.irr.lage[g.id] === g.feld);
 const nvE3SaetzeOk = S => NV8.saetze.every(x => S.wahl[x.id] === (x.stimmt ? 'ja' : 'nein'));
+const nvE3TestGeloest = (t, z) => !!(z.ok && z.ent === t.entscheid);
+const nvE3TestsOk = S => NV8.tests.every(t => nvE3TestGeloest(t, S.t[t.id]));
+function nvE3TeilFertig(S, teil){
+  if (teil === 'test') return nvE3TestsOk(S);
+  if (teil === 'irrtum') return S.irr.geprueft && nvE3IrrOk(S) && S.irr.frage === NV8.irrtum_frage.richtig;
+  return S.d2geprueft && nvE3SaetzeOk(S);
+}
+
+/* Ein Sortierfeld mit Karten: antippen und Feld antippen, oder ziehen. */
+function nvE3Sortieren(o){
+  // o: {vorrat: El, zonen: [El mit data-ziel], karten, lage, soll(k), html(k, zustand), gesperrt, legen(id, ziel)}
+  let gewaehlt = null;
+  const zielUnter = (x, y) => { const el = document.elementFromPoint(x, y), z = el && el.closest('[data-ziel]'); return z ? z.dataset.ziel : null; };
+  document.querySelectorAll('.nv8k').forEach(el => {
+    el.onclick = () => {
+      if (el._gezogen){ el._gezogen = false; return; }
+      gewaehlt = gewaehlt === el.dataset.k ? null : el.dataset.k;
+      document.querySelectorAll('.nv8k').forEach(x => x.classList.toggle('gewaehlt', x.dataset.k === gewaehlt));
+    };
+    el.onpointerdown = ev => {
+      if (o.gesperrt || ev.button > 0) return;
+      const r = el.getBoundingClientRect(), dx = ev.clientX - r.left, dy = ev.clientY - r.top, x0 = ev.clientX, y0 = ev.clientY;
+      let geist = null;
+      const bewegen = e => {
+        if (!geist){
+          if (Math.hypot(e.clientX - x0, e.clientY - y0) < 6) return;
+          geist = el.cloneNode(true); geist.classList.add('schwebt'); geist.style.width = r.width + 'px';
+          document.body.appendChild(geist); el.style.opacity = '.35';
+        }
+        geist.style.left = (e.clientX - dx) + 'px'; geist.style.top = (e.clientY - dy) + 'px';
+        const z = zielUnter(e.clientX, e.clientY);
+        document.querySelectorAll('.nv8sp').forEach(s => s.classList.toggle('ziel', s.dataset.ziel === z));
+      };
+      const loslassen = e => {
+        removeEventListener('pointermove', bewegen); removeEventListener('pointerup', loslassen); removeEventListener('pointercancel', loslassen);
+        if (!geist) return;
+        geist.remove(); el.style.opacity = ''; el._gezogen = true;
+        document.querySelectorAll('.nv8sp').forEach(s => s.classList.remove('ziel'));
+        const z = zielUnter(e.clientX, e.clientY);
+        if (z !== null) o.legen(el.dataset.k, z);
+      };
+      addEventListener('pointermove', bewegen); addEventListener('pointerup', loslassen); addEventListener('pointercancel', loslassen);
+    };
+  });
+  document.querySelectorAll('[data-ziel]').forEach(z => z.addEventListener('click', ev => {
+    if (!gewaehlt || ev.target.closest('.nv8k') || ev.target.closest('textarea')) return;
+    o.legen(gewaehlt, z.dataset.ziel);
+  }));
+}
+function nvE3Karte(k, S, lage, geprueft, soll, rueckfrage){
+  const liegt = lage[k.id], falsch = geprueft && liegt && liegt !== soll, richtig = geprueft && liegt === soll;
+  return `<button type="button" class="nv8k${falsch ? ' falsch' : ''}${richtig ? ' richtig' : ''}" data-k="${k.id}">`
+    + (k.titel ? `<span class="t">${nvEsc(k.titel)}${richtig ? ' ✓' : ''}</span>` : (richtig ? '<span class="t">✓</span>' : ''))
+    + `${nvEsc(k.text)}${falsch && rueckfrage ? `<span class="rf">${nvEsc(rueckfrage)}</span>` : ''}</button>`;
+}
+
+/* Das Bild eines Tests: Glocke der Behauptung, Bereich schraffiert, X als Punkt */
+function nvE3Bild(t){
+  const W = 460, H = 220, X0 = 22, X1 = 438, Y0 = 160, HH = 116;
+  const lo = t.mu - 4 * t.s, hi = t.mu + 4 * t.s;
+  const zx = v => X0 + (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (X1 - X0);
+  const hy = v => Y0 - Math.exp(-(((v - t.mu) / t.s) ** 2) / 2) * HH;
+  const pts = []; for (let i = 0; i <= 160; i++){ const v = lo + (hi - lo) * i / 160; pts.push([zx(v), hy(v)]); }
+  const von = t.a === null ? lo : t.a, bis = t.b === null ? hi : t.b;
+  const flaeche = pts.filter(([x]) => x >= zx(von) && x <= zx(bis));
+  const F = "font-family=\"'Fira Sans','Segoe UI',sans-serif\"";
+  let h = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Bild der Behauptung">`;
+  h += `<path d="M${zx(von)},${Y0} ` + flaeche.map(([x, y]) => `L${x.toFixed(1)},${y.toFixed(1)}`).join(' ') + ` L${zx(bis)},${Y0} Z" fill="#d9c6df"/>`;
+  h += `<line x1="${X0 - 6}" y1="${Y0}" x2="${X1 + 6}" y2="${Y0}" stroke="#6c6357" stroke-width="1.4"/>`;
+  h += `<path d="${pts.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(1) + ',' + y.toFixed(1)).join(' ')}" fill="none" stroke="#2d2924" stroke-width="2.2"/>`;
+  h += `<line x1="${zx(t.mu)}" y1="${Y0}" x2="${zx(t.mu)}" y2="${Y0 - HH}" stroke="#6c6357" stroke-dasharray="4 4"/>`;
+  h += `<text x="${zx(t.mu)}" y="${Y0 + 20}" ${F} font-size="17" fill="#2d2924" text-anchor="middle">μ = ${nvE3Zahl(t.mu)}</text>`;
+  [t.a, t.b].forEach(g => { if (g === null) return;
+    h += `<line x1="${zx(g)}" y1="${Y0}" x2="${zx(g)}" y2="${hy(g) - 10}" stroke="#2d2924" stroke-width="2.2"/>`;
+    h += `<text x="${zx(g)}" y="${Y0 + 40}" ${F} font-size="18" fill="#6a3d78" text-anchor="middle">${g}</text>`; });
+  h += `<text x="${(zx(von) + zx(bis)) / 2}" y="${Y0 - 30}" ${F} font-size="18" font-weight="600" fill="#6a3d78" text-anchor="middle">${t.sicherheit} %</text>`;
+  const xr = zx(t.x), raus = t.x < lo || t.x > hi;
+  h += `<circle cx="${xr}" cy="${Y0}" r="7" fill="#c0392b" stroke="#fff" stroke-width="2"/>`;
+  h += `<text x="${Math.min(X1 - 40, Math.max(X0 + 40, xr))}" y="${Y0 - 16}" ${F} font-size="18" font-weight="700" fill="#c0392b" text-anchor="middle">X = ${t.x}${raus ? (t.x < lo ? ' ←' : ' →') : ''}</text>`;
+  return h + '</svg>';
+}
 
 function etappe3(){
   const a = D.etappen[2];
@@ -3019,150 +3205,202 @@ function etappe3(){
   const merk = () => { if (!gesperrt) sichern(); };
   if (!nvObj(stand.texte)) stand.texte = {};
   const sk = nvKarteHtml({id: 'e3', nr: 3, name: NV_SK.e3name, text: NV_SK.e3text, frage: NV_SK.e3frage, bild: ''});
-  const teil1 = S.teil === 1;
-  const leiste = `<span class="nv8teile" role="group" aria-label="Teile">
-      <button type="button" class="knopf leer" data-teil="1" aria-pressed="${teil1}">${nvEsc(NV8T.teil1)}${nvE3Alle(S) && S.geprueft ? ' ✓' : ''}</button>
-      <button type="button" class="knopf leer" data-teil="2" aria-pressed="${!teil1}">${nvEsc(NV8T.teil2)}${S.d2geprueft && nvE3SaetzeOk(S) ? ' ✓' : ''}</button></span>
-    <button class="knopf" id="nv8pruefen">${nvEsc(NV8T.pruefen)}</button>
+  const leiste = `<span class="nv8teile" role="group" aria-label="Teile">`
+    + NV8T.teile.map(([id, name]) => `<button type="button" class="knopf leer" data-teil="${id}" aria-pressed="${S.teil === id}">${nvEsc(name)}${nvE3TeilFertig(S, id) ? ' ✓' : ''}</button>`).join('')
+    + `</span><button class="knopf" id="nv8pruefen">${nvEsc(NV8T.pruefen)}</button>
     <span class="befund" id="befund"></span>
     <button class="knopf leer" id="weiter" style="margin-left:auto">Fertig →</button>`;
-  if (teil1) buehne({rolle: a.rolle, rang: a.rang, titel: 'Etappe 3 · ' + a.name, text: ''},
-    NV8T.vorrat, NV8T.teil1, leiste, sk, '', [0.8, 1.6]);
-  else buehne({rolle: a.rolle, rang: a.rang, titel: 'Etappe 3 · ' + a.name, text: ''},
-    NV8T.teil2, NV8T.sicht, leiste, sk, '', [1.5, 0.9]);
-  window._zustaendig = () => false;     // keine Karten des Kerns
+  const kopf = {rolle: a.rolle, rang: a.rang, titel: 'Etappe 3 · ' + a.name, text: ''};
+  const T = {test: ['Die Aufgabe', 'Prüfen und entscheiden', [0.85, 1.5]],
+             irrtum: [NV8T.tafel_vorrat, NV8T.tafel, [0.8, 1.6]], deuten: [NV8T.teile[2][1], NV8T.sicht, [1.5, 0.9]]}[S.teil];
+  buehne(kopf, T[0], T[1], leiste, sk, '', T[2]);
+  window._zustaendig = () => false;
   window._neuzeichnen = () => etappe3();
   const tisch = document.getElementById('tisch'), feld = document.getElementById('feld');
-  document.querySelectorAll('.nv8teile [data-teil]').forEach(b => b.onclick = () => {
-    nvFahne(null); S.teil = +b.dataset.teil; merk(); etappe3();
-  });
-  document.getElementById('weiter').onclick = () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); };
   const befund = document.getElementById('befund');
+  document.querySelectorAll('.nv8teile [data-teil]').forEach(b => b.onclick = () => { nvFahne(null); S.teil = b.dataset.teil; merk(); etappe3(); });
+  document.getElementById('weiter').onclick = () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); };
+  const pruefKnopf = document.getElementById('nv8pruefen');
   const textFeld = (el, schluessel) => {
-    el.value = stand.texte[schluessel] || '';
-    el.disabled = gesperrt;
+    el.value = stand.texte[schluessel] || ''; el.disabled = gesperrt;
     el.addEventListener('input', () => { stand.texte[schluessel] = el.value; merk(); });
   };
+  const zuTeil = teil => () => { nvFahne(null); S.teil = teil; merk(); etappe3(); };
+  const weiterFahne = (fenster, schluessel, teil) => nvFahne({notiz: NV_W.e3Notiz, knopf: NV_W.e3weiter,
+    tun: zuTeil(teil), fenster, schluessel});
+  nvKarteHaken(3, null);
 
-  if (teil1){
-    let gewaehlt = null;
-    const karteHtml = k => {
-      const falsch = S.geprueft && S.lage[k.id] && S.lage[k.id] !== k.spalte;
-      const richtig = S.geprueft && S.lage[k.id] === k.spalte;
-      const rf = falsch ? NV8.spalten.find(s => s.id === k.spalte).hinweis : '';
-      return `<button type="button" class="nv8k${falsch ? ' falsch' : ''}${richtig ? ' richtig' : ''}" data-k="${k.id}"${gesperrt ? ' disabled' : ''}>`
-        + `<span class="t">${nvEsc(k.titel)}${k.quelle && !k.titel.startsWith(k.quelle.replace(/^(Skript|Aufgabe) /, '')) ? ` <span class="q">· ${nvEsc(k.quelle)}</span>` : ''}${richtig ? ' ✓' : ''}</span>`
-        + `${nvEsc(k.text)}${rf ? `<span class="rf">${nvEsc(rf)}</span>` : ''}</button>`;
+  if (S.teil === 'test'){
+    const t = NV8.tests.find(x => x.id === S.akt), z = S.t[t.id], R = nvE3Richtig(t), i = NV8.tests.indexOf(t);
+    const fue = t.fuehrung || {};
+    tisch.innerHTML = `<div class="nv8nr" role="group" aria-label="Aufgaben">${NV8.tests.map((x, j) =>
+        `<button type="button" class="knopf leer" data-t="${x.id}" title="${nvEsc(x.titel)}" aria-current="${x.id === t.id}">${j + 1}${nvE3TestGeloest(x, S.t[x.id]) ? ' ✓' : ''}</button>`).join('')}</div>
+      <div class="nv8aufg"><div class="von">${nvEsc(NV.aufgabe_von.replace('{n}', i + 1).replace('{m}', NV8.tests.length))}${t.quelle ? ' · ' + nvEsc(t.quelle) : ''}</div>
+        <h3>${nvEsc(t.titel)}</h3><div class="txt">${nvEsc(t.text)}</div></div>`;
+    tisch.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { nvFahne(null); S.akt = b.dataset.t; merk(); etappe3(); });
+    const eingabe = (f, name, breit) => `<label>${name} <input data-f="${f}" value="${nvEsc(z[f] || '')}" ${breit ? `style="width:${breit}"` : ''} autocomplete="off"></label>`;
+    const knoepfe = (f, liste) => `<span class="wahl" data-wahl="${f}">${liste.map(([w, n]) => `<button type="button" class="knopf leer" data-w="${w}" aria-pressed="${String(z[f]) === String(w)}">${nvEsc(n)}</button>`).join('')}</span>`;
+    const seite = z.seite || '';
+    const grenzen = seite === 'zwei' ? `<span>von</span> ${eingabe('a', '')} <span>bis</span> ${eingabe('b', '')}`
+      : seite === 'wenig' ? `<span>Bereich ab</span> ${eingabe('a', '')}` : seite === 'viel' ? `<span>Bereich bis</span> ${eingabe('b', '')}`
+      : '<span class="zart">Erst die Seite wählen.</span>';
+    const cListe = Object.entries(NV8.c_werte).map(([, c]) => [String(c), String(c)]);
+    const fuehr = k => fue[k] ? `<p class="fue">${nvEsc(fue[k])}</p>` : '';
+    const zeigen = k => gesperrt ? '' : `<button type="button" class="knopf leer zeigen" data-zeigen="${k}">${nvEsc(NV8T.zeigen)}</button>`;
+    feld.innerHTML = `<div class="nv8test">
+      <div class="nv8schritt"><h4>${nvEsc(NV8T.schritt.behauptung)}${zeigen('behauptung')}</h4>${fuehr('behauptung')}
+        <div class="nv8zeile">${eingabe('n', 'n =')} ${eingabe('p', 'p der Behauptung =')} ${eingabe('x', 'beobachtet: X =')}</div></div>
+      <div class="nv8schritt"><h4>${nvEsc(NV8T.schritt.seite)}${zeigen('seite')}</h4>${fuehr('seite')}
+        <div class="nv8zeile">${knoepfe('seite', NV8.seiten)}</div></div>
+      <div class="nv8schritt"><h4>${nvEsc(NV8T.schritt.bereich)}${zeigen('bereich')}</h4>${fuehr('bereich')}
+        <div class="nv8zeile"><span>c =</span> ${knoepfe('c', cListe)}</div>
+        <div class="nv8zeile" style="margin-top:6px">${eingabe('mu', 'μ =', '9em')} ${eingabe('s', 'σ =', '11em')}</div>
+        <div class="nv8zeile" style="margin-top:6px">${grenzen}</div>
+        <ul class="nv8meld" id="nv8meld"></ul></div>
+      <div class="nv8schritt" id="nv8entscheid"${z.ok ? '' : ' hidden'}><h4>${nvEsc(NV8T.schritt.entscheid)}</h4>${fuehr('entscheid')}
+        <div class="nv8bild">${z.ok ? nvE3Bild(t) : ''}</div>
+        <div class="nv8zeile" style="margin-top:8px">${knoepfe('ent', [['bei', NV8T.beibehalten], ['ver', NV8T.verwerfen]])}</div>
+        <p class="nv8ent" id="nv8ent"></p>
+        <label style="display:block;margin-top:6px;font-size:13px">${nvEsc(NV8T.was_heisst)}<textarea data-text="e3t_${t.id}" rows="2"></textarea></label>
+      </div></div>`;
+    feld.querySelectorAll('textarea[data-text]').forEach(x => textFeld(x, x.dataset.text));
+    const meld = document.getElementById('nv8meld');
+    const entZeigen = () => {
+      const p = document.getElementById('nv8ent');
+      if (!z.ent){ p.textContent = ''; p.className = 'nv8ent'; return; }
+      const ok = z.ent === t.entscheid;
+      p.className = 'nv8ent ' + (ok ? 'ok' : 'nein');
+      p.textContent = ok ? '✓ ' + t.sache
+        : 'Schauen Sie ins Bild: Liegt X im schraffierten Bereich der Behauptung? Wenn ja, ist das Ergebnis mit ihr verträglich.';
     };
+    const pruefen = () => {
+      const u = [], rot = new Set();
+      const num = f => { const r = nv3Term(nv3Teile(z[f] || '').slice(-1)[0] || ''); return r.f && !r.vars.size ? r.f({}) : NaN; };
+      const fehl = (f, satz) => { rot.add(f); u.push([false, satz]); };
+      if (num('n') !== t.n) fehl('n', 'n ist die Zahl der Versuche in der Aufgabe.');
+      if (!(nv3Term(z.p || '').f && nv3Passt(nv3Term(z.p).f, () => t.p, '') === 'ok')) fehl('p', 'p ist der Anteil, den die Behauptung nennt.');
+      if (num('x') !== t.x) fehl('x', 'X ist das beobachtete Ergebnis.');
+      if (z.seite !== t.seite) fehl('seite', 'Lesen Sie die Frage noch einmal: Wird nur in eine Richtung vermutet, oder zählt jede Abweichung?');
+      if (String(z.c) !== String(t.c)) fehl('c', t.seite === 'zwei' ? 'Zweiseitig: c zur Sicherheit, wie in Etappe 1 und 2.'
+        : 'Einseitig liegen die ganzen 5 % auf einer Seite: c wie für 90 % zweiseitig.');
+      const mu = nv3Term(nv3Teile(z.mu || '').slice(-1)[0] || ''), sg = nv3Term(nv3Teile(z.s || '').slice(-1)[0] || '');
+      if (!(mu.f && !mu.vars.size && nv3Passt(mu.f, () => t.mu, '') === 'ok')) fehl('mu', 'μ = n · p, mit dem p der Behauptung.');
+      if (!(sg.f && !sg.vars.size && nv3Passt(sg.f, () => t.s, '') !== 'falsch')) fehl('s', 'σ = √(n · p · (1 − p)), mit dem p der Behauptung.');
+      const nahe = (f, soll) => Math.abs(num(f) - soll) <= 1.01;
+      if (t.a !== null && !nahe('a', t.a_genau)) fehl('a', 'Die untere Grenze ist μ − c · σ.');
+      if (t.b !== null && !nahe('b', t.b_genau)) fehl('b', 'Die obere Grenze ist μ + c · σ.');
+      return {ok: !u.length, u, rot};
+    };
+    const urteil = p => {
+      feld.querySelectorAll('input[data-f]').forEach(x => { x.classList.toggle('rot', p.rot.has(x.dataset.f)); x.classList.toggle('gruen', z.geprueft && !p.rot.has(x.dataset.f) && !!x.value.trim()); });
+      feld.querySelectorAll('[data-wahl]').forEach(x => x.classList.toggle('rot', p.rot.has(x.dataset.wahl)));
+      meld.innerHTML = p.ok ? '<li class="ok">✓ Behauptung, Seite und Bereich stimmen. Jetzt entscheiden.</li>'
+        : p.u.map(([, s]) => `<li>${nvEsc(s)}</li>`).join('');
+    };
+    const fahneTest = () => {
+      const offen = NV8.tests.slice(i + 1).concat(NV8.tests.slice(0, i)).find(x => !nvE3TestGeloest(x, S.t[x.id]));
+      if (offen){
+        const j = NV8.tests.indexOf(offen), W = NV.wegweiser.aufgabe3;
+        const f = s => s.replace('{name}', t.titel).replace('{m}', j + 1).replace('{name}', offen.titel);
+        const geh = () => { nvFahne(null); S.akt = offen.id; merk(); etappe3(); };
+        nvFahne({notiz: NV_W.e3Notiz, knopf: NV_W.naechste, tun: geh,
+          fenster: {text: W.text.replace('{name}', t.titel), jetzt: W.jetzt.replace('{m}', j + 1).replace('{name}', offen.titel)},
+          schluessel: 'e3' + t.id, haupt: {knopf: W.knopf.replace('{m}', j + 1), tun: geh}});
+      } else weiterFahne(NV.wegweiser.irrtum, 'e3irrtum', 'irrtum');
+    };
+    if (!gesperrt){
+      feld.querySelectorAll('input[data-f]').forEach(x => x.addEventListener('input', () => {
+        z[x.dataset.f] = x.value; if (z.ok){ z.ok = false; z.ent = ''; } z.geprueft = false; merk();
+        x.classList.remove('rot', 'gruen'); document.getElementById('nv8entscheid').hidden = true; nvFahne(null);
+      }));
+      feld.querySelectorAll('[data-wahl]').forEach(g => g.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
+        const f = g.dataset.wahl;
+        if (f === 'ent'){ z.ent = b.dataset.w; merk(); g.querySelectorAll('[data-w]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); entZeigen();
+          if (nvE3TestGeloest(t, z)){ tisch.querySelector(`[data-t="${t.id}"]`).textContent = (i + 1) + ' ✓'; fahneTest(); } else nvFahne(null);
+          return; }
+        z[f] = b.dataset.w; if (f === 'seite'){ z.a = z.a || ''; z.b = z.b || ''; }
+        z.ok = false; z.ent = ''; z.geprueft = false; merk(); etappe3();
+      }));
+      feld.querySelectorAll('[data-zeigen]').forEach(b => b.onclick = () => {
+        const k = b.dataset.zeigen;
+        const felder = {behauptung: ['n', 'p', 'x'], seite: ['seite'], bereich: ['c', 'mu', 's', 'a', 'b']}[k];
+        felder.forEach(f => { z[f] = R[f]; });
+        if (k === 'bereich' && !z.seite) z.seite = R.seite;
+        z.hilfe = true; z.ok = false; z.ent = ''; merk(); etappe3();
+      });
+    }
+    pruefKnopf.onclick = () => {
+      if (gesperrt) return;
+      const p = pruefen(); z.geprueft = true;
+      if (p.ok && !z.ok){ z.ok = true; merk(); etappe3(); return; }
+      z.ok = p.ok; merk(); urteil(p);
+      befund.textContent = p.ok ? '' : `${p.u.length} ${p.u.length === 1 ? 'Punkt stimmt' : 'Punkte stimmen'} noch nicht.`;
+    };
+    if (z.geprueft) urteil(pruefen());
+    entZeigen();
+    nvJetztSatz(nvE3TestGeloest(t, z) ? 'Diese Aufgabe ist entschieden. Weiter mit der nächsten.'
+      : z.ok ? 'Der Bereich stimmt. Schauen Sie ins Bild und entscheiden Sie.' : NV8T.satz_test);
+    if (nvE3TestGeloest(t, z)) fahneTest(); else nvFahne(null);
+  }
+
+  else if (S.teil === 'irrtum'){
+    const I = S.irr, FQ = NV8.irrtum_frage;
     const zeichnen = () => {
-      const frei = NV8.karten.filter(k => !S.lage[k.id]);
-      tisch.innerHTML = `<div class="nv8vorrat${frei.length ? '' : ' leer'}" data-ziel="">${frei.map(karteHtml).join('')}</div>`;
-      feld.innerHTML = `<div class="nv8spalten">${NV8.spalten.map(sp => {
-        const drin = NV8.karten.filter(k => S.lage[k.id] === sp.id);
-        const fertig = S.geprueft && nvE3Alle(S);
-        return `<div class="nv8sp" data-ziel="${sp.id}">
-          <button type="button" class="kopf" data-spalte="${sp.id}">${nvEsc(sp.frage)}<span class="n">${nvEsc(sp.name)}</span></button>
-          <div class="inhalt">${drin.map(karteHtml).join('')}</div>
-          <p class="fr">${nvEsc(NV8.spaltenfrage)}</p>
-          <textarea data-text="e3s_${sp.id}" rows="2" aria-label="${nvEsc(sp.frage + ': ' + NV8.spaltenfrage)}"></textarea>
-          ${fertig ? `<p class="sicht"><b>${nvEsc(NV8T.sicht)}:</b> ${nvEsc(sp.sicht)}</p>` : ''}
-        </div>`;
-      }).join('')}</div>`;
-      feld.querySelectorAll('textarea[data-text]').forEach(t => textFeld(t, t.dataset.text));
-      binden();
-    };
-    const legen = (kid, ziel) => {
-      if (gesperrt) return;
-      if (ziel) S.lage[kid] = ziel; else delete S.lage[kid];
-      if (S.geprueft && !nvE3Alle(S)) S.geprueft = false;
-      gewaehlt = null; merk(); nvFahne(null); zeichnen();
-      befund.textContent = '';
-      jetzt();
-    };
-    const binden = () => {
-      document.querySelectorAll('.nv8k').forEach(el => {
-        el.onclick = () => {
-          if (el._gezogen){ el._gezogen = false; return; }
-          gewaehlt = gewaehlt === el.dataset.k ? null : el.dataset.k;
-          document.querySelectorAll('.nv8k').forEach(x => x.classList.toggle('gewaehlt', x.dataset.k === gewaehlt));
-        };
-        el.onpointerdown = ev => ziehen(ev, el);
+      const frei = NV8.geschichten.filter(g => !I.lage[g.id]);
+      tisch.innerHTML = `<div class="nv8vorrat${frei.length ? '' : ' leer'}" data-ziel="">${frei.map(g => nvE3Karte(g, S, I.lage, I.geprueft, g.feld, '')).join('')}</div>`;
+      const alle = I.geprueft && nvE3IrrOk(S);
+      const zelle = f => `<div class="nv8sp" data-ziel="${f.id}"><div class="fname${alle ? '' : ' leer'}">${alle ? nvEsc(f.name) : '…'}</div>
+        <div class="inhalt">${NV8.geschichten.filter(g => I.lage[g.id] === f.id).map(g => nvE3Karte(g, S, I.lage, I.geprueft, g.feld, '')).join('')}</div></div>`;
+      const F = id => NV8.felder.find(f => f.id === id);
+      feld.innerHTML = `<div class="nv8tafel"><div></div>${NV8.tafel.spalten.map(s => `<div class="kopf">${nvEsc(s)}</div>`).join('')}
+          <div class="zk">${nvEsc(NV8.tafel.zeilen[0])}</div>${zelle(F('st_bei'))}${zelle(F('nst_bei'))}
+          <div class="zk">${nvEsc(NV8.tafel.zeilen[1])}</div>${zelle(F('st_ver'))}${zelle(F('nst_ver'))}</div>`
+        + (alle ? `<div class="nv8frage">${nvEsc(FQ.frage)}<div class="wahl">${FQ.wahl.map(([w, n]) =>
+            `<button type="button" class="knopf leer" data-fq="${w}" aria-pressed="${I.frage === w}"${gesperrt ? ' disabled' : ''}>${nvEsc(n)}</button>`).join('')}</div>`
+          + (I.frage ? (I.frage === FQ.richtig ? `<p class="nv8bg"><b>✓ ${nvEsc(NV8T.sicht)}</b>${nvEsc(FQ.sicht)}</p>`
+                                              : '<p class="nv8ent nein">Noch nicht. Welcher Fehler passiert, wenn die Behauptung stimmt?</p>') : '')
+          + '</div>' : '');
+      nvE3Sortieren({gesperrt, legen: (id, z) => {
+        if (gesperrt) return;
+        if (z) I.lage[id] = z; else delete I.lage[id];
+        if (I.geprueft && !nvE3IrrOk(S)) I.geprueft = false;
+        merk(); nvFahne(null); befund.textContent = ''; zeichnen();
+      }});
+      feld.querySelectorAll('[data-fq]').forEach(b => b.onclick = () => {
+        I.frage = b.dataset.fq; merk(); zeichnen();
+        if (nvE3TeilFertig(S, 'irrtum')) weiterFahne(NV.wegweiser.deuten, 'e3deuten', 'deuten');
       });
-      document.querySelectorAll('.nv8sp > button.kopf').forEach(b => b.onclick = () => { if (gewaehlt) legen(gewaehlt, b.dataset.spalte); });
-      const vorrat = tisch.querySelector('.nv8vorrat');
-      vorrat.onclick = ev => { if (gewaehlt && !ev.target.closest('.nv8k')) legen(gewaehlt, ''); };
-      document.querySelectorAll('.nv8sp .inhalt').forEach(i => i.onclick = ev => {
-        if (gewaehlt && !ev.target.closest('.nv8k')) legen(gewaehlt, i.parentElement.dataset.ziel);
-      });
+      nvJetztSatz(alle ? 'Alle Geschichten liegen richtig. Beantworten Sie die Frage unter der Tafel.'
+        : NV8T.satz_irrtum + ' <span class="zart">' + nvEsc(NV8T.antippen) + '</span>');
     };
-    const zielUnter = (x, y) => {
-      const el = document.elementFromPoint(x, y);
-      const z = el && el.closest('[data-ziel]');
-      return z ? z.dataset.ziel : null;
-    };
-    const ziehen = (ev, el) => {
-      if (gesperrt || ev.button > 0) return;
-      const r = el.getBoundingClientRect(), dx = ev.clientX - r.left, dy = ev.clientY - r.top;
-      const x0 = ev.clientX, y0 = ev.clientY;
-      let geist = null;
-      const bewegen = e => {
-        if (!geist){
-          if (Math.hypot(e.clientX - x0, e.clientY - y0) < 6) return;
-          geist = el.cloneNode(true); geist.classList.add('schwebt'); geist.style.width = r.width + 'px';
-          document.body.appendChild(geist); el.style.opacity = '.35';
-          if (!stand.nvE3Gezogen){ stand.nvE3Gezogen = true; merk(); }
-        }
-        geist.style.left = (e.clientX - dx) + 'px'; geist.style.top = (e.clientY - dy) + 'px';
-        const z = zielUnter(e.clientX, e.clientY);
-        document.querySelectorAll('.nv8sp').forEach(s => s.classList.toggle('ziel', s.dataset.ziel === z));
-      };
-      const los_ = e => {
-        removeEventListener('pointermove', bewegen); removeEventListener('pointerup', los_); removeEventListener('pointercancel', los_);
-        if (!geist) return;
-        geist.remove(); el.style.opacity = ''; el._gezogen = true;
-        document.querySelectorAll('.nv8sp').forEach(s => s.classList.remove('ziel'));
-        const z = zielUnter(e.clientX, e.clientY);
-        if (z !== null) legen(el.dataset.k, z);
-      };
-      addEventListener('pointermove', bewegen); addEventListener('pointerup', los_); addEventListener('pointercancel', los_);
-    };
-    const jetzt = () => nvJetztSatz(S.geprueft && nvE3Alle(S) ? NV8T.satz_fertig.replace('«Eine mögliche Sicht»', '«Eine mögliche Sicht» unter den Spalten') + ' Danach weiter zu den Sätzen.'
-      : NV8T.satz1 + (stand.nvE3Gezogen ? '' : ' <span class="zart">' + nvEsc(NV8T.antippen) + '</span>'));
-    document.getElementById('nv8pruefen').onclick = () => {
+    pruefKnopf.onclick = () => {
       if (gesperrt) return;
-      const liegt = NV8.karten.filter(k => S.lage[k.id]);
-      const ok = liegt.filter(k => S.lage[k.id] === k.spalte).length;
-      S.geprueft = true; merk(); zeichnen(); jetzt();
-      const offen = NV8.karten.length - liegt.length;
-      befund.textContent = `${ok} von ${NV8.karten.length} Karten liegen richtig.` + (offen ? ` ${offen} liegen noch bei den Aufgaben.` : '');
-      if (nvE3Alle(S)) fahne1();
+      I.geprueft = true; merk(); zeichnen();
+      const ok = NV8.geschichten.filter(g => I.lage[g.id] === g.feld).length;
+      befund.textContent = `${ok} von ${NV8.geschichten.length} Geschichten liegen richtig.`;
     };
-    const fahne1 = () => nvFahne({notiz: NV_W.teil2Notiz, knopf: NV_W.teil2,
-      tun: () => { nvFahne(null); S.teil = 2; merk(); etappe3(); },
-      fenster: NV.wegweiser.e3teil2, schluessel: 'e3teil2'});
     zeichnen();
-    nvKarteHaken(3, null);
-    jetzt();
-    if (S.geprueft && nvE3Alle(S)) fahne1(); else nvFahne(null);
-  } else {
+    if (nvE3TeilFertig(S, 'irrtum')) weiterFahne(NV.wegweiser.deuten, 'e3deuten', 'deuten'); else nvFahne(null);
+  }
+
+  else {
     const zeichnen = () => {
-      tisch.innerHTML = `<div class="nv8saetze">${NV8.saetze.map((x, i) => {
-        const w = S.wahl[x.id], soll = x.stimmt ? 'ja' : 'nein';
-        const falsch = S.d2geprueft && w !== soll;
+      tisch.innerHTML = `<div class="nv8saetze">${NV8.saetze.map((x, j) => {
+        const w = S.wahl[x.id], soll = x.stimmt ? 'ja' : 'nein', falsch = S.d2geprueft && w !== soll;
         return `<div class="nv8satz${falsch ? ' falsch' : ''}" data-s="${x.id}">
-          <p class="s">${i + 1}. ${nvEsc(x.satz)}${S.d2geprueft && w === soll ? ' ✓' : ''}</p>
+          <p class="s">${j + 1}. ${nvEsc(x.satz)}${S.d2geprueft && w === soll ? ' ✓' : ''}</p>
           <div class="wahl" role="group" aria-label="stimmt oder stimmt nicht">
             <button type="button" class="knopf leer" data-w="ja" aria-pressed="${w === 'ja'}"${gesperrt ? ' disabled' : ''}>${nvEsc(NV8T.stimmt)}</button>
             <button type="button" class="knopf leer" data-w="nein" aria-pressed="${w === 'nein'}"${gesperrt ? ' disabled' : ''}>${nvEsc(NV8T.stimmt_nicht)}</button></div>
           <textarea data-text="e3w_${x.id}" rows="2" placeholder="${nvEsc(NV8T.warum)}" aria-label="${nvEsc(NV8T.warum)}"></textarea>
-          ${S.d2geprueft && w ? `<p class="bg"><b>${nvEsc(NV8T.begruendung)}</b>${nvEsc(x.warum)}</p>` : ''}
+          ${S.d2geprueft && w ? `<p class="nv8bg"><b>${nvEsc(NV8T.begruendung)}</b>${nvEsc(x.warum)}</p>` : ''}
         </div>`;
       }).join('')}</div>`;
-      const fertig = S.d2geprueft && nvE3SaetzeOk(S);
+      const fertig = nvE3TeilFertig(S, 'deuten');
       feld.innerHTML = fertig
         ? `<div class="nv8sicht"><h3>${nvEsc(NV8T.sicht)}</h3>${NV8.sicht.map(p => `<p>${nvEsc(p)}</p>`).join('')}</div>`
         : `<div class="nv8sicht zu">«${nvEsc(NV8T.sicht)}» erscheint hier, sobald alle Sätze richtig beurteilt sind.</div>`;
-      tisch.querySelectorAll('textarea[data-text]').forEach(t => textFeld(t, t.dataset.text));
+      tisch.querySelectorAll('textarea[data-text]').forEach(x => textFeld(x, x.dataset.text));
       tisch.querySelectorAll('.nv8satz').forEach(d => d.querySelectorAll('[data-w]').forEach(b => b.onclick = () => {
         if (gesperrt) return;
         S.wahl[d.dataset.s] = b.dataset.w;
@@ -3171,22 +3409,21 @@ function etappe3(){
         d.querySelectorAll('[data-w]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
         d.classList.remove('falsch');
       }));
-      nvJetztSatz(fertig ? NV8T.satz_fertig : NV8T.satz2);
+      nvJetztSatz(fertig ? NV8T.satz_fertig : NV8T.satz_deuten);
     };
-    const fahne2 = () => nvFahne({notiz: NV_W.e3fertigNotiz, knopf: NV_W.mitnehmen,
+    const fahneEnde = () => nvFahne({notiz: NV_W.e3fertigNotiz, knopf: NV_W.mitnehmen,
       tun: () => { nvFahne(null); stand.etappe = ETAPPEN.length; los(); },
       fenster: NV.wegweiser.e3fertig, schluessel: 'e3fertig'});
-    document.getElementById('nv8pruefen').onclick = () => {
+    pruefKnopf.onclick = () => {
       if (gesperrt) return;
       const ok = NV8.saetze.filter(x => S.wahl[x.id] === (x.stimmt ? 'ja' : 'nein')).length;
       const leer = NV8.saetze.filter(x => !S.wahl[x.id]).length;
       S.d2geprueft = true; merk(); zeichnen();
       befund.textContent = `${ok} von ${NV8.saetze.length} Sätzen richtig beurteilt.` + (leer ? ` ${leer} noch offen.` : '');
-      if (nvE3SaetzeOk(S)) fahne2();
+      if (nvE3SaetzeOk(S)) fahneEnde();
     };
     zeichnen();
-    nvKarteHaken(3, null);
-    if (S.d2geprueft && nvE3SaetzeOk(S)) fahne2(); else nvFahne(null);
+    if (nvE3TeilFertig(S, 'deuten')) fahneEnde(); else nvFahne(null);
   }
   loesungsKnopf(() => etappe3());
 }
